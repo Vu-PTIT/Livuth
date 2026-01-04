@@ -1,6 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000/api';
+// Use environment variable or default to production backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://livuth.onrender.com/api';
 
 // Create axios instance
 const apiClient = axios.create({
