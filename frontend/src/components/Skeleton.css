@@ -1,0 +1,143 @@
+/* Skeleton Base Styles */
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--skeleton-base, #e5e7eb) 0%,
+            var(--skeleton-highlight, #f3f4f6) 50%,
+            var(--skeleton-base, #e5e7eb) 100%);
+    background-size: 200% 100%;
+    border-radius: 4px;
+}
+
+/* Variants */
+.skeleton-text {
+    border-radius: 4px;
+    height: 1em;
+}
+
+.skeleton-circular {
+    border-radius: 50%;
+}
+
+.skeleton-rectangular {
+    border-radius: 8px;
+}
+
+/* Animations */
+.skeleton-wave {
+    animation: skeleton-wave 1.5s ease-in-out infinite;
+}
+
+.skeleton-pulse {
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.skeleton-none {
+    animation: none;
+}
+
+@keyframes skeleton-wave {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes skeleton-pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* EventCard Skeleton */
+.event-card-skeleton {
+    background: var(--card-bg);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.event-card-skeleton .skeleton-image {
+    width: 100%;
+    border-radius: 0;
+}
+
+.event-card-skeleton .skeleton-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.event-card-skeleton .skeleton-meta {
+    display: flex;
+    gap: 1rem;
+}
+
+.event-card-skeleton .skeleton-tags {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.event-card-skeleton .skeleton-tags .skeleton {
+    border-radius: 12px;
+}
+
+/* Profile Skeleton */
+.profile-skeleton {
+    padding: 2rem;
+}
+
+.profile-skeleton-header {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.profile-skeleton-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.profile-skeleton-content {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* Chat Skeleton */
+.chat-skeleton {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.message-skeleton {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.message-skeleton.right {
+    flex-direction: row-reverse;
+}
+
+.message-skeleton .skeleton-rectangular {
+    border-radius: 16px;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .skeleton {
+    --skeleton-base: #374151;
+    --skeleton-highlight: #4b5563;
+}

@@ -1,0 +1,53 @@
+/* Location Picker Styles */
+.location-picker {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.location-picker-header {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.location-picker-map {
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.location-picker-map:hover {
+    border-color: var(--primary);
+}
+
+.geocode-error {
+    color: var(--error);
+    font-size: 0.85rem;
+    padding: 0.5rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 6px;
+}
+
+.location-picker-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    padding: 0.5rem 0;
+}
+
+.location-picker-coords {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--primary);
+    font-weight: 500;
+    padding: 0.5rem;
+    background: rgba(var(--primary-rgb), 0.1);
+    border-radius: 6px;
+}

@@ -1,0 +1,42 @@
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-badge.small {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+}
+
+.status-badge.medium {
+    font-size: 0.8rem;
+}
+
+.status-badge.pending {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #7c2d12;
+}
+
+.status-badge.approved {
+    background: linear-gradient(135deg, #34d399, #10b981);
+    color: white;
+}
+
+.status-badge.rejected {
+    background: linear-gradient(135deg, #f87171, #ef4444);
+    color: white;
+}
+
+.status-badge.verified {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    color: white;
+}
+
+.status-badge.unverified {
+    background: var(--bg-secondary, #e5e7eb);
+    color: var(--text-secondary, #6b7280);
+}
