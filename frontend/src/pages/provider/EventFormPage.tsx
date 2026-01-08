@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { eventApi } from '../../api/endpoints';
 import type { EventCreateRequest } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import LocationPicker from '../../components/LocationPicker';
 import '../../components/LocationPicker.css';
-import { ArrowLeft, Plus, X } from '@phosphor-icons/react';
+import { ArrowLeft, Plus, X, UploadSimple, Image } from '@phosphor-icons/react';
 import './ProviderPages.css';
 
 const CATEGORIES = [
@@ -36,6 +36,44 @@ const EventFormPage: React.FC = () => {
 
     const [newActivity, setNewActivity] = useState('');
     const [newMediaUrl, setNewMediaUrl] = useState('');
+    const [mediaError, setMediaError] = useState('');
+    const mediaFileInputRef = useRef<HTMLInputElement>(null);
+
+    // Handle media file upload (convert to base64)
+    const handleMediaFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setMediaError('Vui lòng chọn file ảnh');
+            return;
+        }
+
+        // Validate file size (max 2MB)
+        if (file.size > 2 * 1024 * 1024) {
+            setMediaError('Ảnh không được vượt quá 2MB');
+            return;
+        }
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64Url = reader.result as string;
+            setFormData((prev) => ({
+                ...prev,
+                media: [...(prev.media || []), { url: base64Url, type: file.type }],
+            }));
+            setMediaError('');
+        };
+        reader.onerror = () => {
+            setMediaError('Không thể đọc file ảnh');
+        };
+        reader.readAsDataURL(file);
+
+        // Reset input so same file can be selected again
+        e.target.value = '';
+    };
 
     useEffect(() => {
         if (isEditing && id) {
@@ -417,21 +455,62 @@ const EventFormPage: React.FC = () => {
                     {/* Media */}
                     <div className="form-section">
                         <h3>Hình ảnh</h3>
-                        <div className="form-group">
-                            <div className="highlights-list">
-                                {formData.media?.map((item, idx) => (
-                                    <div key={idx} className="highlight-item">
-                                        <input type="text" className="form-input" value={item.url} readOnly />
+
+                        {/* Image Preview Gallery */}
+                        {formData.media && formData.media.length > 0 && (
+                            <div className="media-gallery">
+                                {formData.media.map((item, idx) => (
+                                    <div key={idx} className="media-item">
+                                        <img
+                                            src={item.url}
+                                            alt={item.caption || `Ảnh ${idx + 1}`}
+                                            className="media-preview"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect fill="%23ddd" width="100" height="100"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="12">Lỗi ảnh</text></svg>';
+                                            }}
+                                        />
                                         <button
                                             type="button"
-                                            className="btn btn-secondary btn-sm"
+                                            className="media-remove-btn"
                                             onClick={() => removeMedia(idx)}
+                                            title="Xóa ảnh"
                                         >
-                                            <X size={16} />
+                                            <X size={14} weight="bold" />
                                         </button>
                                     </div>
                                 ))}
-                                <div className="highlight-item">
+                            </div>
+                        )}
+
+                        {/* Upload Section */}
+                        <div className="media-upload-section">
+                            {/* Hidden file input */}
+                            <input
+                                type="file"
+                                ref={mediaFileInputRef}
+                                onChange={handleMediaFileChange}
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                            />
+
+                            {/* Upload button */}
+                            <button
+                                type="button"
+                                className="btn btn-outline media-upload-btn"
+                                onClick={() => mediaFileInputRef.current?.click()}
+                            >
+                                <UploadSimple size={18} />
+                                Tải ảnh từ máy tính
+                            </button>
+
+                            <div className="media-divider">
+                                <span>hoặc</span>
+                            </div>
+
+                            {/* URL input */}
+                            <div className="highlight-item">
+                                <div className="url-input-wrapper">
+                                    <Image size={18} className="url-input-icon" />
                                     <input
                                         type="url"
                                         className="form-input"
@@ -439,15 +518,26 @@ const EventFormPage: React.FC = () => {
                                         onChange={(e) => setNewMediaUrl(e.target.value)}
                                         placeholder="Nhập URL hình ảnh..."
                                     />
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary btn-sm"
-                                        onClick={addMedia}
-                                    >
-                                        <Plus size={16} />
-                                    </button>
                                 </div>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary btn-sm"
+                                    onClick={addMedia}
+                                    disabled={!newMediaUrl.trim()}
+                                >
+                                    <Plus size={16} />
+                                </button>
                             </div>
+
+                            <p className="form-hint">
+                                Hỗ trợ JPG, PNG, GIF. Tối đa 2MB mỗi ảnh.
+                            </p>
+
+                            {mediaError && (
+                                <div className="alert alert-error" style={{ marginTop: '0.75rem' }}>
+                                    {mediaError}
+                                </div>
+                            )}
                         </div>
                     </div>
 

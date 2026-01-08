@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { userApi } from '../../api/endpoints';
 import { ArrowLeft, Sparkle, CheckCircle, Warning } from '@phosphor-icons/react';
 import './RoleUpgradePage.css';

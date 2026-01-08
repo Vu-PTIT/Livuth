@@ -100,6 +100,7 @@ export interface Event {
     location?: LocationInfo;
     categories?: string[];
     tags?: string[];
+    is_visible?: boolean;
     tour_providers?: TourProviderListing[];
     created_at: number;
     updated_at: number;
@@ -144,6 +145,7 @@ export interface TourProviderListing {
     logo_url?: string;
     photos: string[];
     view_count: number;
+    is_visible?: boolean;
     created_at: number;
     updated_at: number;
 }

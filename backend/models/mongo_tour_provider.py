@@ -45,6 +45,9 @@ class TourProviderListing(BaseModel):
     logo_url: Optional[str] = None
     photos: List[str] = Field(default_factory=list)
     
+    # Visibility
+    is_visible: bool = True  # False = hidden from public, only owner/admin can see
+    
     # Analytics
     view_count: int = 0
     

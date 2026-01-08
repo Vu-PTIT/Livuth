@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { chatApi } from '../../api/endpoints';
 import type { ChatConversation, ChatMessage, ChatHistory } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';

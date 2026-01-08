@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/Modal';
 import {
@@ -47,7 +47,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <header className="header">
                 <div className="header-container">
                     <Link to="/" className="logo">
-                        <img src="/logo.jpg" alt="Ganvo" className="logo-img" />
+                        <img src="./src/img/LOGO TRONG SUỐT.png" alt="Ganvo" className="logo-img" />
                         <span className="logo-text">Ganvo</span>
                     </Link>
 

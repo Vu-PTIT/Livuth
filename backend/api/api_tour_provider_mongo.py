@@ -259,3 +259,31 @@ async def get_all_listings(
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
     except Exception as e:
         raise CustomException(exception=e)
+
+
+@router.patch(
+    "/{listing_id}/visibility",
+    response_model=DataResponse[TourProviderListingResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def toggle_visibility(
+    listing_id: str,
+    is_visible: bool = Query(..., description="Set visibility status"),
+    token: str = Depends(JWTBearer())
+) -> Any:
+    """Toggle tour provider listing visibility (owner only)"""
+    try:
+        payload = decode_jwt(token)
+        provider_id = payload.get("sub")
+        
+        if not provider_id:
+            raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+        
+        updated_listing = await tour_provider_service.toggle_visibility(
+            listing_id=listing_id,
+            provider_id=provider_id,
+            is_visible=is_visible
+        )
+        return DataResponse(http_code=status.HTTP_200_OK, data=updated_listing)
+    except Exception as e:
+        raise CustomException(exception=e)

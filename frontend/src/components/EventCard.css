@@ -56,17 +56,25 @@
 }
 
 .event-card-date {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-family: var(--font-family);
     font-size: 0.8rem;
     color: var(--primary-color, #dc2626);
     font-weight: 500;
+    line-height: 1.2;
+}
+
+.event-card-date svg {
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 .event-card-title {
+    font-family: var(--font-heading);
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
     color: var(--text-primary, #1f2937);
     line-height: 1.4;
@@ -77,11 +85,18 @@
 }
 
 .event-card-location {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-family: var(--font-family);
     font-size: 0.85rem;
     color: var(--text-secondary, #6b7280);
+    line-height: 1.2;
+}
+
+.event-card-location svg {
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 .event-card-location .distance {
@@ -105,10 +120,17 @@
 }
 
 .event-card-price {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 6px;
+    font-family: var(--font-family);
     font-size: 0.85rem;
     color: var(--success-color, #059669);
     font-weight: 600;
+    line-height: 1.2;
+}
+
+.event-card-price svg {
+    flex-shrink: 0;
+    vertical-align: middle;
 }

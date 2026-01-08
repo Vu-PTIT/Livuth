@@ -144,6 +144,24 @@ async def get_by_category(
 
 
 @router.get(
+    "/my/events",
+    response_model=DataResponse[List[EventBaseResponse]],
+    status_code=status.HTTP_200_OK,
+)
+async def get_my_events(
+    token: str = Depends(EventProviderOrAdmin())
+) -> Any:
+    """Get all events created by current user (includes hidden) - Event Provider or Admin"""
+    try:
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        data, metadata = await event_service.get_by_creator(creator_id=user_id)
+        return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.get(
     "/{event_id}",
     response_model=DataResponse[EventBaseResponse],
     status_code=status.HTTP_200_OK,
@@ -237,3 +255,20 @@ async def delete_by_id(
     except Exception as e:
         raise CustomException(exception=e)
 
+
+@router.patch(
+    "/{event_id}/visibility",
+    response_model=DataResponse[EventBaseResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def toggle_visibility(
+    event_id: str,
+    is_visible: bool = Query(..., description="Set visibility status"),
+    token: str = Depends(EventOwnerOrAdmin())
+) -> Any:
+    """Toggle event visibility (Owner or Admin only)"""
+    try:
+        updated_event = await event_service.toggle_visibility(event_id=event_id, is_visible=is_visible)
+        return DataResponse(http_code=status.HTTP_200_OK, data=updated_event)
+    except Exception as e:
+        raise CustomException(exception=e)

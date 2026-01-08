@@ -53,6 +53,7 @@ class TourProviderListingUpdateRequest(BaseModel):
     
     logo_url: Optional[str] = None
     photos: Optional[List[str]] = None
+    is_visible: Optional[bool] = None
 
 
 class TourProviderListingResponse(BaseModelResponse):
@@ -92,3 +93,6 @@ class TourProviderListingResponse(BaseModelResponse):
     
     # Analytics
     view_count: int
+    
+    # Visibility
+    is_visible: bool = True

@@ -27,12 +27,10 @@
 }
 
 .logo {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     text-decoration: none;
-    font-size: 1.25rem;
-    font-weight: 700;
 }
 
 .logo-icon {
@@ -40,17 +38,23 @@
 }
 
 .logo-img {
-    height: 40px;
-    width: auto;
+    height: 28px;
+    width: 28px;
     object-fit: contain;
-    border-radius: 8px;
+    flex-shrink: 0;
+    vertical-align: middle;
 }
 
 .logo-text {
+    font-family: var(--font-family);
+    font-size: 1.125rem;
+    font-weight: 700;
     background: linear-gradient(135deg, #dc2626, #f97316);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    line-height: 28px;
+    height: 28px;
 }
 
 /* Desktop Navigation */
@@ -61,15 +65,24 @@
 }
 
 .nav-link {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 8px;
     text-decoration: none;
     color: var(--text-secondary);
+    font-family: var(--font-family);
     font-weight: 500;
+    font-size: 0.9375rem;
     transition: all 0.2s;
+    line-height: normal;
+}
+
+.nav-link svg {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
 }
 
 .nav-link:hover {
@@ -431,4 +444,27 @@
     .header-container {
         padding: 0 1rem;
     }
+}
+
+/* Font & Icon Alignment Overrides */
+.dropdown-item {
+    font-family: var(--font-family);
+    line-height: 1.2;
+}
+
+.dropdown-item svg {
+    flex-shrink: 0;
+}
+
+.btn {
+    font-family: var(--font-family);
+    line-height: 1.2;
+}
+
+.btn svg {
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-family: var(--font-family);
 }

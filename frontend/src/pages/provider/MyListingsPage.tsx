@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { tourProviderApi } from '../../api/endpoints';
 import type { TourProviderListing } from '../../types';
 import StatusBadge from '../../components/StatusBadge';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Modal from '../../components/Modal';
-import { Plus, Pencil, Trash, Eye, MapTrifold, Info } from '@phosphor-icons/react';
+import { Plus, Pencil, Trash, Eye, EyeSlash, MapTrifold, Info } from '@phosphor-icons/react';
 import { useToast } from '../../components/Toast';
 import './ProviderPages.css';
 
@@ -17,6 +17,7 @@ const MyListingsPage: React.FC = () => {
     const [deleteListingId, setDeleteListingId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [statusFilter, setStatusFilter] = useState<string>('');
+    const [togglingId, setTogglingId] = useState<string | null>(null);
     const { showToast } = useToast();
 
     useEffect(() => {
@@ -48,6 +49,23 @@ const MyListingsPage: React.FC = () => {
             showToast('Không thể xóa dịch vụ', 'error');
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleToggleVisibility = async (listing: TourProviderListing) => {
+        setTogglingId(listing.id);
+        try {
+            const newVisibility = !listing.is_visible;
+            await tourProviderApi.toggleVisibility(listing.id, newVisibility);
+            setListings((prev) =>
+                prev.map((l) => (l.id === listing.id ? { ...l, is_visible: newVisibility } : l))
+            );
+            showToast(newVisibility ? 'Đã hiện dịch vụ' : 'Đã ẩn dịch vụ', 'success');
+        } catch (error) {
+            console.error('Failed to toggle visibility:', error);
+            showToast('Không thể thay đổi trạng thái hiển thị', 'error');
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -125,7 +143,12 @@ const MyListingsPage: React.FC = () => {
                                                 <MapTrifold size={20} weight="bold" />
                                             </div>
                                             <div>
-                                                <span className="company-name">{listing.company_name}</span>
+                                                <span className="company-name">
+                                                    {listing.company_name}
+                                                    {listing.is_visible === false && (
+                                                        <span className="visibility-badge hidden">Đã ẩn</span>
+                                                    )}
+                                                </span>
                                                 <span className="service-name">{listing.service_name}</span>
                                             </div>
                                         </div>
@@ -149,6 +172,14 @@ const MyListingsPage: React.FC = () => {
                                     <td className="view-count">{listing.view_count.toLocaleString()}</td>
                                     <td>
                                         <div className="table-actions">
+                                            <button
+                                                className={`action-btn ${listing.is_visible === false ? 'hidden-state' : 'visible-state'}`}
+                                                title={listing.is_visible === false ? 'Hiện dịch vụ' : 'Ẩn dịch vụ'}
+                                                onClick={() => handleToggleVisibility(listing)}
+                                                disabled={togglingId === listing.id}
+                                            >
+                                                {listing.is_visible === false ? <Eye size={18} weight="bold" /> : <EyeSlash size={18} weight="bold" />}
+                                            </button>
                                             <Link
                                                 to={`/tour-providers/${listing.id}`}
                                                 className="action-btn view"

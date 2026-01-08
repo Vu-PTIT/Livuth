@@ -64,6 +64,7 @@ class EventUpdateRequest(BaseModel):
     location: Optional[LocationInfoSchema] = None
     categories: Optional[List[str]] = None
     tags: Optional[List[str]] = None
+    is_visible: Optional[bool] = None
 
 
 class EventBaseResponse(BaseModelResponse):
@@ -78,6 +79,7 @@ class EventBaseResponse(BaseModelResponse):
     location: Optional[LocationInfoSchema] = None
     categories: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
+    is_visible: bool = True
     
     # Tour providers (populated when include_tours=True)
     tour_providers: Optional[List[Any]] = None

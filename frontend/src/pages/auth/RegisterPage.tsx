@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
 import './Auth.css';
 
@@ -122,7 +122,7 @@ const RegisterPage: React.FC = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-header">
-                    <img src="/logo.jpg" alt="Ganvo" className="logo-img" />
+                    <img src="./src/img/LOGO TRONG SUỐT.png" alt="Ganvo" className="logo-img" />
                     <h1>Tạo tài khoản</h1>
                     <p>Tham gia cộng đồng p-INNO</p>
                 </div>

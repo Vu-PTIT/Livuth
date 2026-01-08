@@ -108,6 +108,12 @@ export const eventApi = {
 
     delete: (eventId: string) =>
         apiClient.delete(`/events/${eventId}`),
+
+    toggleVisibility: (eventId: string, isVisible: boolean) =>
+        apiClient.patch<ApiResponse<Event>>(`/events/${eventId}/visibility?is_visible=${isVisible}`),
+
+    getMyEvents: () =>
+        apiClient.get<ApiResponse<Event[]>>('/events/my/events'),
 };
 
 // ============ TOUR PROVIDER API ============
@@ -152,6 +158,9 @@ export const tourProviderApi = {
 
     verify: (listingId: string) =>
         apiClient.patch<ApiResponse<TourProviderListing>>(`/tour-providers/${listingId}/verify`),
+
+    toggleVisibility: (listingId: string, isVisible: boolean) =>
+        apiClient.patch<ApiResponse<TourProviderListing>>(`/tour-providers/${listingId}/visibility?is_visible=${isVisible}`),
 };
 
 // ============ CHAT API ============

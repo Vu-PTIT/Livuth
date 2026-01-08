@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Modal from '../../components/Modal';
-import { Plus, Pencil, Trash, Eye, CalendarBlank } from '@phosphor-icons/react';
+import { Plus, Pencil, Trash, Eye, EyeSlash, CalendarBlank } from '@phosphor-icons/react';
+import { useToast } from '../../components/Toast';
 import './ProviderPages.css';
 
 const MyEventsPage: React.FC = () => {
-    const { user } = useAuth();
+    useAuth(); // Just for auth check
+    const toast = useToast();
     const [events, setEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
 
     useEffect(() => {
         fetchEvents();
@@ -21,12 +24,9 @@ const MyEventsPage: React.FC = () => {
 
     const fetchEvents = async () => {
         try {
-            const response = await eventApi.getAll(100);
-            // Filter events by creator
-            const myEvents = (response.data.data || []).filter(
-                (event) => event.creator_id === user?.id
-            );
-            setEvents(myEvents);
+            // Use the new /my/events endpoint which includes hidden events
+            const response = await eventApi.getMyEvents();
+            setEvents(response.data.data || []);
         } catch (error) {
             console.error('Failed to fetch events:', error);
         } finally {
@@ -46,6 +46,23 @@ const MyEventsPage: React.FC = () => {
             console.error('Failed to delete event:', error);
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleToggleVisibility = async (event: Event) => {
+        setTogglingId(event.id);
+        try {
+            const newVisibility = !event.is_visible;
+            await eventApi.toggleVisibility(event.id, newVisibility);
+            setEvents((prev) =>
+                prev.map((e) => (e.id === event.id ? { ...e, is_visible: newVisibility } : e))
+            );
+            toast.success(newVisibility ? 'Đã hiện sự kiện' : 'Đã ẩn sự kiện');
+        } catch (error) {
+            console.error('Failed to toggle visibility:', error);
+            toast.error('Không thể thay đổi trạng thái hiển thị');
+        } finally {
+            setTogglingId(null);
         }
     };
 
@@ -89,6 +106,9 @@ const MyEventsPage: React.FC = () => {
                                         <div className="event-name">
                                             <CalendarBlank size={18} className="event-icon" />
                                             <span>{event.name}</span>
+                                            {event.is_visible === false && (
+                                                <span className="visibility-badge hidden">Đã ẩn</span>
+                                            )}
                                         </div>
                                     </td>
                                     <td>{event.location?.city || event.location?.province || '-'}</td>
@@ -100,6 +120,14 @@ const MyEventsPage: React.FC = () => {
                                     <td>{new Date(event.created_at * 1000).toLocaleDateString('vi-VN')}</td>
                                     <td>
                                         <div className="table-actions">
+                                            <button
+                                                className={`action-btn ${event.is_visible === false ? 'hidden-state' : 'visible-state'}`}
+                                                title={event.is_visible === false ? 'Hiện sự kiện' : 'Ẩn sự kiện'}
+                                                onClick={() => handleToggleVisibility(event)}
+                                                disabled={togglingId === event.id}
+                                            >
+                                                {event.is_visible === false ? <Eye size={18} /> : <EyeSlash size={18} />}
+                                            </button>
                                             <Link
                                                 to={`/events/${event.id}`}
                                                 className="action-btn view"

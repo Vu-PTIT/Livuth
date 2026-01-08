@@ -135,6 +135,33 @@ class TourProviderService:
         
         return True
     
+    async def toggle_visibility(self, listing_id: str, provider_id: str, is_visible: bool) -> TourProviderListingResponse:
+        """Toggle listing visibility (only by owner)"""
+        collection = self.get_collection()
+        
+        if not ObjectId.is_valid(listing_id):
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+        
+        # Check ownership
+        listing = await collection.find_one({"_id": ObjectId(listing_id)})
+        if not listing:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+        
+        if str(listing["provider_id"]) != provider_id:
+            raise CustomException(exception=ExceptionType.FORBIDDEN)
+        
+        result = await collection.find_one_and_update(
+            {"_id": ObjectId(listing_id)},
+            {"$set": {"is_visible": is_visible, "updated_at": datetime.now().timestamp()}},
+            return_document=True
+        )
+        
+        result["id"] = str(result["_id"])
+        result["provider_id"] = str(result["provider_id"])
+        result["event_id"] = str(result["event_id"])
+        
+        return TourProviderListingResponse(**result)
+    
     async def get_by_event(self, event_id: str, approved_only: bool = True) -> tuple[List[TourProviderListingResponse], Dict[str, Any]]:
         """Get all listings for an event"""
         collection = self.get_collection()
@@ -145,6 +172,8 @@ class TourProviderService:
         query = {"event_id": ObjectId(event_id)}
         if approved_only:
             query["status"] = "approved"
+            # Only show visible listings (or those without is_visible field for backwards compatibility)
+            query["$or"] = [{"is_visible": True}, {"is_visible": {"$exists": False}}]
         
         cursor = collection.find(query).sort([("verification_status", -1), ("created_at", -1)])  # Verified first, then newest
         listings = await cursor.to_list(length=None)

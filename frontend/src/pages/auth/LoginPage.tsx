@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { Eye, EyeSlash, SignIn } from '@phosphor-icons/react';
 import './Auth.css';
 
@@ -44,7 +44,7 @@ const LoginPage: React.FC = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-header">
-                    <img src="/logo.jpg" alt="Ganvo" className="logo-img" />
+                    <img src="./src/img/LOGO TRONG SUỐT.png" alt="Ganvo" className="logo-img" />
                     <h1>Đăng nhập</h1>
                     <p>Chào mừng bạn quay trở lại p-INNO</p>
                 </div>

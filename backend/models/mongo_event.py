@@ -80,6 +80,9 @@ class EventMongo(BaseModel):
     categories: List[str] = Field(default_factory=list)  # For matching with user hobbies
     tags: List[str] = Field(default_factory=list)  # Additional searchable keywords
     
+    # Visibility
+    is_visible: bool = True  # False = hidden from public, only owner/admin can see
+    
     # Timestamps
     created_at: float = Field(default_factory=lambda: datetime.now().timestamp())
     updated_at: float = Field(default_factory=lambda: datetime.now().timestamp())

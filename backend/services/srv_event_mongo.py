@@ -22,11 +22,15 @@ class EventMongoService:
         """Get events collection"""
         return db.get_collection(self.collection_name)
     
-    async def get_all(self, limit: Optional[int] = None) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
+    async def get_all(self, limit: Optional[int] = None, include_hidden: bool = False) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
         """Get all events"""
         collection = self.get_collection()
+        
+        # Filter by visibility (only show visible events unless include_hidden)
+        filter_dict = {} if include_hidden else {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
+        
         # Sort by newest first
-        cursor = collection.find({}).sort("created_at", -1)
+        cursor = collection.find(filter_dict).sort("created_at", -1)
         
         if limit:
             cursor = cursor.limit(limit)
@@ -158,6 +162,53 @@ class EventMongoService:
         
         return True
     
+    async def toggle_visibility(self, event_id: str, is_visible: bool) -> EventBaseResponse:
+        """Toggle event visibility"""
+        collection = self.get_collection()
+        
+        if not ObjectId.is_valid(event_id):
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+        
+        result = await collection.find_one_and_update(
+            {"_id": ObjectId(event_id)},
+            {"$set": {"is_visible": is_visible, "updated_at": datetime.now().timestamp()}},
+            return_document=True
+        )
+        
+        if not result:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+        
+        result["id"] = str(result["_id"])
+        if result.get("creator_id"):
+            result["creator_id"] = str(result["creator_id"])
+        
+        return EventBaseResponse(**result)
+    
+    async def get_by_creator(self, creator_id: str) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
+        """Get all events by creator (includes hidden)"""
+        collection = self.get_collection()
+        
+        if not ObjectId.is_valid(creator_id):
+            return [], {"total": 0, "page": 1, "page_size": 0}
+        
+        cursor = collection.find({"creator_id": ObjectId(creator_id)}).sort("created_at", -1)
+        events = await cursor.to_list(length=None)
+        
+        event_responses = []
+        for event in events:
+            event["id"] = str(event["_id"])
+            if event.get("creator_id"):
+                event["creator_id"] = str(event["creator_id"])
+            for field in ["categories", "tags", "media"]:
+                if event.get(field) is None:
+                    event[field] = []
+            try:
+                event_responses.append(EventBaseResponse(**event))
+            except Exception:
+                continue
+        
+        return event_responses, {"total": len(events), "page": 1, "page_size": len(events)}
+    
     async def get_recommended_events(
         self, 
         user_hobbies: List[str], 
@@ -177,8 +228,9 @@ class EventMongoService:
         """
         collection = self.get_collection()
         
-        # Get all events (you can optimize this with indexing)
-        cursor = collection.find({})
+        # Only get visible events (public listing)
+        visibility_filter = {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
+        cursor = collection.find(visibility_filter)
         events = await cursor.to_list(length=None)
         
         # Convert to dict format for recommendation algorithm
@@ -231,8 +283,12 @@ class EventMongoService:
         """
         collection = self.get_collection()
         
-        # For now, we'll use simple filtering (you can optimize with $geoNear later)
-        cursor = collection.find({"location.coordinates": {"$ne": None}})
+        # Only get visible events with coordinates (public listing)
+        visibility_filter = {"$and": [
+            {"location.coordinates": {"$ne": None}},
+            {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
+        ]}
+        cursor = collection.find(visibility_filter)
         events = await cursor.to_list(length=None)
         
         nearby_events = []
@@ -292,22 +348,23 @@ class EventMongoService:
         """
         collection = self.get_collection()
         
-        # Build filter
-        filter_dict = {}
+        # Build filter - always include visibility filter for public listing
+        filter_dict = {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
+        filter_conditions = [filter_dict]
         
         if query:
             # Text search on multiple fields
-            filter_dict["$or"] = [
+            filter_conditions.append({"$or": [
                 {"name": {"$regex": query, "$options": "i"}},
                 {"content.intro": {"$regex": query, "$options": "i"}},
                 {"content.history": {"$regex": query, "$options": "i"}},
-            ]
+            ]})
         
         if city:
-            filter_dict["location.city"] = {"$regex": city, "$options": "i"}
+            filter_conditions.append({"location.city": {"$regex": city, "$options": "i"}})
         
         if province:
-            filter_dict["location.province"] = {"$regex": province, "$options": "i"}
+            filter_conditions.append({"location.province": {"$regex": province, "$options": "i"}})
         
         if categories:
             # Use case-insensitive regex matching for categories
@@ -315,19 +372,13 @@ class EventMongoService:
                 {"categories": {"$regex": f"^{cat}$", "$options": "i"}}
                 for cat in categories
             ]
-            if "$or" in filter_dict:
-                # Combine with existing $or conditions using $and
-                filter_dict = {
-                    "$and": [
-                        {"$or": filter_dict["$or"]},
-                        {"$or": category_conditions}
-                    ]
-                }
-            else:
-                filter_dict["$or"] = category_conditions
+            filter_conditions.append({"$or": category_conditions})
+        
+        # Combine all conditions with $and
+        final_filter = {"$and": filter_conditions} if len(filter_conditions) > 1 else filter_conditions[0]
         
         # Execute query with sort
-        cursor = collection.find(filter_dict).sort("created_at", -1).limit(limit)
+        cursor = collection.find(final_filter).sort("created_at", -1).limit(limit)
         events = await cursor.to_list(length=None)
         
         # Convert to response format
@@ -362,7 +413,14 @@ class EventMongoService:
         """Get all events in a specific category"""
         collection = self.get_collection()
         
-        cursor = collection.find({"categories": category})
+        # Only get visible events in category (public listing)
+        filter_dict = {
+            "$and": [
+                {"categories": category},
+                {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
+            ]
+        }
+        cursor = collection.find(filter_dict)
         events = await cursor.to_list(length=None)
         
         # Convert to response format

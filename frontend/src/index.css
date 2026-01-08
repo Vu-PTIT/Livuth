@@ -1,5 +1,8 @@
 /* Global Styles & CSS Variables */
 
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Baloo+Tammudu+2:wght@400;500;600;700;800&display=swap');
+
 :root {
   /* Colors */
   --primary-color: #dc2626;
@@ -41,8 +44,10 @@
   --header-bg: rgba(255, 255, 255, 0.95);
   --footer-bg: #1f2937;
 
-  /* Font */
+  /* Fonts */
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Arial Rounded MT Bold', 'Baloo Tammudu 2', -apple-system, sans-serif;
+  --font-body: 'Baloo Tammudu 2', 'Inter', sans-serif;
 }
 
 /* Dark Mode */
@@ -101,7 +106,8 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 700;
   line-height: 1.3;
 }
 
@@ -151,12 +157,18 @@ a:hover {
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
   border-radius: var(--border-radius);
+  font-family: var(--font-family);
   font-weight: 600;
   font-size: 0.875rem;
+  line-height: 1.2;
   cursor: pointer;
   transition: all var(--transition);
   border: none;
   text-decoration: none;
+}
+
+.btn svg {
+  flex-shrink: 0;
 }
 
 .btn:disabled {
