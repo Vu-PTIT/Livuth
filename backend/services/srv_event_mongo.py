@@ -37,6 +37,10 @@ class EventMongoService:
         
         events = await cursor.to_list(length=None)
         
+        # Get participant counts for all events in one batch
+        event_ids = [str(event["_id"]) for event in events]
+        participant_counts = await self.get_participant_counts(event_ids) if event_ids else {}
+        
         # Convert to response format
         event_responses = []
         for event in events:
@@ -48,6 +52,8 @@ class EventMongoService:
             for field in ["categories", "tags", "media"]:
                 if event.get(field) is None:
                     event[field] = []
+            # Add participant count
+            event["participant_count"] = participant_counts.get(event["id"], 0)
             
             try:
                 event_responses.append(EventBaseResponse(**event))
@@ -256,6 +262,8 @@ class EventMongoService:
         
         metadata = {
             "total": len(recommended),
+            "page": 1,
+            "page_size": len(recommended),
             "limit": limit,
             "has_more": len(ranked_events) > limit
         }
@@ -468,4 +476,41 @@ class EventMongoService:
             print("✅ Geospatial and text indexes created successfully!")
         except Exception as e:
             print(f"⚠️ Error creating indexes: {e}")
+
+    async def get_participant_count(self, event_id: str) -> int:
+        """
+        Count how many users have participated in this event
+        by checking users' participated_events lists
+        """
+        users_collection = db.get_collection("users")
+        
+        count = await users_collection.count_documents({
+            "participated_events": event_id
+        })
+        
+        return count
+    
+    async def get_participant_counts(self, event_ids: List[str]) -> Dict[str, int]:
+        """
+        Get participant counts for multiple events (batch operation)
+        Returns dict: {event_id: count}
+        """
+        users_collection = db.get_collection("users")
+        
+        # Use aggregation to count participants for each event
+        pipeline = [
+            {"$unwind": "$participated_events"},
+            {"$match": {"participated_events": {"$in": event_ids}}},
+            {"$group": {"_id": "$participated_events", "count": {"$sum": 1}}}
+        ]
+        
+        cursor = users_collection.aggregate(pipeline)
+        results = await cursor.to_list(length=None)
+        
+        # Build dict with all event_ids (default 0)
+        counts = {eid: 0 for eid in event_ids}
+        for r in results:
+            counts[r["_id"]] = r["count"]
+        
+        return counts
 

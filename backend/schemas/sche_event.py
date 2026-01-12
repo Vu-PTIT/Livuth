@@ -80,6 +80,10 @@ class EventBaseResponse(BaseModelResponse):
     categories: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
     is_visible: bool = True
+    average_rating: float = 0.0
+    review_count: int = 0
+    participant_count: int = 0  # Number of users who participated
     
     # Tour providers (populated when include_tours=True)
     tour_providers: Optional[List[Any]] = None
+

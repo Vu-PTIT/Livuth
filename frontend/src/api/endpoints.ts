@@ -13,6 +13,9 @@ import type {
     TourProviderCreateRequest,
     RoleUpgradeRequest,
     ApiResponse,
+    Review,
+    ReviewCreateRequest,
+    EventReviewsResponse,
 } from '../types';
 
 // ============ AUTH API ============
@@ -182,3 +185,25 @@ export const chatApi = {
     deleteConversation: (conversationId: string) =>
         apiClient.delete(`/chat/conversations/${conversationId}`),
 };
+
+// ============ REVIEW API ============
+export const reviewApi = {
+    getEventReviews: (eventId: string) =>
+        apiClient.get<ApiResponse<EventReviewsResponse>>(`/reviews/event/${eventId}`),
+
+    getMyReview: (eventId: string) =>
+        apiClient.get<ApiResponse<Review | null>>(`/reviews/event/${eventId}/my-review`),
+
+    createReview: (eventId: string, data: ReviewCreateRequest) =>
+        apiClient.post<ApiResponse<Review>>(`/reviews/event/${eventId}`, data),
+
+    updateReview: (reviewId: string, data: Partial<ReviewCreateRequest>) =>
+        apiClient.put<ApiResponse<Review>>(`/reviews/${reviewId}`, data),
+
+    deleteReview: (reviewId: string) =>
+        apiClient.delete(`/reviews/${reviewId}`),
+
+    getEventStats: (eventId: string) =>
+        apiClient.get<ApiResponse<{ average_rating: number; total_reviews: number }>>(`/reviews/event/${eventId}/stats`),
+};
+

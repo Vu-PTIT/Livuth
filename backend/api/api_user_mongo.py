@@ -133,6 +133,8 @@ async def update_my_profile(user_data: UserUpdateMeRequest, token: str = Depends
             bio=user_data.bio,
             avatar_url=user_data.avatar_url,
             dob=user_data.dob,
+            hobbies=user_data.hobbies,
+            participated_events=user_data.participated_events
         )
         
         updated_user = await user_service.update_by_id(user_id=user_id, data=update_data)

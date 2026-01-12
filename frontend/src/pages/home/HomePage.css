@@ -1,21 +1,32 @@
 /* Home Page Styles */
 .home-page {
-    margin-top: -2rem;
+    /* No negative margin - banner shows fully below header */
 }
 
 /* Hero Section */
 .hero {
     position: relative;
-    background: linear-gradient(135deg, #1f2937 0%, #374151 50%, #4b5563 100%);
-    padding: 5rem 0;
+    padding: 0;
     overflow: hidden;
 }
 
+/* Banner background image - shows full image */
+.hero-bg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
 .hero-content {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     z-index: 2;
     text-align: center;
     color: white;
+    width: 100%;
+    padding: 0 1rem;
 }
 
 .hero-title {

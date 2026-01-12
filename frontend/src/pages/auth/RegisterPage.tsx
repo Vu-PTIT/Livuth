@@ -19,6 +19,7 @@ const RegisterPage: React.FC = () => {
         full_name: '',
         phone: '',
         gender: '',
+        dob: '',
     });
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -91,6 +92,7 @@ const RegisterPage: React.FC = () => {
                 full_name: fullName || undefined,
                 phone: formData.phone || undefined,
                 gender: formData.gender || undefined,
+                dob: formData.dob ? new Date(formData.dob).getTime() : undefined,
             });
 
             setSuccess(true);
@@ -231,7 +233,7 @@ const RegisterPage: React.FC = () => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label className="form-label" htmlFor="first_name">
-                                    Họ
+                                    Họ *
                                 </label>
                                 <input
                                     type="text"
@@ -241,12 +243,13 @@ const RegisterPage: React.FC = () => {
                                     placeholder="vd: Nguyễn"
                                     value={formData.first_name}
                                     onChange={handleChange}
+                                    required
                                 />
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label" htmlFor="last_name">
-                                    Tên
+                                    Tên *
                                 </label>
                                 <input
                                     type="text"
@@ -256,13 +259,14 @@ const RegisterPage: React.FC = () => {
                                     placeholder="vd: Văn A"
                                     value={formData.last_name}
                                     onChange={handleChange}
+                                    required
                                 />
                             </div>
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="phone">
-                                Số điện thoại
+                                Số điện thoại *
                             </label>
                             <input
                                 type="tel"
@@ -272,12 +276,13 @@ const RegisterPage: React.FC = () => {
                                 placeholder="vd: 0901234567"
                                 value={formData.phone}
                                 onChange={handleChange}
+                                required
                             />
                         </div>
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="gender">
-                                Giới tính
+                                Giới tính *
                             </label>
                             <select
                                 id="gender"
@@ -285,12 +290,29 @@ const RegisterPage: React.FC = () => {
                                 className="form-select"
                                 value={formData.gender}
                                 onChange={handleChange}
+                                required
                             >
                                 <option value="">Chọn giới tính</option>
                                 <option value="Male">Nam</option>
                                 <option value="Female">Nữ</option>
                                 <option value="Other">Khác</option>
                             </select>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="dob">
+                                Ngày sinh *
+                            </label>
+                            <input
+                                type="date"
+                                id="dob"
+                                name="dob"
+                                className="form-input"
+                                value={formData.dob}
+                                onChange={handleChange}
+                                max={new Date().toISOString().split('T')[0]}
+                                required
+                            />
                         </div>
 
                         <div className="form-actions">

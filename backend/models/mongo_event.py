@@ -82,6 +82,10 @@ class EventMongo(BaseModel):
     
     # Visibility
     is_visible: bool = True  # False = hidden from public, only owner/admin can see
+
+    # Review Stats
+    average_rating: float = 0.0
+    review_count: int = 0
     
     # Timestamps
     created_at: float = Field(default_factory=lambda: datetime.now().timestamp())

@@ -58,24 +58,17 @@ def are_related_keywords(word1: str, word2: str) -> bool:
     Returns:
         True if words are related, False otherwise
     """
-    # Predefined relationships (Vietnamese cultural context)
+    # Predefined relationships - only very close relationships
+    # 12 categories: Văn hóa, Tâm linh, Ẩm thực, Âm nhạc, Thể thao, Nghệ thuật, 
+    # Du lịch, Lễ hội, Gia đình, Thiên nhiên, Giải trí, Di sản
     related_pairs = {
-        ("văn hóa", "lễ hội"),
-        ("văn hóa", "truyền thống"),
-        ("âm nhạc", "ca nhạc"),
-        ("âm nhạc", "nhạc sống"),
-        ("thể thao", "bóng đá"),
-        ("thể thao", "chạy bộ"),
-        ("nghệ thuật", "hội họa"),
-        ("nghệ thuật", "triển lãm"),
-        ("ẩm thực", "món ăn"),
-        ("ẩm thực", "nấu ăn"),
-        ("du lịch", "khám phá"),
-        ("du lịch", "phượt"),
-        ("tâm linh", "thiền"),
-        ("tâm linh", "chùa"),
-        ("công nghệ", "khoa học"),
-        ("công nghệ", "AI"),
+        # Closest relationships only
+        ("văn hóa", "di sản"),      # Di sản là một phần của văn hóa
+        ("văn hóa", "lễ hội"),      # Lễ hội là biểu hiện văn hóa
+        ("tâm linh", "lễ hội"),     # Lễ hội thường gắn với tâm linh
+        ("âm nhạc", "nghệ thuật"),  # Âm nhạc là một loại nghệ thuật
+        ("du lịch", "thiên nhiên"), # Du lịch gắn với thiên nhiên
+        ("gia đình", "giải trí"),   # Giải trí cho gia đình
     }
     
     pair = tuple(sorted([word1, word2]))

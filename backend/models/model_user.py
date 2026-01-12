@@ -25,3 +25,7 @@ class User(BareBaseModel):
     last_login = Column(Float)
     hashed_password = Column(String(255))
     roles = Column(ARRAY(String), default=list)
+    hobbies = Column(ARRAY(String), default=list)
+    bio = Column(String, nullable=True)
+    avatar_url = Column(String, nullable=True)
+    participated_events = Column(ARRAY(String), default=list)

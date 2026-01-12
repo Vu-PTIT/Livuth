@@ -478,13 +478,18 @@ a:hover {
 
 /* App Loading (Full Screen) */
 .app-loading {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
   background: var(--bg-secondary);
-  gap: 1rem;
+  z-index: 9999;
+}
+
+[data-theme="dark"] .app-loading {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
 }
 
 .app-loading p {

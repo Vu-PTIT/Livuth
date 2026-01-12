@@ -29,11 +29,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         const saved = localStorage.getItem('theme') as Theme;
         if (saved) return saved;
 
-        // Check system preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            return 'dark';
-        }
-        return 'light';
+        // Default to dark (matches index.html critical CSS)
+        return 'dark';
     });
 
     useEffect(() => {

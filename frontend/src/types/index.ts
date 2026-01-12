@@ -101,6 +101,9 @@ export interface Event {
     categories?: string[];
     tags?: string[];
     is_visible?: boolean;
+    average_rating?: number;
+    review_count?: number;
+    participant_count?: number;
     tour_providers?: TourProviderListing[];
     created_at: number;
     updated_at: number;
@@ -219,3 +222,35 @@ export const USER_ROLES = {
     EVENT_PROVIDER: 'Event Provider',
     GUEST: 'Guest',
 } as const;
+
+// Review Types
+export interface Review {
+    id: string;
+    event_id: string;
+    user_id: string;
+    rating: number;
+    comment?: string;
+    user_name?: string;
+    user_avatar?: string;
+    created_at: number;
+    updated_at: number;
+}
+
+export interface ReviewCreateRequest {
+    rating: number;
+    comment?: string;
+}
+
+export interface ReviewStats {
+    average_rating: number;
+    total_reviews: number;
+    rating_distribution: {
+        [key: string]: number;
+    };
+}
+
+export interface EventReviewsResponse {
+    stats: ReviewStats;
+    reviews: Review[];
+}
+

@@ -1,3 +1,4 @@
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './providers/AuthProvider';
 import { useAuth } from './hooks/useAuth';
@@ -5,13 +6,13 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ToastProvider } from './components/Toast';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
-import LoadingSpinner from './components/LoadingSpinner';
 
 // Pages
 import LandingPage from './pages/landing/LandingPage';
 import HomePage from './pages/home/HomePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
+import OnboardingPage from './pages/onboarding/OnboardingPage';
 import EventsPage from './pages/events/EventsPage';
 import EventDetailPage from './pages/events/EventDetailPage';
 import TourProviderDetailPage from './pages/tour-providers/TourProviderDetailPage';
@@ -31,16 +32,26 @@ import AdminEventsPage from './pages/admin/AdminEventsPage';
 
 // Inner component that uses auth context
 function AppContent() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
 
-  // Show loading screen while checking authentication
+  // Check if user needs onboarding (user without hobbies)
+  const needsOnboarding = isAuthenticated && user && (!user.hobbies || user.hobbies.length === 0);
+
+  // Hide HTML initial-loader when React is ready
+  React.useEffect(() => {
+    if (!isLoading) {
+      const loader = document.getElementById('initial-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        loader.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => loader.remove(), 300);
+      }
+    }
+  }, [isLoading]);
+
+  // Keep showing HTML loader while checking auth
   if (isLoading) {
-    return (
-      <div className="app-loading">
-        <LoadingSpinner size="large" />
-        <p>Đang tải...</p>
-      </div>
-    );
+    return null;
   }
 
   // If not authenticated, show only landing page, login, and register
@@ -55,6 +66,16 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </MainLayout>
+    );
+  }
+
+  // Show onboarding for new users
+  if (needsOnboarding) {
+    return (
+      <Routes>
+        <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="*" element={<Navigate to="/onboarding" replace />} />
+      </Routes>
     );
   }
 

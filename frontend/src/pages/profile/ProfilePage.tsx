@@ -7,6 +7,7 @@ import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Modal from '../../components/Modal';
+import { CATEGORIES } from '../../constants/categories';
 import {
     User,
     Envelope,
@@ -25,21 +26,8 @@ import {
 } from '@phosphor-icons/react';
 import './ProfilePage.css';
 
-// Event categories for hobby selection
-const HOBBY_CATEGORIES = [
-    { id: 'van-hoa', name: 'Văn hóa', icon: '🎭' },
-    { id: 'tam-linh', name: 'Tâm linh', icon: '🙏' },
-    { id: 'am-thuc', name: 'Ẩm thực', icon: '🍜' },
-    { id: 'am-nhac', name: 'Âm nhạc', icon: '🎵' },
-    { id: 'the-thao', name: 'Thể thao', icon: '⚽' },
-    { id: 'nghe-thuat', name: 'Nghệ thuật', icon: '🎨' },
-    { id: 'du-lich', name: 'Du lịch', icon: '✈️' },
-    { id: 'le-hoi', name: 'Lễ hội', icon: '🎉' },
-    { id: 'gia-dinh', name: 'Gia đình', icon: '👨‍👩‍👧‍👦' },
-    { id: 'thien-nhien', name: 'Thiên nhiên', icon: '🌿' },
-    { id: 'giai-tri', name: 'Giải trí', icon: '🎮' },
-    { id: 'di-san', name: 'Di sản', icon: '🏛️' },
-];
+// Use shared CATEGORIES for hobby selection
+const HOBBY_CATEGORIES = CATEGORIES;
 
 const GENDER_OPTIONS = ['Nam', 'Nữ', 'Khác'];
 

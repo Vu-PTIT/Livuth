@@ -6,12 +6,12 @@ import type { EventCreateRequest } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import LocationPicker from '../../components/LocationPicker';
 import '../../components/LocationPicker.css';
+import { CATEGORY_NAMES } from '../../constants/categories';
 import { ArrowLeft, Plus, X, UploadSimple, Image } from '@phosphor-icons/react';
 import './ProviderPages.css';
 
-const CATEGORIES = [
-    'Văn hóa', 'Tâm linh', 'Ẩm thực', 'Âm nhạc', 'Thể thao', 'Nghệ thuật', 'Du lịch', 'Công nghệ'
-];
+// Use shared categories
+const CATEGORIES = CATEGORY_NAMES;
 
 const EventFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();

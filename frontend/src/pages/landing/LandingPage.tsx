@@ -43,15 +43,15 @@ const LandingPage: React.FC = () => {
         <div className="landing-page">
             {/* Hero Section */}
             <section className="landing-hero">
+                {/* Banner background using img tag */}
+                <img
+                    src="/banner.jpg"
+                    alt=""
+                    className="landing-hero-bg"
+                    aria-hidden="true"
+                />
                 <div className="landing-hero-content container">
-                    <h1 className="landing-title">
-                        Khám phá <span className="gradient-text">Văn hóa</span><br />
-                        và Lễ hội Việt Nam
-                    </h1>
-                    <p className="landing-subtitle">
-                        Nền tảng khám phá, tìm kiếm và trải nghiệm những lễ hội truyền thống
-                        độc đáo trên khắp đất nước. Đăng nhập để bắt đầu hành trình của bạn.
-                    </p>
+
                     <div className="landing-cta">
                         <Link to="/register" className="btn btn-primary btn-lg">
                             Đăng ký miễn phí

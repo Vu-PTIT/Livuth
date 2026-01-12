@@ -1,13 +1,99 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./src/img/LOGO TRONG SUỐT.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ganvo</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="./src/img/LOGO TRONG SUỐT.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ganvo</title>
+  <style>
+    /* Critical CSS - Loading screen */
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #1f2937;
+      min-height: 100vh;
+    }
+
+    #initial-loader {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+      z-index: 9999;
+      gap: 24px;
+    }
+
+    #initial-loader img {
+      max-width: 150px;
+      max-height: 150px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    #initial-loader p {
+      color: #9ca3af;
+      margin-top: 16px;
+      font-family: sans-serif;
+      font-size: 14px;
+    }
+
+    .loader-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #f97316;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Light theme override */
+    [data-theme="light"] body,
+    html[data-theme="light"] {
+      background: #f3f4f6;
+    }
+
+    [data-theme="light"] #initial-loader {
+      background: #f3f4f6;
+    }
+
+    [data-theme="light"] .loader-spinner {
+      border-color: rgba(0, 0, 0, 0.1);
+      border-top-color: #dc2626;
+    }
+  </style>
+  <!-- Theme detection script - runs synchronously BEFORE body renders -->
+  <script>
+    (function () {
+      // Get saved theme or default to dark
+      var savedTheme = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+    })();
+  </script>
+</head>
+
+<body>
+  <!-- Initial Loading Screen - OUTSIDE root so React doesn't remove it -->
+  <div id="initial-loader">
+    <img src="/load.gif" alt="Loading..." />
+    <p>Đang tải...</p>
+  </div>
+
+  <!-- React mounts here -->
+  <div id="root"></div>
+
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

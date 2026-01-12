@@ -291,6 +291,11 @@
     padding: 2rem 0;
 }
 
+/* Remove padding for full-width hero pages */
+.main-content.no-padding-top {
+    padding-top: 0;
+}
+
 /* Footer */
 .footer {
     background: var(--footer-bg);

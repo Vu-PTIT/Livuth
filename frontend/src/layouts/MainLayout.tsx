@@ -201,7 +201,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             )}
 
             {/* Main Content */}
-            <main className="main-content">{children}</main>
+            <main className={`main-content ${location.pathname === '/' ? 'no-padding-top' : ''}`}>{children}</main>
 
             {/* Footer - Hide on specific pages */}
             {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin'].some(path => location.pathname.startsWith(path)) && (

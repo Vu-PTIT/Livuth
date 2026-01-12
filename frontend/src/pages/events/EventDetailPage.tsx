@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { eventApi } from '../../api/endpoints';
-import type { Event, TourProviderListing } from '../../types';
+import { eventApi, reviewApi, userApi } from '../../api/endpoints';
+import type { Event, TourProviderListing, Review, ReviewStats } from '../../types';
+import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
 import {
     MapPin,
     Calendar,
@@ -12,15 +14,41 @@ import {
     Phone,
     CheckCircle,
     ArrowLeft,
+    Star,
+    UserCircle,
+    PaperPlaneRight,
+    PencilSimple,
+    MapTrifold,
+    NavigationArrow,
 } from '@phosphor-icons/react';
 import './EventDetailPage.css';
 
 const EventDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
     const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'intro' | 'history' | 'activities'>('intro');
+
+    // Review states
+    const [reviews, setReviews] = useState<Review[]>([]);
+    const [reviewStats, setReviewStats] = useState<ReviewStats | null>(null);
+    const [myReview, setMyReview] = useState<Review | null>(null);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(true);
+    const [newRating, setNewRating] = useState(5);
+    const [newComment, setNewComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [reviewError, setReviewError] = useState('');
+    const [isEditingReview, setIsEditingReview] = useState(false);
+
+    // Check-in states
+    const [isCheckingIn, setIsCheckingIn] = useState(false);
+    const [checkInError, setCheckInError] = useState('');
+    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [distanceToEvent, setDistanceToEvent] = useState<number | null>(null);
+    const [isGettingLocation, setIsGettingLocation] = useState(false);
+    const [hasCheckedIn, setHasCheckedIn] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -38,6 +66,201 @@ const EventDetailPage: React.FC = () => {
 
         fetchEvent();
     }, [id]);
+
+    // Fetch reviews
+    useEffect(() => {
+        const fetchReviews = async () => {
+            if (!id) return;
+
+            try {
+                const response = await reviewApi.getEventReviews(id);
+                const data = response.data.data;
+                if (data) {
+                    setReviews(data.reviews || []);
+                    setReviewStats(data.stats || null);
+                }
+            } catch (err) {
+                console.error('Failed to fetch reviews:', err);
+            } finally {
+                setIsLoadingReviews(false);
+            }
+        };
+
+        const fetchMyReview = async () => {
+            if (!id || !user) return;
+
+            try {
+                const response = await reviewApi.getMyReview(id);
+                setMyReview(response.data.data || null);
+            } catch (err) {
+                // User hasn't reviewed yet
+            }
+        };
+
+        fetchReviews();
+        fetchMyReview();
+    }, [id, user]);
+
+    // Check if user already participated
+    useEffect(() => {
+        if (user && id && user.participated_events) {
+            setHasCheckedIn(user.participated_events.includes(id));
+        }
+    }, [user, id]);
+
+    // Get user location and calculate distance
+    const getUserLocation = () => {
+        if (!navigator.geolocation) {
+            setCheckInError('Trình duyệt không hỗ trợ GPS');
+            return;
+        }
+
+        setIsGettingLocation(true);
+        setCheckInError('');
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const { latitude, longitude } = position.coords;
+                setUserLocation({ lat: latitude, lng: longitude });
+
+                // Calculate distance to event if event has coordinates (GeoJSON format)
+                if (event?.location?.coordinates?.coordinates) {
+                    const coords = event.location.coordinates.coordinates;
+                    const eventLng = coords[0];
+                    const eventLat = coords[1];
+                    const distance = calculateDistance(latitude, longitude, eventLat, eventLng);
+                    setDistanceToEvent(distance);
+                }
+
+                setIsGettingLocation(false);
+            },
+            (error) => {
+                setIsGettingLocation(false);
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        setCheckInError('Bạn cần cho phép truy cập vị trí');
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        setCheckInError('Không thể xác định vị trí');
+                        break;
+                    case error.TIMEOUT:
+                        setCheckInError('Hết thời gian chờ GPS');
+                        break;
+                    default:
+                        setCheckInError('Lỗi khi lấy vị trí');
+                }
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
+    };
+
+    // Handle check-in
+    const handleCheckIn = async () => {
+        if (!user || !id || !event) return;
+
+        // Check if event has coordinates (GeoJSON format)
+        if (!event.location?.coordinates?.coordinates) {
+            setCheckInError('Sự kiện này chưa có tọa độ địa điểm');
+            return;
+        }
+
+        // Check distance
+        if (distanceToEvent === null || distanceToEvent > CHECKIN_RADIUS_METERS) {
+            setCheckInError(`Bạn cần đến gần sự kiện hơn (trong ${CHECKIN_RADIUS_METERS}m)`);
+            return;
+        }
+
+        setIsCheckingIn(true);
+        setCheckInError('');
+
+        try {
+            await userApi.addParticipatedEvent(user.id, id);
+            setHasCheckedIn(true);
+        } catch (err: any) {
+            setCheckInError(err.response?.data?.message || 'Không thể check-in');
+        } finally {
+            setIsCheckingIn(false);
+        }
+    };
+
+    const handleSubmitReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id || !user) return;
+
+        setIsSubmitting(true);
+        setReviewError('');
+
+        try {
+            let newReviewData: Review;
+
+            if (isEditingReview && myReview) {
+                // Update existing review
+                const response = await reviewApi.updateReview(myReview.id, {
+                    rating: newRating,
+                    comment: newComment || undefined,
+                });
+                if (!response.data.data) throw new Error('Không thể cập nhật đánh giá');
+                newReviewData = response.data.data;
+                setIsEditingReview(false);
+
+                // Update reviews list with updated review
+                setReviews(prev => prev.map(r => r.id === newReviewData.id ? newReviewData : r));
+            } else {
+                // Create new review
+                const response = await reviewApi.createReview(id, {
+                    rating: newRating,
+                    comment: newComment || undefined,
+                });
+                if (!response.data.data) throw new Error('Không thể tạo đánh giá');
+                newReviewData = response.data.data;
+                setReviews(prev => [newReviewData, ...prev]);
+
+                // Update stats only on creation (approximation)
+                if (reviewStats) {
+                    const newTotal = reviewStats.total_reviews + 1;
+                    const newAvg = ((reviewStats.average_rating * reviewStats.total_reviews) + newRating) / newTotal;
+                    setReviewStats({
+                        ...reviewStats,
+                        total_reviews: newTotal,
+                        average_rating: Math.round(newAvg * 10) / 10,
+                    });
+                }
+            }
+
+            if (newReviewData) {
+                setMyReview(newReviewData);
+                setNewComment('');
+            }
+        } catch (err: any) {
+            setReviewError(err.response?.data?.message || 'Không thể gửi đánh giá');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const renderStars = (rating: number, interactive: boolean = false) => {
+        return (
+            <div className={`stars ${interactive ? 'interactive' : ''}`}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                        key={star}
+                        size={interactive ? 28 : 16}
+                        weight={star <= rating ? 'fill' : 'regular'}
+                        className={star <= rating ? 'star-filled' : 'star-empty'}
+                        onClick={interactive ? () => setNewRating(star) : undefined}
+                    />
+                ))}
+            </div>
+        );
+    };
+
+    const formatDate = (timestamp: number) => {
+        return new Date(timestamp * 1000).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    };
 
     if (isLoading) {
         return (
@@ -108,6 +331,13 @@ const EventDetailPage: React.FC = () => {
                             <span className="meta-item">
                                 <Ticket size={18} />
                                 {event.info.ticket_price.toLocaleString('vi-VN')} VND
+                            </span>
+                        )}
+                        {/* Rating in hero */}
+                        {reviewStats && reviewStats.total_reviews > 0 && (
+                            <span className="meta-item rating-badge">
+                                <Star size={18} weight="fill" />
+                                {reviewStats.average_rating} ({reviewStats.total_reviews} đánh giá)
                             </span>
                         )}
                     </div>
@@ -224,6 +454,141 @@ const EventDetailPage: React.FC = () => {
                             </div>
                         </div>
                     )}
+
+                    {/* Reviews Section */}
+                    <div className="reviews-section card">
+                        <h3>
+                            <Star size={20} weight="fill" />
+                            Đánh giá ({reviewStats?.total_reviews || 0})
+                        </h3>
+
+                        {/* Review Stats */}
+                        {reviewStats && reviewStats.total_reviews > 0 && (
+                            <div className="review-stats">
+                                <div className="stats-summary">
+                                    <span className="big-rating">{reviewStats.average_rating}</span>
+                                    {renderStars(Math.round(reviewStats.average_rating))}
+                                    <span className="total-text">{reviewStats.total_reviews} đánh giá</span>
+                                </div>
+                                <div className="stats-bars">
+                                    {[5, 4, 3, 2, 1].map((star) => {
+                                        const count = reviewStats.rating_distribution[String(star)] || 0;
+                                        const percentage = reviewStats.total_reviews > 0
+                                            ? (count / reviewStats.total_reviews) * 100
+                                            : 0;
+                                        return (
+                                            <div key={star} className="bar-row">
+                                                <span className="bar-label">{star}</span>
+                                                <Star size={12} weight="fill" className="star-filled" />
+                                                <div className="bar-bg">
+                                                    <div className="bar-fill" style={{ width: `${percentage}%` }} />
+                                                </div>
+                                                <span className="bar-count">{count}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Write/Edit Review Form */}
+                        {user && (!myReview || isEditingReview) && (
+                            <form className="review-form" onSubmit={handleSubmitReview}>
+                                <h4>{isEditingReview ? 'Chỉnh sửa đánh giá của bạn' : 'Viết đánh giá của bạn'}</h4>
+                                <div className="form-group">
+                                    <label>Đánh giá sao</label>
+                                    {renderStars(newRating, true)}
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="comment">Nhận xét (tùy chọn)</label>
+                                    <textarea
+                                        id="comment"
+                                        className="form-textarea"
+                                        rows={3}
+                                        placeholder="Chia sẻ trải nghiệm của bạn..."
+                                        value={newComment}
+                                        onChange={(e) => setNewComment(e.target.value)}
+                                        maxLength={1000}
+                                    />
+                                </div>
+                                {reviewError && <p className="error-text">{reviewError}</p>}
+                                <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                    {isEditingReview && (
+                                        <button
+                                            type="button"
+                                            className="btn btn-outline"
+                                            onClick={() => setIsEditingReview(false)}
+                                            disabled={isSubmitting}
+                                            style={{ flex: 1 }}
+                                        >
+                                            Hủy
+                                        </button>
+                                    )}
+                                    <button type="submit" className="btn btn-primary" disabled={isSubmitting} style={{ flex: 1 }}>
+                                        <PaperPlaneRight size={18} />
+                                        {isSubmitting ? 'Đang gửi...' : (isEditingReview ? 'Cập nhật' : 'Gửi đánh giá')}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
+                        {myReview && !isEditingReview && (
+                            <div className="my-review-notice">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1 }}>
+                                    <CheckCircle size={20} weight="fill" />
+                                    <span>Bạn đã đánh giá sự kiện này {myReview.rating} sao</span>
+                                </div>
+                                <button
+                                    className="btn-edit-review"
+                                    onClick={() => {
+                                        setNewRating(myReview.rating);
+                                        setNewComment(myReview.comment || '');
+                                        setIsEditingReview(true);
+                                    }}
+                                    title="Sửa đánh giá"
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                                >
+                                    <PencilSimple size={18} />
+                                    Sửa
+                                </button>
+                            </div>
+                        )}
+
+                        {!user && (
+                            <p className="login-prompt">
+                                <Link to="/login">Đăng nhập</Link> để viết đánh giá
+                            </p>
+                        )}
+
+                        {/* Reviews List */}
+                        {isLoadingReviews ? (
+                            <LoadingSpinner size="small" />
+                        ) : reviews.length > 0 ? (
+                            <div className="reviews-list">
+                                {reviews.map((review) => (
+                                    <div key={review.id} className="review-item">
+                                        <div className="review-header">
+                                            <div className="reviewer-info">
+                                                {review.user_avatar ? (
+                                                    <img src={review.user_avatar} alt="" className="reviewer-avatar" />
+                                                ) : (
+                                                    <UserCircle size={40} weight="fill" className="reviewer-avatar-placeholder" />
+                                                )}
+                                                <div>
+                                                    <span className="reviewer-name">{review.user_name || 'Ẩn danh'}</span>
+                                                    <span className="review-date">{formatDate(review.created_at)}</span>
+                                                </div>
+                                            </div>
+                                            {renderStars(review.rating)}
+                                        </div>
+                                        {review.comment && <p className="review-comment">{review.comment}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="no-reviews">Chưa có đánh giá nào cho sự kiện này</p>
+                        )}
+                    </div>
                 </div>
 
                 {/* Sidebar - Tour Providers */}
@@ -256,6 +621,77 @@ const EventDetailPage: React.FC = () => {
                             </div>
                         ) : (
                             <p className="no-providers">Chưa có dịch vụ tour cho sự kiện này</p>
+                        )}
+                    </div>
+                </aside>
+
+                {/* Check-in Section */}
+                <aside className="event-sidebar checkin-sidebar">
+                    <div className="sidebar-section checkin-section">
+                        <h3>
+                            <MapTrifold size={20} />
+                            Check-in tại sự kiện
+                        </h3>
+
+                        {!user ? (
+                            <p className="login-prompt">
+                                <Link to="/login">Đăng nhập</Link> để check-in
+                            </p>
+                        ) : hasCheckedIn ? (
+                            <div className="checkin-success">
+                                <CheckCircle size={48} weight="fill" className="checkin-icon-success" />
+                                <p>Bạn đã tham gia sự kiện này!</p>
+                            </div>
+                        ) : !event?.location?.coordinates?.coordinates ? (
+                            <p className="text-secondary">Sự kiện này chưa có tọa độ GPS</p>
+                        ) : (
+                            <div className="checkin-controls">
+                                {!userLocation ? (
+                                    <button
+                                        className="btn btn-outline"
+                                        onClick={getUserLocation}
+                                        disabled={isGettingLocation}
+                                    >
+                                        <NavigationArrow size={18} />
+                                        {isGettingLocation ? 'Đang xác định...' : 'Kiểm tra vị trí'}
+                                    </button>
+                                ) : (
+                                    <>
+                                        <div className="distance-info">
+                                            <span className="distance-label">Khoảng cách:</span>
+                                            <span className={`distance-value ${distanceToEvent && distanceToEvent <= CHECKIN_RADIUS_METERS ? 'in-range' : 'out-range'}`}>
+                                                {distanceToEvent !== null ? formatDistance(distanceToEvent) : 'Không xác định'}
+                                            </span>
+                                        </div>
+
+                                        {distanceToEvent !== null && distanceToEvent <= CHECKIN_RADIUS_METERS ? (
+                                            <button
+                                                className="btn btn-primary btn-checkin"
+                                                onClick={handleCheckIn}
+                                                disabled={isCheckingIn}
+                                            >
+                                                <CheckCircle size={20} weight="bold" />
+                                                {isCheckingIn ? 'Đang check-in...' : 'Check-in ngay'}
+                                            </button>
+                                        ) : (
+                                            <p className="checkin-warning">
+                                                Bạn cần đến gần hơn (trong {CHECKIN_RADIUS_METERS}m) để check-in
+                                            </p>
+                                        )}
+
+                                        <button
+                                            className="btn btn-text btn-refresh-location"
+                                            onClick={getUserLocation}
+                                            disabled={isGettingLocation}
+                                        >
+                                            <NavigationArrow size={16} />
+                                            Cập nhật vị trí
+                                        </button>
+                                    </>
+                                )}
+
+                                {checkInError && <p className="error-text">{checkInError}</p>}
+                            </div>
                         )}
                     </div>
                 </aside>

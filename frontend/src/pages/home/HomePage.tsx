@@ -5,17 +5,12 @@ import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
+import { CATEGORIES } from '../../constants/categories';
 import { MagnifyingGlass, ArrowRight, Sparkle } from '@phosphor-icons/react';
 import './HomePage.css';
 
-const CATEGORIES = [
-    { id: 'van-hoa', name: 'Văn hóa', icon: '🎭' },
-    { id: 'tam-linh', name: 'Tâm linh', icon: '🙏' },
-    { id: 'am-thuc', name: 'Ẩm thực', icon: '🍜' },
-    { id: 'am-nhac', name: 'Âm nhạc', icon: '🎵' },
-    { id: 'the-thao', name: 'Thể thao', icon: '⚽' },
-    { id: 'nghe-thuat', name: 'Nghệ thuật', icon: '🎨' },
-];
+// Use first 6 categories for homepage display
+const HOME_CATEGORIES = CATEGORIES.slice(0, 6);
 
 const HomePage: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
@@ -61,6 +56,13 @@ const HomePage: React.FC = () => {
         <div className="home-page">
             {/* Hero Section */}
             <section className="hero">
+                {/* Banner background */}
+                <img
+                    src="/banner.jpg"
+                    alt=""
+                    className="hero-bg"
+                    aria-hidden="true"
+                />
                 <div className="hero-content container">
                     <h1 className="hero-title">
                         Khám phá <span className="gradient-text">Văn hóa</span><br />
@@ -93,7 +95,7 @@ const HomePage: React.FC = () => {
                         <h2>Khám phá theo danh mục</h2>
                     </div>
                     <div className="categories-grid">
-                        {CATEGORIES.map((cat) => (
+                        {HOME_CATEGORIES.map((cat) => (
                             <Link
                                 key={cat.id}
                                 to={`/events?categories=${cat.name}`}

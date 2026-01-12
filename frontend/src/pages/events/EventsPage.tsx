@@ -4,18 +4,21 @@ import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
-import { MagnifyingGlass, FunnelSimple, X } from '@phosphor-icons/react';
+import { CATEGORY_NAMES } from '../../constants/categories';
+import { MagnifyingGlass, FunnelSimple, X, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import './EventsPage.css';
 
-const CATEGORIES = [
-    'Văn hóa', 'Tâm linh', 'Ẩm thực', 'Âm nhạc', 'Thể thao', 'Nghệ thuật', 'Du lịch', 'Công nghệ'
-];
+// Use shared categories
+const CATEGORIES = CATEGORY_NAMES;
+
+const ITEMS_PER_PAGE = 12;
 
 const EventsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [events, setEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Filter states
     const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -61,6 +64,7 @@ const EventsPage: React.FC = () => {
                 }
 
                 setEvents(allEvents);
+                setCurrentPage(1); // Reset to first page when filters change
             } catch (error) {
                 console.error('Failed to fetch events:', error);
                 setEvents([]);
@@ -71,6 +75,17 @@ const EventsPage: React.FC = () => {
 
         fetchEvents();
     }, [query, selectedCategories, city]);
+
+    // Pagination calculations
+    const totalPages = Math.ceil(events.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentEvents = events.slice(startIndex, endIndex);
+
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,6 +116,35 @@ const EventsPage: React.FC = () => {
     };
 
     const hasFilters = query || selectedCategories.length > 0 || city;
+
+    // Generate page numbers to display
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+        const maxVisiblePages = 5;
+
+        if (totalPages <= maxVisiblePages) {
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            if (currentPage <= 3) {
+                for (let i = 1; i <= 4; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            } else if (currentPage >= totalPages - 2) {
+                pages.push(1);
+                pages.push('...');
+                for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+            } else {
+                pages.push(1);
+                pages.push('...');
+                for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+                pages.push('...');
+                pages.push(totalPages);
+            }
+        }
+        return pages;
+    };
 
     return (
         <div className="events-page container">
@@ -204,7 +248,7 @@ const EventsPage: React.FC = () => {
             <div className="results-section">
                 {isLoading ? (
                     <div className="events-grid grid grid-4">
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
                             <EventCardSkeleton key={i} />
                         ))}
                     </div>
@@ -212,12 +256,50 @@ const EventsPage: React.FC = () => {
                     <>
                         <div className="results-count">
                             Tìm thấy <strong>{events.length}</strong> sự kiện
+                            {totalPages > 1 && (
+                                <span> • Trang {currentPage}/{totalPages}</span>
+                            )}
                         </div>
                         <div className="events-grid grid grid-4">
-                            {events.map((event) => (
+                            {currentEvents.map((event) => (
                                 <EventCard key={event.id} event={event} />
                             ))}
                         </div>
+
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="pagination">
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => handlePageChange(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    <CaretLeft size={18} />
+                                </button>
+
+                                {getPageNumbers().map((page, index) => (
+                                    typeof page === 'number' ? (
+                                        <button
+                                            key={index}
+                                            className={`pagination-btn ${currentPage === page ? 'active' : ''}`}
+                                            onClick={() => handlePageChange(page)}
+                                        >
+                                            {page}
+                                        </button>
+                                    ) : (
+                                        <span key={index} className="pagination-ellipsis">...</span>
+                                    )
+                                ))}
+
+                                <button
+                                    className="pagination-btn"
+                                    onClick={() => handlePageChange(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    <CaretRight size={18} />
+                                </button>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="empty-state">
