@@ -124,7 +124,7 @@ const RegisterPage: React.FC = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-header">
-                    <img src="./src/img/LOGO TRONG SUỐT.png" alt="Ganvo" className="logo-img" />
+                    <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                     <h1>Tạo tài khoản</h1>
                     <p>Tham gia cộng đồng p-INNO</p>
                 </div>

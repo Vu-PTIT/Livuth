@@ -48,7 +48,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             <header className="header">
                 <div className="header-container">
                     <Link to="/" className="logo">
-                        <img src="./src/img/LOGO TRONG SUỐT.png" alt="Ganvo" className="logo-img" />
+                        <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                         <span className="logo-text">Ganvo</span>
                     </Link>
 

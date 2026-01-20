@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useMemo, useContext } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import { CATEGORIES } from '../../constants/categories';
-import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Star, Calendar, ArrowRight } from '@phosphor-icons/react';
+import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -122,6 +122,58 @@ function ClosePopupOnZoom() {
     return null;
 }
 
+// Calculate radius from map bounds (in km)
+const calculateRadiusFromBounds = (map: L.Map): number => {
+    const bounds = map.getBounds();
+    const center = bounds.getCenter();
+    const ne = bounds.getNorthEast();
+
+    // Calculate distance from center to corner in km
+    const R = 6371; // Earth's radius in km
+    const dLat = (ne.lat - center.lat) * Math.PI / 180;
+    const dLon = (ne.lng - center.lng) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(center.lat * Math.PI / 180) * Math.cos(ne.lat * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    // Return radius with some padding
+    return Math.min(Math.max(distance * 1.2, 5), 500); // Min 5km, max 500km
+};
+
+// Component to detect map movement and trigger event reload
+function MapEventHandler({ onViewportChange }: { onViewportChange: (center: L.LatLng, radius: number) => void }) {
+    const map = useMap();
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    useMapEvents({
+        moveend: () => {
+            // Debounce: wait 500ms after user stops moving
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => {
+                const center = map.getCenter();
+                const radius = calculateRadiusFromBounds(map);
+                onViewportChange(center, radius);
+            }, 500);
+        },
+        zoomend: () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => {
+                const center = map.getCenter();
+                const radius = calculateRadiusFromBounds(map);
+                onViewportChange(center, radius);
+            }, 500);
+        },
+    });
+
+    return null;
+}
+
 // Search result interface
 interface SearchResult {
     display_name: string;
@@ -146,29 +198,71 @@ const MapPage = () => {
     const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
+    const initialFetchDone = useRef(false);
 
-    // Fetch all events
+    // Fetch events based on viewport using getNearby API
+    const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
+        try {
+            // Limit based on radius - smaller radius = fewer events needed
+            const limit = radiusKm < 20 ? 30 : radiusKm < 100 ? 50 : 100;
+            const response = await eventApi.getNearby(lat, lng, radiusKm, limit);
+            if (response.data.success && response.data.data) {
+                setEvents(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching nearby events:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Handle viewport change from map
+    const handleViewportChange = useCallback((center: L.LatLng, radius: number) => {
+        fetchNearbyEvents(center.lat, center.lng, radius);
+    }, [fetchNearbyEvents]);
+
+    // Initial fetch - get events near default center or user location
     useEffect(() => {
-        const fetchEvents = async () => {
+        if (initialFetchDone.current) return;
+
+        // Initial fetch with large radius for Vietnam overview
+        const initialFetch = async () => {
             try {
-                const response = await eventApi.getAll(100);
-                if (response.data.success && response.data.data) {
-                    setEvents(response.data.data);
+                // First try to get user location
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const userPos: [number, number] = [position.coords.latitude, position.coords.longitude];
+                            setUserLocation(userPos);
+                            setCenter(userPos);
+                            setZoom(10);
+                            // Fetch events near user with 50km radius
+                            fetchNearbyEvents(userPos[0], userPos[1], 50);
+                            initialFetchDone.current = true;
+                        },
+                        () => {
+                            // Fallback to Vietnam center with large radius
+                            fetchNearbyEvents(16.0, 106.0, 300);
+                            initialFetchDone.current = true;
+                        }
+                    );
+                } else {
+                    fetchNearbyEvents(16.0, 106.0, 300);
+                    initialFetchDone.current = true;
                 }
             } catch (error) {
-                console.error('Error fetching events:', error);
-            } finally {
+                console.error('Error in initial fetch:', error);
                 setLoading(false);
             }
         };
 
-        fetchEvents();
-    }, []);
+        initialFetch();
+    }, [fetchNearbyEvents]);
 
     // Use shared categories from constants
     const allCategories = CATEGORIES;
 
-    // Filter events that have coordinates, apply category filter, and sort by review_count
+    // Filter events that have coordinates and apply category filter
     const eventsWithLocation = useMemo(() => {
         return events
             .filter((event) => {
@@ -185,7 +279,7 @@ const MapPage = () => {
                 }
                 return true;
             })
-            .sort((a, b) => (a.review_count || 0) - (b.review_count || 0));
+            .sort((a, b) => (b.participant_count || b.review_count || 0) - (a.participant_count || a.review_count || 0));
     }, [events, selectedCategories]);
 
     // Toggle category selection
@@ -240,13 +334,16 @@ const MapPage = () => {
         }, 500);
     };
 
-    // Handle search result click
+    // Handle search result click - also fetch nearby events for new location
     const handleResultClick = (result: SearchResult) => {
         const lat = parseFloat(result.lat);
         const lon = parseFloat(result.lon);
         setCenter([lat, lon]);
+        setZoom(12);
         setSearchQuery(result.display_name.split(',')[0]);
         setShowSearchResults(false);
+        // Fetch events near the searched location
+        fetchNearbyEvents(lat, lon, 30);
     };
 
     // Get current location
@@ -262,7 +359,10 @@ const MapPage = () => {
                 const userPos: [number, number] = [position.coords.latitude, position.coords.longitude];
                 setUserLocation(userPos);
                 setCenter(userPos);
+                setZoom(12);
                 setIsLocating(false);
+                // Fetch events near user location
+                fetchNearbyEvents(userPos[0], userPos[1], 30);
             },
             (error) => {
                 console.error('Error getting location:', error);
@@ -271,23 +371,6 @@ const MapPage = () => {
             }
         );
     };
-
-    // Auto-detect user location on mount and center map
-    useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userPos: [number, number] = [position.coords.latitude, position.coords.longitude];
-                    setUserLocation(userPos);
-                    setCenter(userPos); // Center map on user location
-                    setZoom(10); // Zoom closer (about 2 provinces)
-                },
-                (error) => {
-                    console.log('Could not get user location:', error.message);
-                }
-            );
-        }
-    }, []);
 
     // Navigate to event detail
     const handleEventClick = (eventId: string) => {
@@ -443,6 +526,7 @@ const MapPage = () => {
                 />
                 <MapUpdater center={center} zoom={zoom} />
                 <ClosePopupOnZoom />
+                <MapEventHandler onViewportChange={handleViewportChange} />
 
                 {eventsWithLocation.map((event) => {
                     const [lng, lat] = event.location!.coordinates!.coordinates;
