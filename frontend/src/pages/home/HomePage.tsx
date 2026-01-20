@@ -109,6 +109,8 @@ const HomePage: React.FC = () => {
                 </div>
             </section>
 
+
+
             {/* Recommended Events (if logged in and has hobbies) */}
             {isAuthenticated && recommendedEvents.length > 0 && (
                 <section className="section recommended-section">

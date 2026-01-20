@@ -15,6 +15,7 @@ import {
     MapTrifold,
     Sun,
     Moon,
+    UsersThree,
 } from '@phosphor-icons/react';
 import './MainLayout.css';
 
@@ -69,6 +70,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`}>
                                 <ChatCircle size={20} />
                                 Trợ lý AI
+                            </Link>
+                            <Link to="/create-post" className={`nav-link ${isActive('/create-post') ? 'active' : ''}`}>
+                                <UsersThree size={20} />
+                                Cộng đồng
                             </Link>
                         </nav>
                     )}
@@ -167,6 +172,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             </Link>
                             <Link to="/chat" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <ChatCircle size={20} /> Trợ lý AI
+                            </Link>
+                            <Link to="/create-post" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                                <UsersThree size={20} /> Cộng đồng
                             </Link>
                             <Link to="/profile" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <User size={20} /> Hồ sơ

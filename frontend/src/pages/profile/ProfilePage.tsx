@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useToast } from '../../components/Toast';
-import { userApi, eventApi } from '../../api/endpoints';
-import type { Event } from '../../types';
+import { userApi, eventApi, postApi } from '../../api/endpoints';
+import type { Event, Post } from '../../types';
 import EventCard from '../../components/EventCard';
+import PostCard from '../../components/PostCard';
+import CreatePostForm from '../../components/CreatePostForm';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import Modal from '../../components/Modal';
 import { CATEGORIES } from '../../constants/categories';
@@ -23,6 +25,8 @@ import {
     Check,
     Camera,
     UploadSimple,
+    Notebook,
+    CalendarCheck,
 } from '@phosphor-icons/react';
 import './ProfilePage.css';
 
@@ -59,6 +63,13 @@ const ProfilePage: React.FC = () => {
     const [isSavingAvatar, setIsSavingAvatar] = useState(false);
 
     const [error, setError] = useState('');
+
+    // Tab state
+    const [activeTab, setActiveTab] = useState<'events' | 'posts'>('events');
+
+    // Posts state
+    const [userPosts, setUserPosts] = useState<Post[]>([]);
+    const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
     useEffect(() => {
         const fetchParticipatedEvents = async () => {
@@ -102,6 +113,27 @@ const ProfilePage: React.FC = () => {
             setAvatarUrl(user.avatar_url || '');
         }
     }, [user]);
+
+    // Fetch user posts when posts tab is active
+    useEffect(() => {
+        const fetchUserPosts = async () => {
+            if (!user?.id || activeTab !== 'posts') return;
+
+            setIsLoadingPosts(true);
+            try {
+                const response = await postApi.getUserPosts(user.id, 1, 10);
+                if (response.data.data?.posts) {
+                    setUserPosts(response.data.data.posts);
+                }
+            } catch (error) {
+                console.error('Failed to fetch user posts:', error);
+            } finally {
+                setIsLoadingPosts(false);
+            }
+        };
+
+        fetchUserPosts();
+    }, [user?.id, activeTab]);
 
     const handleEditProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -412,27 +444,76 @@ const ProfilePage: React.FC = () => {
                         )}
                     </section>
 
-                    {/* Participated Events */}
-                    <section className="events-section card">
-                        <div className="section-header">
-                            <h2>Sự kiện đã tham gia</h2>
-                            {user.participated_events && user.participated_events.length > 4 && (
-                                <Link to="/events" className="section-link">
-                                    Xem tất cả <ArrowRight size={16} />
-                                </Link>
-                            )}
+                    {/* Tabs Section */}
+                    <section className="tabs-section card">
+                        <div className="profile-tabs">
+                            <button
+                                className={`profile-tab ${activeTab === 'events' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('events')}
+                            >
+                                <CalendarCheck size={20} />
+                                <span>Sự kiện đã tham gia</span>
+                            </button>
+                            <button
+                                className={`profile-tab ${activeTab === 'posts' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('posts')}
+                            >
+                                <Notebook size={20} />
+                                <span>Bài đăng</span>
+                            </button>
                         </div>
 
-                        {isLoadingEvents ? (
-                            <LoadingSpinner size="small" />
-                        ) : participatedEvents.length > 0 ? (
-                            <div className="events-grid grid grid-2">
-                                {participatedEvents.map((event) => (
-                                    <EventCard key={event.id} event={event} />
-                                ))}
+                        {/* Events Tab Content */}
+                        {activeTab === 'events' && (
+                            <div className="tab-content">
+                                {user.participated_events && user.participated_events.length > 4 && (
+                                    <div className="tab-header">
+                                        <Link to="/events" className="section-link">
+                                            Xem tất cả <ArrowRight size={16} />
+                                        </Link>
+                                    </div>
+                                )}
+                                {isLoadingEvents ? (
+                                    <LoadingSpinner size="small" />
+                                ) : participatedEvents.length > 0 ? (
+                                    <div className="events-grid grid grid-2">
+                                        {participatedEvents.map((event) => (
+                                            <EventCard key={event.id} event={event} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="no-events">Bạn chưa tham gia sự kiện nào</p>
+                                )}
                             </div>
-                        ) : (
-                            <p className="no-events">Bạn chưa tham gia sự kiện nào</p>
+                        )}
+
+                        {/* Posts Tab Content */}
+                        {activeTab === 'posts' && (
+                            <div className="tab-content">
+                                {/* Create Post Form */}
+                                <div className="profile-create-post">
+                                    <CreatePostForm
+                                        onPostCreated={(newPost) => setUserPosts([newPost, ...userPosts])}
+                                    />
+                                </div>
+
+                                {/* User Posts */}
+                                {isLoadingPosts ? (
+                                    <LoadingSpinner size="small" />
+                                ) : userPosts.length > 0 ? (
+                                    <div className="profile-posts">
+                                        {userPosts.map((post) => (
+                                            <PostCard key={post.id} post={post} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="no-posts">
+                                        <Notebook size={48} weight="light" />
+                                        <p>Bạn chưa có bài đăng nào</p>
+                                        <span>Chia sẻ khoảnh khắc du lịch của bạn!</span>
+                                    </div>
+                                )}
+                            </div>
                         )}
                     </section>
                 </main>

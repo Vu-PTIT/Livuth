@@ -16,6 +16,12 @@ import type {
     Review,
     ReviewCreateRequest,
     EventReviewsResponse,
+    Post,
+    PostCreateRequest,
+    PostListResponse,
+    Comment,
+    CommentCreateRequest,
+    CommentListResponse,
 } from '../types';
 
 // ============ AUTH API ============
@@ -207,3 +213,41 @@ export const reviewApi = {
         apiClient.get<ApiResponse<{ average_rating: number; total_reviews: number }>>(`/reviews/event/${eventId}/stats`),
 };
 
+// ============ POST API (Social Media) ============
+export const postApi = {
+    // Posts CRUD
+    getFeed: (page: number = 1, pageSize: number = 10) =>
+        apiClient.get<ApiResponse<PostListResponse>>('/posts', { params: { page, page_size: pageSize } }),
+
+    getUserPosts: (userId: string, page: number = 1, pageSize: number = 10) =>
+        apiClient.get<ApiResponse<PostListResponse>>(`/posts/user/${userId}`, { params: { page, page_size: pageSize } }),
+
+    getById: (postId: string) =>
+        apiClient.get<ApiResponse<Post>>(`/posts/${postId}`),
+
+    create: (data: PostCreateRequest) =>
+        apiClient.post<ApiResponse<Post>>('/posts', data),
+
+    update: (postId: string, data: Partial<PostCreateRequest>) =>
+        apiClient.put<ApiResponse<Post>>(`/posts/${postId}`, data),
+
+    delete: (postId: string) =>
+        apiClient.delete(`/posts/${postId}`),
+
+    // Like
+    toggleLike: (postId: string) =>
+        apiClient.post<ApiResponse<{ is_liked: boolean; like_count: number }>>(`/posts/${postId}/like`),
+
+    // Comments
+    getComments: (postId: string, page: number = 1, pageSize: number = 20) =>
+        apiClient.get<ApiResponse<CommentListResponse>>(`/posts/${postId}/comments`, { params: { page, page_size: pageSize } }),
+
+    createComment: (postId: string, data: CommentCreateRequest) =>
+        apiClient.post<ApiResponse<Comment>>(`/posts/${postId}/comments`, data),
+
+    toggleCommentLike: (postId: string, commentId: string) =>
+        apiClient.post<ApiResponse<{ is_liked: boolean; like_count: number }>>(`/posts/${postId}/comments/${commentId}/like`),
+
+    deleteComment: (postId: string, commentId: string) =>
+        apiClient.delete(`/posts/${postId}/comments/${commentId}`),
+};

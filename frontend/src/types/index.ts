@@ -254,3 +254,67 @@ export interface EventReviewsResponse {
     reviews: Review[];
 }
 
+// Post Types (Social Media)
+export interface PostAuthor {
+    id: string;
+    username: string;
+    full_name?: string;
+    avatar_url?: string;
+}
+
+export interface Post {
+    id: string;
+    author: PostAuthor;
+    content: string;
+    media: MediaItem[];
+    location?: LocationInfo;
+    tags: string[];
+    like_count: number;
+    comment_count: number;
+    share_count: number;
+    is_liked: boolean;
+    visibility: 'public' | 'friends' | 'private';
+    created_at: number;
+    updated_at: number;
+}
+
+export interface PostCreateRequest {
+    content: string;
+    media?: MediaItem[];
+    location?: LocationInfo;
+    tags?: string[];
+    visibility?: 'public' | 'friends' | 'private';
+}
+
+export interface PostListResponse {
+    posts: Post[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_more: boolean;
+}
+
+export interface Comment {
+    id: string;
+    post_id: string;
+    author: PostAuthor;
+    content: string;
+    like_count: number;
+    is_liked: boolean;
+    parent_id?: string;
+    reply_count: number;
+    replies: Comment[];
+    created_at: number;
+    updated_at: number;
+}
+
+export interface CommentCreateRequest {
+    content: string;
+    parent_id?: string;
+}
+
+export interface CommentListResponse {
+    comments: Comment[];
+    total: number;
+    has_more: boolean;
+}

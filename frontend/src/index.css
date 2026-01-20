@@ -99,6 +99,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Large screen background effect */
+@media (min-width: 1920px) {
+  body {
+    background: #0f0f0f;
+  }
+
+  [data-theme="dark"] body {
+    background: #000000;
+  }
+}
+
 /* Typography */
 h1,
 h2,
@@ -320,6 +331,25 @@ a:hover {
 
 .container-lg {
   max-width: 1024px;
+}
+
+.container-xl {
+  max-width: 1440px;
+}
+
+/* Large screens - limit content width */
+@media (min-width: 1440px) {
+  .container {
+    max-width: 1320px;
+    padding: 0 2rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container {
+    max-width: 1440px;
+    padding: 0 2.5rem;
+  }
 }
 
 /* Grid */

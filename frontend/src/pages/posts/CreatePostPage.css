@@ -1,0 +1,66 @@
+.create-post-page {
+    min-height: calc(100vh - 72px);
+    padding: 2rem 0;
+    background: var(--bg-primary);
+}
+
+.create-post-page .container {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+.create-post-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.create-post-header .back-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.create-post-header .back-button:hover {
+    background: var(--bg-tertiary);
+    transform: scale(1.05);
+}
+
+.create-post-header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.create-post-content {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Override CreatePostForm styles for full page */
+.create-post-content .create-post-form {
+    border-radius: 0;
+}
+
+@media (max-width: 768px) {
+    .create-post-page {
+        padding: 1rem 0;
+    }
+
+    .create-post-header h1 {
+        font-size: 1.25rem;
+    }
+}

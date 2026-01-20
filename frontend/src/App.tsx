@@ -29,6 +29,8 @@ import UserManagementPage from './pages/admin/UserManagementPage';
 import UpgradeRequestsPage from './pages/admin/UpgradeRequestsPage';
 import TourProviderModerationPage from './pages/admin/TourProviderModerationPage';
 import AdminEventsPage from './pages/admin/AdminEventsPage';
+import PostDetailPage from './pages/posts/PostDetailPage';
+import FeedPage from './pages/feed/FeedPage';
 
 // Inner component that uses auth context
 function AppContent() {
@@ -100,6 +102,11 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/upgrade" element={<RoleUpgradePage />} />
         <Route path="/chat" element={<ChatPage />} />
+
+        {/* Posts Routes */}
+        <Route path="/create-post" element={<FeedPage />} />
+        <Route path="/feed" element={<FeedPage />} />
+        <Route path="/posts/:postId" element={<PostDetailPage />} />
 
         {/* Event Provider Routes */}
         <Route

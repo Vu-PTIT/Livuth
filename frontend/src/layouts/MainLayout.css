@@ -3,6 +3,10 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    max-width: 1920px;
+    margin: 0 auto;
+    background: var(--bg-secondary);
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
 }
 
 /* Header */
@@ -448,6 +452,25 @@
 
     .header-container {
         padding: 0 1rem;
+    }
+}
+
+/* Large screens - limit header/footer width */
+@media (min-width: 1440px) {
+
+    .header-container,
+    .footer-container {
+        max-width: 1320px;
+        padding: 0 2rem;
+    }
+}
+
+@media (min-width: 1920px) {
+
+    .header-container,
+    .footer-container {
+        max-width: 1440px;
+        padding: 0 2.5rem;
     }
 }
 
