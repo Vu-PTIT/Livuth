@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/Modal';
+import NotificationDropdown from '../components/NotificationDropdown';
 import {
     House,
     CalendarBlank,
@@ -67,14 +68,15 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                                 <CalendarBlank size={20} />
                                 Sự kiện
                             </Link>
-                            <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`}>
-                                <ChatCircle size={20} />
-                                Trợ lý AI
-                            </Link>
                             <Link to="/create-post" className={`nav-link ${isActive('/create-post') ? 'active' : ''}`}>
                                 <UsersThree size={20} />
                                 Cộng đồng
                             </Link>
+                            <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`}>
+                                <ChatCircle size={20} />
+                                Trợ lý AI
+                            </Link>
+
                         </nav>
                     )}
 
@@ -88,6 +90,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         >
                             {isDark ? <Sun size={20} /> : <Moon size={20} />}
                         </button>
+
+                        {/* Notification Dropdown */}
+                        <NotificationDropdown />
 
                         {isAuthenticated ? (
                             <div className="user-menu">

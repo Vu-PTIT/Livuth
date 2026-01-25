@@ -4,7 +4,6 @@ Chat Service for MongoDB with Google Gemini Integration
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
-import google.generativeai as genai
 from backend.core.database import db
 from backend.core.config import settings
 from backend.models.mongo_chat import ChatConversation, ChatMessage
@@ -16,28 +15,16 @@ from backend.schemas.sche_chat import (
     ChatMessageRequest
 )
 from backend.utils.exception_handler import CustomException, ExceptionType
+from backend.services.ai_agent import AIAgent
 
 
 class ChatService:
-    """Chat Service for MongoDB operations with Google Gemini integration"""
+    """Chat Service for MongoDB operations with AI Agent integration"""
     
     def __init__(self):
         self.conversation_collection = "chat_conversations"
         self.message_collection = "chat_messages"
-        self.gemini_model = None
-        
-        # Initialize Gemini if API key is available
-        if settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.gemini_model = genai.GenerativeModel(
-                model_name=settings.GEMINI_MODEL,
-                generation_config={
-                    "temperature": settings.GENERATION_TEMPERATURE,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "max_output_tokens": 8192,
-                }
-            )
+        self.ai_agent = AIAgent()
     
     def get_conversation_collection(self):
         """Get conversations collection"""
@@ -142,7 +129,7 @@ class ChatService:
         user_id: str, 
         message_data: ChatMessageRequest
     ) -> ChatMessageResponse:
-        """Send user message and get AI response from Gemini"""
+        """Send user message and get AI response from Gemini via AIAgent"""
         conv_collection = self.get_conversation_collection()
         msg_collection = self.get_message_collection()
         
@@ -188,27 +175,8 @@ class ChatService:
                         "parts": [msg["content"]]
                     })
             
-            # Get AI response using Gemini
-            ai_content = None
-            try:
-                if not self.gemini_model:
-                    ai_content = "Xin lỗi, trợ lý AI chưa được cấu hình. Vui lòng liên hệ quản trị viên."
-                else:
-                    chat = self.gemini_model.start_chat(history=chat_history)
-                    
-                    if not chat_history:
-                        system_message = "Bạn là trợ lý AI thông minh, hiểu biết về văn hóa và lễ hội Việt Nam. Hãy trả lời một cách hữu ích, thân thiện và chính xác bằng tiếng Việt."
-                        response = chat.send_message(f"{system_message}\n\nUser: {message_data.content}")
-                    else:
-                        response = chat.send_message(message_data.content)
-                    
-                    ai_content = response.text
-                
-            except Exception as gemini_error:
-                import traceback
-                print(f"Gemini API Error: {str(gemini_error)}")
-                print(traceback.format_exc())
-                ai_content = f"Xin lỗi, tôi không thể trả lời ngay bây giờ. Vui lòng thử lại sau."
+            # Get AI response using AIAgent
+            ai_content = self.ai_agent.get_response(message_data.content, chat_history)
             
             # Store AI response
             now = datetime.now().timestamp()

@@ -32,6 +32,14 @@ export interface LoginRequest {
     password: string;
 }
 
+export interface GoogleLoginRequest {
+    id_token: string;
+}
+
+export interface FacebookLoginRequest {
+    access_token: string;
+}
+
 export interface RegisterRequest {
     email: string;
     username: string;
@@ -316,5 +324,34 @@ export interface CommentCreateRequest {
 export interface CommentListResponse {
     comments: Comment[];
     total: number;
+    has_more: boolean;
+}
+
+// Notification Types
+export interface NotificationActor {
+    id: string;
+    username: string;
+    full_name?: string;
+    avatar_url?: string;
+}
+
+export interface Notification {
+    id: string;
+    user_id: string;
+    actor: NotificationActor;
+    type: 'like' | 'comment' | string;
+    message: string;
+    post_id?: string;
+    comment_id?: string;
+    read: boolean;
+    created_at: number;
+}
+
+export interface NotificationListResponse {
+    notifications: Notification[];
+    total: number;
+    unread_count: number;
+    page: number;
+    page_size: number;
     has_more: boolean;
 }

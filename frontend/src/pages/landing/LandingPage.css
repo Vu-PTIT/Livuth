@@ -92,7 +92,7 @@
 
 .highlights-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
 }
 
@@ -126,6 +126,24 @@
 
 .highlight-map:hover {
     border-color: rgba(16, 185, 129, 0.4);
+}
+
+.highlight-feed {
+    border-color: rgba(236, 72, 153, 0.2);
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.05), rgba(168, 85, 247, 0.05));
+}
+
+.highlight-feed:hover {
+    border-color: rgba(236, 72, 153, 0.4);
+}
+
+.highlight-feed .highlight-icon {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(168, 85, 247, 0.15));
+    color: #ec4899;
+}
+
+.highlight-feed .highlight-features li svg {
+    color: #ec4899;
 }
 
 .highlight-icon {

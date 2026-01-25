@@ -70,7 +70,8 @@
     background: none;
     padding: 0.75rem 1rem;
     font-size: 1rem;
-    color: var(--text-primary);
+    color: #1f2937;
+    /* Always dark text on white background */
 }
 
 .hero-search input:focus {
@@ -78,7 +79,8 @@
 }
 
 .hero-search input::placeholder {
-    color: var(--text-light);
+    color: #9ca3af;
+    /* Always gray placeholder on white background */
 }
 
 .hero-search .btn {

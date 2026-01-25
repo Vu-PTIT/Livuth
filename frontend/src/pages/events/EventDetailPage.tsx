@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { eventApi, reviewApi, userApi } from '../../api/endpoints';
+import { eventApi, reviewApi } from '../../api/endpoints';
 import type { Event, TourProviderListing, Review, ReviewStats } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
 import {
     MapPin,
     Calendar,
@@ -18,8 +17,6 @@ import {
     UserCircle,
     PaperPlaneRight,
     PencilSimple,
-    MapTrifold,
-    NavigationArrow,
 } from '@phosphor-icons/react';
 import './EventDetailPage.css';
 
@@ -41,14 +38,6 @@ const EventDetailPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [reviewError, setReviewError] = useState('');
     const [isEditingReview, setIsEditingReview] = useState(false);
-
-    // Check-in states
-    const [isCheckingIn, setIsCheckingIn] = useState(false);
-    const [checkInError, setCheckInError] = useState('');
-    const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-    const [distanceToEvent, setDistanceToEvent] = useState<number | null>(null);
-    const [isGettingLocation, setIsGettingLocation] = useState(false);
-    const [hasCheckedIn, setHasCheckedIn] = useState(false);
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -97,91 +86,10 @@ const EventDetailPage: React.FC = () => {
             }
         };
 
+
         fetchReviews();
         fetchMyReview();
     }, [id, user]);
-
-    // Check if user already participated
-    useEffect(() => {
-        if (user && id && user.participated_events) {
-            setHasCheckedIn(user.participated_events.includes(id));
-        }
-    }, [user, id]);
-
-    // Get user location and calculate distance
-    const getUserLocation = () => {
-        if (!navigator.geolocation) {
-            setCheckInError('Trình duyệt không hỗ trợ GPS');
-            return;
-        }
-
-        setIsGettingLocation(true);
-        setCheckInError('');
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const { latitude, longitude } = position.coords;
-                setUserLocation({ lat: latitude, lng: longitude });
-
-                // Calculate distance to event if event has coordinates (GeoJSON format)
-                if (event?.location?.coordinates?.coordinates) {
-                    const coords = event.location.coordinates.coordinates;
-                    const eventLng = coords[0];
-                    const eventLat = coords[1];
-                    const distance = calculateDistance(latitude, longitude, eventLat, eventLng);
-                    setDistanceToEvent(distance);
-                }
-
-                setIsGettingLocation(false);
-            },
-            (error) => {
-                setIsGettingLocation(false);
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        setCheckInError('Bạn cần cho phép truy cập vị trí');
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        setCheckInError('Không thể xác định vị trí');
-                        break;
-                    case error.TIMEOUT:
-                        setCheckInError('Hết thời gian chờ GPS');
-                        break;
-                    default:
-                        setCheckInError('Lỗi khi lấy vị trí');
-                }
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-        );
-    };
-
-    // Handle check-in
-    const handleCheckIn = async () => {
-        if (!user || !id || !event) return;
-
-        // Check if event has coordinates (GeoJSON format)
-        if (!event.location?.coordinates?.coordinates) {
-            setCheckInError('Sự kiện này chưa có tọa độ địa điểm');
-            return;
-        }
-
-        // Check distance
-        if (distanceToEvent === null || distanceToEvent > CHECKIN_RADIUS_METERS) {
-            setCheckInError(`Bạn cần đến gần sự kiện hơn (trong ${CHECKIN_RADIUS_METERS}m)`);
-            return;
-        }
-
-        setIsCheckingIn(true);
-        setCheckInError('');
-
-        try {
-            await userApi.addParticipatedEvent(user.id, id);
-            setHasCheckedIn(true);
-        } catch (err: any) {
-            setCheckInError(err.response?.data?.message || 'Không thể check-in');
-        } finally {
-            setIsCheckingIn(false);
-        }
-    };
 
     const handleSubmitReview = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -260,6 +168,10 @@ const EventDetailPage: React.FC = () => {
             month: 'long',
             day: 'numeric',
         });
+    };
+
+    const capitalizeFirst = (str: string) => {
+        return str.charAt(0).toUpperCase() + str.slice(1);
     };
 
     if (isLoading) {
@@ -346,7 +258,7 @@ const EventDetailPage: React.FC = () => {
                             {event.categories.map((cat, idx) => (
                                 <span key={idx} className="category-tag">
                                     <Tag size={14} />
-                                    {cat}
+                                    {capitalizeFirst(cat)}
                                 </span>
                             ))}
                         </div>
@@ -621,77 +533,6 @@ const EventDetailPage: React.FC = () => {
                             </div>
                         ) : (
                             <p className="no-providers">Chưa có dịch vụ tour cho sự kiện này</p>
-                        )}
-                    </div>
-                </aside>
-
-                {/* Check-in Section */}
-                <aside className="event-sidebar checkin-sidebar">
-                    <div className="sidebar-section checkin-section">
-                        <h3>
-                            <MapTrifold size={20} />
-                            Check-in tại sự kiện
-                        </h3>
-
-                        {!user ? (
-                            <p className="login-prompt">
-                                <Link to="/login">Đăng nhập</Link> để check-in
-                            </p>
-                        ) : hasCheckedIn ? (
-                            <div className="checkin-success">
-                                <CheckCircle size={48} weight="fill" className="checkin-icon-success" />
-                                <p>Bạn đã tham gia sự kiện này!</p>
-                            </div>
-                        ) : !event?.location?.coordinates?.coordinates ? (
-                            <p className="text-secondary">Sự kiện này chưa có tọa độ GPS</p>
-                        ) : (
-                            <div className="checkin-controls">
-                                {!userLocation ? (
-                                    <button
-                                        className="btn btn-outline"
-                                        onClick={getUserLocation}
-                                        disabled={isGettingLocation}
-                                    >
-                                        <NavigationArrow size={18} />
-                                        {isGettingLocation ? 'Đang xác định...' : 'Kiểm tra vị trí'}
-                                    </button>
-                                ) : (
-                                    <>
-                                        <div className="distance-info">
-                                            <span className="distance-label">Khoảng cách:</span>
-                                            <span className={`distance-value ${distanceToEvent && distanceToEvent <= CHECKIN_RADIUS_METERS ? 'in-range' : 'out-range'}`}>
-                                                {distanceToEvent !== null ? formatDistance(distanceToEvent) : 'Không xác định'}
-                                            </span>
-                                        </div>
-
-                                        {distanceToEvent !== null && distanceToEvent <= CHECKIN_RADIUS_METERS ? (
-                                            <button
-                                                className="btn btn-primary btn-checkin"
-                                                onClick={handleCheckIn}
-                                                disabled={isCheckingIn}
-                                            >
-                                                <CheckCircle size={20} weight="bold" />
-                                                {isCheckingIn ? 'Đang check-in...' : 'Check-in ngay'}
-                                            </button>
-                                        ) : (
-                                            <p className="checkin-warning">
-                                                Bạn cần đến gần hơn (trong {CHECKIN_RADIUS_METERS}m) để check-in
-                                            </p>
-                                        )}
-
-                                        <button
-                                            className="btn btn-text btn-refresh-location"
-                                            onClick={getUserLocation}
-                                            disabled={isGettingLocation}
-                                        >
-                                            <NavigationArrow size={16} />
-                                            Cập nhật vị trí
-                                        </button>
-                                    </>
-                                )}
-
-                                {checkInError && <p className="error-text">{checkInError}</p>}
-                            </div>
                         )}
                     </div>
                 </aside>

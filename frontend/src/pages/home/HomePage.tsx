@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
@@ -14,6 +14,7 @@ const HOME_CATEGORIES = CATEGORIES.slice(0, 6);
 
 const HomePage: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
+    const navigate = useNavigate();
     const [events, setEvents] = useState<Event[]>([]);
     const [recommendedEvents, setRecommendedEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -48,7 +49,7 @@ const HomePage: React.FC = () => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            window.location.href = `/events?q=${encodeURIComponent(searchQuery)}`;
+            navigate(`/events?q=${encodeURIComponent(searchQuery)}`);
         }
     };
 

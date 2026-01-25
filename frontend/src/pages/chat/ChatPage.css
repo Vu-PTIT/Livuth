@@ -198,6 +198,15 @@
     border-bottom-left-radius: 4px;
 }
 
+/* Dark mode - ensure assistant message text is visible */
+[data-theme="dark"] .message.assistant .message-bubble {
+    color: #f9fafb;
+}
+
+[data-theme="dark"] .message.assistant .message-bubble p {
+    color: #f9fafb;
+}
+
 .message-bubble p {
     margin: 0;
     white-space: pre-wrap;
@@ -301,6 +310,7 @@
     border-radius: 100px;
     font-size: 0.9375rem;
     background: var(--bg-secondary);
+    color: var(--text-primary);
     transition: all 0.2s;
 }
 

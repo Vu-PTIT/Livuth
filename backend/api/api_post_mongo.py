@@ -308,6 +308,16 @@ async def toggle_like(
         )
         is_liked = True
         message = "Đã thích bài viết"
+        
+        # Create notification for post author
+        from backend.api.api_notification_mongo import create_notification
+        await create_notification(
+            user_id=str(post["author_id"]),
+            actor_id=user_id,
+            notification_type="like",
+            message="đã thích bài viết của bạn",
+            post_id=post_id
+        )
     
     updated_post = await get_posts_collection().find_one({"_id": ObjectId(post_id)})
     return DataResponse(data={
@@ -439,6 +449,18 @@ async def create_comment(
         "created_at": now,
         "updated_at": now
     }
+    
+    # Create notification for post author
+    from backend.api.api_notification_mongo import create_notification
+    truncated_content = comment_data.content[:50] + "..." if len(comment_data.content) > 50 else comment_data.content
+    await create_notification(
+        user_id=str(post["author_id"]),
+        actor_id=user_id,
+        notification_type="comment",
+        message=f'đã bình luận: "{truncated_content}"',
+        post_id=post_id,
+        comment_id=str(result.inserted_id)
+    )
     
     return DataResponse(data=response, message="Đã bình luận!")
 

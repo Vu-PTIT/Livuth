@@ -1,0 +1,77 @@
+// List of all 63 provinces/cities in Vietnam
+export const VIETNAM_PROVINCES = [
+    // 5 Central-governed cities
+    { name: 'Hà Nội', type: 'Thành phố' },
+    { name: 'Hồ Chí Minh', type: 'Thành phố' },
+    { name: 'Đà Nẵng', type: 'Thành phố' },
+    { name: 'Hải Phòng', type: 'Thành phố' },
+    { name: 'Cần Thơ', type: 'Thành phố' },
+    // Northern provinces
+    { name: 'Hà Giang', type: 'Tỉnh' },
+    { name: 'Cao Bằng', type: 'Tỉnh' },
+    { name: 'Bắc Kạn', type: 'Tỉnh' },
+    { name: 'Tuyên Quang', type: 'Tỉnh' },
+    { name: 'Lào Cai', type: 'Tỉnh' },
+    { name: 'Điện Biên', type: 'Tỉnh' },
+    { name: 'Lai Châu', type: 'Tỉnh' },
+    { name: 'Sơn La', type: 'Tỉnh' },
+    { name: 'Yên Bái', type: 'Tỉnh' },
+    { name: 'Hòa Bình', type: 'Tỉnh' },
+    { name: 'Thái Nguyên', type: 'Tỉnh' },
+    { name: 'Lạng Sơn', type: 'Tỉnh' },
+    { name: 'Quảng Ninh', type: 'Tỉnh' },
+    { name: 'Bắc Giang', type: 'Tỉnh' },
+    { name: 'Phú Thọ', type: 'Tỉnh' },
+    { name: 'Vĩnh Phúc', type: 'Tỉnh' },
+    { name: 'Bắc Ninh', type: 'Tỉnh' },
+    { name: 'Hải Dương', type: 'Tỉnh' },
+    { name: 'Hưng Yên', type: 'Tỉnh' },
+    { name: 'Thái Bình', type: 'Tỉnh' },
+    { name: 'Hà Nam', type: 'Tỉnh' },
+    { name: 'Nam Định', type: 'Tỉnh' },
+    { name: 'Ninh Bình', type: 'Tỉnh' },
+    // Central provinces
+    { name: 'Thanh Hóa', type: 'Tỉnh' },
+    { name: 'Nghệ An', type: 'Tỉnh' },
+    { name: 'Hà Tĩnh', type: 'Tỉnh' },
+    { name: 'Quảng Bình', type: 'Tỉnh' },
+    { name: 'Quảng Trị', type: 'Tỉnh' },
+    { name: 'Thừa Thiên Huế', type: 'Tỉnh' },
+    { name: 'Quảng Nam', type: 'Tỉnh' },
+    { name: 'Quảng Ngãi', type: 'Tỉnh' },
+    { name: 'Bình Định', type: 'Tỉnh' },
+    { name: 'Phú Yên', type: 'Tỉnh' },
+    { name: 'Khánh Hòa', type: 'Tỉnh' },
+    { name: 'Ninh Thuận', type: 'Tỉnh' },
+    { name: 'Bình Thuận', type: 'Tỉnh' },
+    // Central Highlands
+    { name: 'Kon Tum', type: 'Tỉnh' },
+    { name: 'Gia Lai', type: 'Tỉnh' },
+    { name: 'Đắk Lắk', type: 'Tỉnh' },
+    { name: 'Đắk Nông', type: 'Tỉnh' },
+    { name: 'Lâm Đồng', type: 'Tỉnh' },
+    // Southern provinces
+    { name: 'Bình Phước', type: 'Tỉnh' },
+    { name: 'Tây Ninh', type: 'Tỉnh' },
+    { name: 'Bình Dương', type: 'Tỉnh' },
+    { name: 'Đồng Nai', type: 'Tỉnh' },
+    { name: 'Bà Rịa - Vũng Tàu', type: 'Tỉnh' },
+    { name: 'Long An', type: 'Tỉnh' },
+    { name: 'Tiền Giang', type: 'Tỉnh' },
+    { name: 'Bến Tre', type: 'Tỉnh' },
+    { name: 'Trà Vinh', type: 'Tỉnh' },
+    { name: 'Vĩnh Long', type: 'Tỉnh' },
+    { name: 'Đồng Tháp', type: 'Tỉnh' },
+    { name: 'An Giang', type: 'Tỉnh' },
+    { name: 'Kiên Giang', type: 'Tỉnh' },
+    { name: 'Hậu Giang', type: 'Tỉnh' },
+    { name: 'Sóc Trăng', type: 'Tỉnh' },
+    { name: 'Bạc Liêu', type: 'Tỉnh' },
+    { name: 'Cà Mau', type: 'Tỉnh' },
+];
+
+// Get province names only
+export const PROVINCE_NAMES = VIETNAM_PROVINCES.map(p => p.name);
+
+// Get provinces sorted by name
+export const PROVINCES_SORTED = [...VIETNAM_PROVINCES].sort((a, b) => a.name.localeCompare(b.name, 'vi'));

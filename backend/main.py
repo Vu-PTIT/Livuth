@@ -12,6 +12,7 @@ from backend.api.api_tour_provider_mongo import router as tour_provider_router
 from backend.api.api_chat_mongo import router as chat_router
 from backend.api.api_review_mongo import router as review_router
 from backend.api.api_post_mongo import router as post_router
+from backend.api.api_notification_mongo import router as notification_router
 from backend.utils.exception_handler import (
     CustomException,
     fastapi_error_handler,
@@ -77,6 +78,7 @@ app.include_router(tour_provider_router, prefix=settings.API_PREFIX, tags=["Tour
 app.include_router(chat_router, prefix=settings.API_PREFIX, tags=["Chat"])
 app.include_router(review_router, prefix=settings.API_PREFIX, tags=["Reviews"])
 app.include_router(post_router, prefix=settings.API_PREFIX, tags=["Posts"])
+app.include_router(notification_router, prefix=settings.API_PREFIX, tags=["Notifications"])
 
 # Register exception handlers
 app.add_exception_handler(Exception, fastapi_error_handler)

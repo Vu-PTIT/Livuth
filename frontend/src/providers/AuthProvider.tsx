@@ -34,17 +34,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (data: LoginRequest) => {
         const response = await authApi.login(data);
         const tokenData = response.data.data as TokenResponse;
+        handleLoginSuccess(tokenData);
+    };
 
+    const loginGoogle = async (data: import('../types').GoogleLoginRequest) => {
+        const response = await authApi.loginGoogle(data);
+        const tokenData = response.data.data as TokenResponse;
+        handleLoginSuccess(tokenData);
+    };
+
+    const loginFacebook = async (data: import('../types').FacebookLoginRequest) => {
+        const response = await authApi.loginFacebook(data);
+        const tokenData = response.data.data as TokenResponse;
+        handleLoginSuccess(tokenData);
+    };
+
+    const handleLoginSuccess = (tokenData: TokenResponse) => {
         localStorage.setItem('access_token', tokenData.access_token);
         if (tokenData.refresh_token) {
             localStorage.setItem('refresh_token', tokenData.refresh_token);
         }
 
+        // Save login timestamp
+        localStorage.setItem('login_timestamp', String(Date.now() / 1000));
+
         if (tokenData.user) {
             setUser(tokenData.user);
         } else {
-            // Fetch user data if not included in response
-            await refreshUser();
+            refreshUser();
         }
     };
 
@@ -81,6 +98,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isAuthenticated,
         isLoading,
         login,
+        loginGoogle,
+        loginFacebook,
         register,
         logout,
         refreshUser,

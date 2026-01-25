@@ -62,7 +62,12 @@ const ChatPage: React.FC = () => {
     const fetchConversations = async () => {
         try {
             const response = await chatApi.getConversations();
-            const convs = response.data.data || [];
+            const allConvs = response.data.data || [];
+
+            // Filter conversations created after login timestamp
+            const loginTimestamp = parseFloat(localStorage.getItem('login_timestamp') || '0');
+            const convs = allConvs.filter(conv => conv.created_at >= loginTimestamp);
+
             setConversations(convs);
 
             // Auto-select first conversation or create new one

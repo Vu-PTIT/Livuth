@@ -77,6 +77,7 @@ class UserMongo(BaseModel):
     
     # SSO
     sso_sub: Optional[str] = None
+    auth_provider: str = Field(default="email") # email, google, facebook
     
     # Timestamps
     last_login: Optional[float] = None

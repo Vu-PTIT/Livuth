@@ -3,6 +3,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { postApi } from '../../api/endpoints';
 import type { Post } from '../../types';
 import PostCard from '../../components/PostCard';
+import PostDetailModal from '../../components/PostDetailModal';
 import CreatePostForm from '../../components/CreatePostForm';
 import { PostCardSkeleton } from '../../components/Skeleton';
 import { Notebook, ArrowUp } from '@phosphor-icons/react';
@@ -16,6 +17,7 @@ const FeedPage: React.FC = () => {
     const [hasMore, setHasMore] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<Post | null>(null);
 
     // Fetch posts
     const fetchPosts = useCallback(async (pageNum: number, append: boolean = false) => {
@@ -86,6 +88,24 @@ const FeedPage: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const handleOpenDetail = (post: Post) => {
+        setSelectedPost(post);
+    };
+
+    const handleCloseModal = () => {
+        setSelectedPost(null);
+    };
+
+    const handlePostUpdate = (updatedPost: Post) => {
+        setPosts(prev => prev.map(p => p.id === updatedPost.id ? updatedPost : p));
+        setSelectedPost(updatedPost);
+    };
+
+    const handlePostDelete = (postId: string) => {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        setSelectedPost(null);
+    };
+
     if (!isAuthenticated) {
         return (
             <div className="feed-page">
@@ -122,7 +142,13 @@ const FeedPage: React.FC = () => {
                             ) : posts.length > 0 ? (
                                 <>
                                     {posts.map((post) => (
-                                        <PostCard key={post.id} post={post} />
+                                        <PostCard
+                                            key={post.id}
+                                            post={post}
+                                            onOpenDetail={handleOpenDetail}
+                                            onUpdate={handlePostUpdate}
+                                            onDelete={handlePostDelete}
+                                        />
                                     ))}
 
                                     {/* Loading more indicator */}
@@ -155,6 +181,16 @@ const FeedPage: React.FC = () => {
                     <button className="scroll-top-btn" onClick={scrollToTop}>
                         <ArrowUp size={24} weight="bold" />
                     </button>
+                )}
+
+                {/* Post Detail Modal */}
+                {selectedPost && (
+                    <PostDetailModal
+                        post={selectedPost}
+                        onClose={handleCloseModal}
+                        onPostUpdate={handlePostUpdate}
+                        onPostDelete={handlePostDelete}
+                    />
                 )}
             </div>
         </div>

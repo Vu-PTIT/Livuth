@@ -742,6 +742,69 @@
     transform: translateX(3px);
 }
 
+/* Check-in button in popup */
+.popup-checkin-btn {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white !important;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.popup-checkin-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+.popup-checkin-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Checked-in state */
+.popup-checkedin {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    padding: 0.65rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.popup-checkedin svg {
+    color: #10b981;
+}
+
+/* Distance display in popup */
+.popup-distance {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
 /* Leaflet popup overrides - Premium styling */
 .leaflet-popup-content-wrapper {
     border-radius: 16px;
@@ -892,4 +955,165 @@
 [data-theme="dark"] .locate-button,
 .dark .locate-button {
     background: #1f2937;
+}
+
+/* Date Filter Styles */
+.date-filter-container {
+    position: relative;
+}
+
+.date-filter-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--card-bg);
+    border: none;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.date-filter-button:hover {
+    color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.date-filter-button.has-filter {
+    color: var(--primary);
+    border: 1.5px solid var(--primary);
+}
+
+.date-filter-button .date-filter-label {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.date-filter-button .caret-icon {
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.date-filter-button .caret-icon.open {
+    transform: rotate(180deg);
+}
+
+.date-filter-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    z-index: 1001;
+    min-width: 180px;
+    animation: slideDown 0.2s ease;
+}
+
+.date-filter-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.date-filter-option:hover {
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.date-filter-option.active {
+    background: rgba(99, 102, 241, 0.12);
+}
+
+.date-filter-option .option-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.date-filter-option .option-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.date-filter-option.active .option-label {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* Dark mode for date filter */
+[data-theme="dark"] .date-filter-button,
+.dark .date-filter-button {
+    background: #1f2937;
+    color: #9ca3af;
+}
+
+[data-theme="dark"] .date-filter-button:hover,
+.dark .date-filter-button:hover {
+    color: #818cf8;
+}
+
+[data-theme="dark"] .date-filter-button.has-filter,
+.dark .date-filter-button.has-filter {
+    color: #818cf8;
+    border-color: #818cf8;
+}
+
+[data-theme="dark"] .date-filter-dropdown,
+.dark .date-filter-dropdown {
+    background: #1f2937;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .date-filter-option:hover,
+.dark .date-filter-option:hover {
+    background: rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="dark"] .date-filter-option.active,
+.dark .date-filter-option.active {
+    background: rgba(99, 102, 241, 0.2);
+}
+
+[data-theme="dark"] .date-filter-option .option-label,
+.dark .date-filter-option .option-label {
+    color: #e5e7eb;
+}
+
+[data-theme="dark"] .date-filter-option.active .option-label,
+.dark .date-filter-option.active .option-label {
+    color: #a5b4fc;
+}
+
+/* Mobile responsive for date filter */
+@media (max-width: 768px) {
+    .date-filter-button {
+        padding: 0.7rem 0.75rem;
+    }
+
+    .date-filter-button .date-filter-label {
+        display: none;
+    }
+
+    .date-filter-button .caret-icon {
+        display: none;
+    }
+
+    .date-filter-dropdown {
+        right: 0;
+        min-width: 160px;
+    }
 }

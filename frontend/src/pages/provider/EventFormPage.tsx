@@ -6,12 +6,10 @@ import type { EventCreateRequest } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import LocationPicker from '../../components/LocationPicker';
 import '../../components/LocationPicker.css';
-import { CATEGORY_NAMES } from '../../constants/categories';
+import { CATEGORIES } from '../../constants/categories';
+import { PROVINCES_SORTED } from '../../constants/provinces';
 import { ArrowLeft, Plus, X, UploadSimple, Image } from '@phosphor-icons/react';
 import './ProviderPages.css';
-
-// Use shared categories
-const CATEGORIES = CATEGORY_NAMES;
 
 const EventFormPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -246,15 +244,16 @@ const EventFormPage: React.FC = () => {
 
                         <div className="form-group">
                             <label className="form-label">Danh mục</label>
-                            <div className="category-chips">
+                            <div className="category-chips-grid">
                                 {CATEGORIES.map((cat) => (
                                     <button
-                                        key={cat}
+                                        key={cat.id}
                                         type="button"
-                                        className={`chip ${formData.categories?.includes(cat) ? 'active' : ''}`}
-                                        onClick={() => toggleCategory(cat)}
+                                        className={`category-chip-btn ${formData.categories?.includes(cat.name) ? 'active' : ''}`}
+                                        onClick={() => toggleCategory(cat.name)}
                                     >
-                                        {cat}
+                                        <span className="chip-icon">{cat.icon}</span>
+                                        <span className="chip-label">{cat.name}</span>
                                     </button>
                                 ))}
                             </div>
@@ -306,26 +305,31 @@ const EventFormPage: React.FC = () => {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="form-label">Thành phố</label>
+                                <label className="form-label">Thành phố/Quận/Huyện</label>
                                 <input
                                     type="text"
                                     name="location.city"
                                     className="form-input"
                                     value={formData.location?.city || ''}
                                     onChange={handleChange}
-                                    placeholder="vd: Hà Nội"
+                                    placeholder="vd: Quận Ba Đình, TP. Nha Trang..."
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Tỉnh/Thành</label>
-                                <input
-                                    type="text"
+                                <label className="form-label">Tỉnh/Thành phố</label>
+                                <select
                                     name="location.province"
                                     className="form-input"
                                     value={formData.location?.province || ''}
                                     onChange={handleChange}
-                                    placeholder="vd: Hà Nội"
-                                />
+                                >
+                                    <option value="">-- Chọn Tỉnh/Thành phố --</option>
+                                    {PROVINCES_SORTED.map((province) => (
+                                        <option key={province.name} value={province.name}>
+                                            {province.type} {province.name}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
                         </div>
 

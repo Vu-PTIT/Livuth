@@ -8,6 +8,8 @@ import {
     ArrowRight,
     Robot,
     MapPin,
+    PencilLine,
+    ChatCircleDots,
 } from '@phosphor-icons/react';
 import './LandingPage.css';
 
@@ -27,6 +29,11 @@ const FEATURES = [
         title: 'Kết nối dịch vụ tour',
         description: 'Tìm và kết nối với các nhà cung cấp dịch vụ tour du lịch uy tín.',
     },
+    {
+        icon: PencilLine,
+        title: 'Chia sẻ trải nghiệm',
+        description: 'Đăng bài viết, chia sẻ ảnh và câu chuyện về những chuyến đi đáng nhớ của bạn.',
+    },
 ];
 
 const BENEFITS = [
@@ -35,6 +42,7 @@ const BENEFITS = [
     'Trợ lý AI hỗ trợ 24/7',
     'Bản đồ sự kiện trực quan',
     'Kết nối với tour provider',
+    'Chia sẻ trải nghiệm du lịch',
     'Hoàn toàn miễn phí',
 ];
 
@@ -103,6 +111,25 @@ const LandingPage: React.FC = () => {
                                     <li><CheckCircle size={18} weight="fill" /> Bản đồ tương tác thời gian thực</li>
                                     <li><CheckCircle size={18} weight="fill" /> Tìm sự kiện gần vị trí của bạn</li>
                                     <li><CheckCircle size={18} weight="fill" /> Lọc theo tỉnh/thành phố</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Community Feed Highlight */}
+                        <div className="highlight-card highlight-feed">
+                            <div className="highlight-icon">
+                                <ChatCircleDots size={48} weight="duotone" />
+                            </div>
+                            <div className="highlight-content">
+                                <h3>📝 Cộng đồng Chia sẻ</h3>
+                                <p className="highlight-description">
+                                    Tham gia cộng đồng những người yêu du lịch! Đăng bài viết, chia sẻ ảnh
+                                    và câu chuyện về những chuyến đi của bạn với mọi người.
+                                </p>
+                                <ul className="highlight-features">
+                                    <li><CheckCircle size={18} weight="fill" /> Đăng bài viết và ảnh du lịch</li>
+                                    <li><CheckCircle size={18} weight="fill" /> Tương tác với cộng đồng</li>
+                                    <li><CheckCircle size={18} weight="fill" /> Khám phá trải nghiệm từ người khác</li>
                                 </ul>
                             </div>
                         </div>

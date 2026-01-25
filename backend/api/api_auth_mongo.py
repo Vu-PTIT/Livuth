@@ -9,6 +9,12 @@ from backend.core.security import verify_password, create_access_token, create_r
 from backend.schemas.sche_auth import TokenRequest
 from backend.utils.exception_handler import CustomException, ExceptionType
 from backend.utils import time_utils
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import requests
+import uuid
+from backend.core.config import settings
+from backend.schemas.sche_auth import GoogleLoginRequest, FacebookLoginRequest
 
 router = APIRouter(prefix="/auth")
 
@@ -156,6 +162,185 @@ async def refresh_token(refresh_data: RefreshTokenRequest) -> Any:
     except Exception as e:
         raise CustomException(exception=ExceptionType.UNAUTHORIZED)
 
+@router.post(
+    "/google",
+    response_model=DataResponse[TokenResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def google_login(login_data: GoogleLoginRequest) -> Any:
+    """Login with Google"""
+    try:
+        # Verify Google token
+        id_info = id_token.verify_oauth2_token(
+            login_data.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+
+        email = id_info.get("email")
+        google_id = id_info.get("sub")
+        first_name = id_info.get("given_name", "")
+        last_name = id_info.get("family_name", "")
+        full_name = id_info.get("name", "")
+        picture = id_info.get("picture", "")
+
+        if not email:
+            raise CustomException(exception=ExceptionType.BAD_REQUEST)
+
+        # Check if user exists
+        user = await user_service.get_by_email(email)
+
+        if not user:
+            # Create new user
+            username = email.split("@")[0]
+            # Ensure unique username
+            existing_username = await user_service.get_by_username(username)
+            if existing_username:
+                username = f"{username}_{uuid.uuid4().hex[:4]}"
+
+            user_data = UserCreateRequest(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                full_name=full_name,
+                avatar_url=picture,
+                sso_sub=google_id,
+                auth_provider="google",
+                is_active=True
+            )
+            created_user = await user_service.create(data=user_data)
+            user = await user_service.get_by_email(email) # Fetch raw dict
+
+        # Update last login
+        await user_service.update_last_login(str(user["_id"]))
+        
+        # Ensure chat conversation
+        await chat_service.ensure_active_conversation(str(user["_id"]))
+
+        # Create tokens
+        token_payload = TokenRequest(
+            exp=time_utils.timestamp_after_now(seconds=900),
+            auth_time=time_utils.timestamp_now(),
+            sub=str(user["_id"]),
+            email=user.get("email", ""),
+        )
+        
+        access_token, expires_in = create_access_token(payload=token_payload)
+        refresh_token, refresh_expires = create_refresh_token(user_id=str(user["_id"]))
+
+        user["id"] = str(user["_id"])
+        user_response = UserBaseResponse(**user)
+        
+        token_response = TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=expires_in,
+            refresh_expires_in=refresh_expires,
+            token_type="Bearer",
+            user=user_response.model_dump(),
+        )
+        
+        return DataResponse(http_code=status.HTTP_200_OK, data=token_response)
+
+    except ValueError:
+        # Invalid token
+        raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+    except Exception as e:
+        print(f"Google login error: {e}")
+        raise CustomException(exception=ExceptionType.INTERNAL_SERVER_ERROR)
+
+
+@router.post(
+    "/facebook",
+    response_model=DataResponse[TokenResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def facebook_login(login_data: FacebookLoginRequest) -> Any:
+    """Login with Facebook"""
+    try:
+        # Verify Facebook token
+        graph_api_url = f"https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture&access_token={login_data.access_token}"
+        response = requests.get(graph_api_url)
+        
+        if response.status_code != 200:
+            raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+            
+        fb_data = response.json()
+        
+        email = fb_data.get("email")
+        facebook_id = fb_data.get("id")
+        first_name = fb_data.get("first_name", "")
+        last_name = fb_data.get("last_name", "")
+        full_name = fb_data.get("name", "")
+        picture = fb_data.get("picture", {}).get("data", {}).get("url", "")
+
+        if not email:
+            # Facebook might not return email if user didn't grant permission or signed up with phone
+            # We enforce email for now or handle it differently
+            raise CustomException(exception=ExceptionType.BAD_REQUEST)
+
+        # Check if user exists (by email or sso_sub)
+        user = await user_service.get_by_email(email)
+        
+        if not user:
+             # Create new user
+            username = email.split("@")[0]
+            # Ensure unique username
+            existing_username = await user_service.get_by_username(username)
+            if existing_username:
+                username = f"{username}_{uuid.uuid4().hex[:4]}"
+
+            user_data = UserCreateRequest(
+                username=username,
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                full_name=full_name,
+                avatar_url=picture,
+                sso_sub=facebook_id,
+                auth_provider="facebook",
+                is_active=True
+            )
+            created_user = await user_service.create(data=user_data)
+            user = await user_service.get_by_email(email)
+
+        # Update last login
+        await user_service.update_last_login(str(user["_id"]))
+        
+        # Ensure chat conversation
+        await chat_service.ensure_active_conversation(str(user["_id"]))
+
+        # Create tokens
+        token_payload = TokenRequest(
+            exp=time_utils.timestamp_after_now(seconds=900),
+            auth_time=time_utils.timestamp_now(),
+            sub=str(user["_id"]),
+            email=user.get("email", ""),
+        )
+        
+        access_token, expires_in = create_access_token(payload=token_payload)
+        refresh_token, refresh_expires = create_refresh_token(user_id=str(user["_id"]))
+
+        user["id"] = str(user["_id"])
+        user_response = UserBaseResponse(**user)
+        
+        token_response = TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=expires_in,
+            refresh_expires_in=refresh_expires,
+            token_type="Bearer",
+            user=user_response.model_dump(),
+        )
+        
+        return DataResponse(http_code=status.HTTP_200_OK, data=token_response)
+
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        print(f"Facebook login error: {e}")
+        raise CustomException(exception=ExceptionType.INTERNAL_SERVER_ERROR)
 
 @router.get(
     "/me",

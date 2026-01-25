@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'r
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
-import { eventApi } from '../../api/endpoints';
+import { eventApi, userApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import { CATEGORIES } from '../../constants/categories';
-import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight } from '@phosphor-icons/react';
+import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
+import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank, CaretDown } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -68,12 +69,72 @@ const formatCount = (count: number): string => {
     return count > 0 ? `${count}` : '';
 };
 
+// Parse Vietnamese date string to Date object
+const parseVietnameseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+
+    // Handle formats like "ngày 15 tháng 1" or "15/1/2026" or "15-01-2026"
+
+    // Format: "ngày X tháng Y"
+    const vnMatch = dateStr.match(/ngày\s*(\d+)\s*tháng\s*(\d+)/i);
+    if (vnMatch) {
+        const day = parseInt(vnMatch[1]);
+        const month = parseInt(vnMatch[2]) - 1; // months are 0-indexed
+        const year = new Date().getFullYear();
+        return new Date(year, month, day);
+    }
+
+    // Format: "DD/MM" or "DD/MM/YYYY"
+    const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+    if (slashMatch) {
+        const day = parseInt(slashMatch[1]);
+        const month = parseInt(slashMatch[2]) - 1;
+        let year = slashMatch[3] ? parseInt(slashMatch[3]) : new Date().getFullYear();
+        if (year < 100) year += 2000;
+        return new Date(year, month, day);
+    }
+
+    // Format: "DD-MM-YYYY"
+    const dashMatch = dateStr.match(/(\d{1,2})-(\d{1,2})-(\d{2,4})/);
+    if (dashMatch) {
+        const day = parseInt(dashMatch[1]);
+        const month = parseInt(dashMatch[2]) - 1;
+        let year = parseInt(dashMatch[3]);
+        if (year < 100) year += 2000;
+        return new Date(year, month, day);
+    }
+
+    return null;
+};
+
+// Check if event is in the past
+const isEventPast = (event: Event): boolean => {
+    const nextOccurrence = event.time?.next_occurrence;
+    if (!nextOccurrence) return false;
+
+    const eventDate = parseVietnameseDate(nextOccurrence);
+    if (!eventDate) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+
+    return eventDate < today;
+};
+
 // Create dynamic event marker icon
 const createEventIcon = (event: Event) => {
     // Use participant_count from backend, fallback to review_count if not available
     const count = event.participant_count || event.review_count || 0;
     const size = getMarkerSize(count);
-    const { tier, color, hasPulse } = getMarkerTier(count);
+    let { tier, color, hasPulse } = getMarkerTier(count);
+
+    // Override style for past events
+    if (isEventPast(event)) {
+        tier = 'cold';
+        color = '#9ca3af'; // Gray-400
+        hasPulse = false;
+    }
+
     const badge = formatCount(count);
 
     const html = `
@@ -199,6 +260,10 @@ const MapPage = () => {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
     const initialFetchDone = useRef(false);
+    const [checkingInEventId, setCheckingInEventId] = useState<string | null>(null);
+    const [checkedInEvents, setCheckedInEvents] = useState<string[]>([]);
+    const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'today' | 'week' | 'month' | 'year' | 'past'>('all');
+    const [showDateFilter, setShowDateFilter] = useState(false);
 
     // Fetch events based on viewport using getNearby API
     const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
@@ -262,13 +327,84 @@ const MapPage = () => {
     // Use shared categories from constants
     const allCategories = CATEGORIES;
 
-    // Filter events that have coordinates and apply category filter
+    // Date filter options
+    const dateFilterOptions = [
+        { value: 'all' as const, label: 'Tất cả', icon: '📅' },
+        { value: 'upcoming' as const, label: 'Sắp diễn ra', icon: '🚀' },
+        { value: 'today' as const, label: 'Hôm nay', icon: '☀️' },
+        { value: 'week' as const, label: '7 ngày tới', icon: '📆' },
+        { value: 'month' as const, label: '30 ngày tới', icon: '🗓️' },
+        { value: 'year' as const, label: 'Trong năm', icon: '🎯' },
+        { value: 'past' as const, label: 'Đã qua', icon: '⏳' },
+    ];
+
+
+
+    // Check if event date matches the filter
+    const matchesDateFilter = (event: Event): boolean => {
+        if (dateFilter === 'all') return true;
+
+        const nextOccurrence = event.time?.next_occurrence;
+        if (!nextOccurrence) return false;
+
+        const eventDate = parseVietnameseDate(nextOccurrence);
+        if (!eventDate) return false;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const endOfToday = new Date(today);
+        endOfToday.setHours(23, 59, 59, 999);
+
+        switch (dateFilter) {
+            case 'past':
+                // Events that have already occurred
+                return eventDate < today;
+
+            case 'upcoming':
+                // All upcoming events (from today onwards)
+                return eventDate >= today;
+
+            case 'today':
+                return eventDate >= today && eventDate <= endOfToday;
+
+            case 'week': {
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(today.getDate() + 7);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfWeek;
+            }
+
+            case 'month': {
+                const endOfMonth = new Date(today);
+                endOfMonth.setDate(today.getDate() + 30);
+                endOfMonth.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfMonth;
+            }
+
+            case 'year': {
+                const endOfYear = new Date(today);
+                endOfYear.setFullYear(today.getFullYear() + 1);
+                endOfYear.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfYear;
+            }
+
+            default:
+                return true;
+        }
+    };
+
+    // Filter events that have coordinates and apply category + date filter
     const eventsWithLocation = useMemo(() => {
         return events
             .filter((event) => {
                 // Must have coordinates
                 if (!event.location?.coordinates?.coordinates ||
                     event.location.coordinates.coordinates.length !== 2) {
+                    return false;
+                }
+                // Apply date filter
+                if (!matchesDateFilter(event)) {
                     return false;
                 }
                 // If categories selected, event must have at least one matching category
@@ -280,7 +416,7 @@ const MapPage = () => {
                 return true;
             })
             .sort((a, b) => (b.participant_count || b.review_count || 0) - (a.participant_count || a.review_count || 0));
-    }, [events, selectedCategories]);
+    }, [events, selectedCategories, dateFilter]);
 
     // Toggle category selection
     const toggleCategory = (category: string) => {
@@ -377,6 +513,50 @@ const MapPage = () => {
         navigate(`/events/${eventId}`);
     };
 
+    // Handle check-in at event location
+    const handleCheckIn = async (event: Event) => {
+        if (!user || !userLocation) return;
+
+        const [lng, lat] = event.location!.coordinates!.coordinates;
+        const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+
+        if (distance > CHECKIN_RADIUS_METERS) {
+            alert(`Bạn cần đến gần sự kiện hơn. Khoảng cách hiện tại: ${formatDistance(distance)} (cần trong ${CHECKIN_RADIUS_METERS}m)`);
+            return;
+        }
+
+        setCheckingInEventId(event.id);
+        try {
+            await userApi.addParticipatedEvent(user.id, event.id);
+            setCheckedInEvents(prev => [...prev, event.id]);
+            alert('Check-in thành công! 🎉');
+        } catch (err: any) {
+            alert(err.response?.data?.message || 'Không thể check-in');
+        } finally {
+            setCheckingInEventId(null);
+        }
+    };
+
+    // Calculate distance from user to event
+    const getDistanceToEvent = (event: Event): number | null => {
+        if (!userLocation || !event.location?.coordinates?.coordinates) return null;
+        const [lng, lat] = event.location.coordinates.coordinates;
+        return calculateDistance(userLocation[0], userLocation[1], lat, lng);
+    };
+
+    // Check if user is within check-in range
+    const isInCheckInRange = (event: Event): boolean => {
+        const distance = getDistanceToEvent(event);
+        return distance !== null && distance <= CHECKIN_RADIUS_METERS;
+    };
+
+    // Initialize checked-in events from user data
+    useEffect(() => {
+        if (user?.participated_events) {
+            setCheckedInEvents(user.participated_events);
+        }
+    }, [user]);
+
     if (loading) {
         return (
             <div className="map-page-loading">
@@ -457,6 +637,39 @@ const MapPage = () => {
                         <span className="filter-count">{selectedCategories.length}</span>
                     )}
                 </button>
+
+                {/* Date Filter Dropdown */}
+                <div className="date-filter-container">
+                    <button
+                        className={`date-filter-button ${dateFilter !== 'all' ? 'has-filter' : ''}`}
+                        onClick={() => setShowDateFilter(!showDateFilter)}
+                        title="Lọc theo thời gian"
+                    >
+                        <CalendarBlank size={20} />
+                        <span className="date-filter-label">
+                            {dateFilterOptions.find(opt => opt.value === dateFilter)?.label || 'Thời gian'}
+                        </span>
+                        <CaretDown size={14} className={`caret-icon ${showDateFilter ? 'open' : ''}`} />
+                    </button>
+
+                    {showDateFilter && (
+                        <div className="date-filter-dropdown">
+                            {dateFilterOptions.map((option) => (
+                                <button
+                                    key={option.value}
+                                    className={`date-filter-option ${dateFilter === option.value ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setDateFilter(option.value);
+                                        setShowDateFilter(false);
+                                    }}
+                                >
+                                    <span className="option-icon">{option.icon}</span>
+                                    <span className="option-label">{option.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Category Filters */}
@@ -573,6 +786,31 @@ const MapPage = () => {
                                         Xem chi tiết
                                         <ArrowRight size={16} weight="bold" />
                                     </button>
+
+                                    {/* Check-in Button */}
+                                    {user && event.location?.coordinates?.coordinates && (
+                                        <>
+                                            {checkedInEvents.includes(event.id) ? (
+                                                <div className="popup-checkedin">
+                                                    <CheckCircle size={16} weight="fill" />
+                                                    Đã check-in
+                                                </div>
+                                            ) : isInCheckInRange(event) ? (
+                                                <button
+                                                    className="popup-checkin-btn"
+                                                    onClick={() => handleCheckIn(event)}
+                                                    disabled={checkingInEventId === event.id}
+                                                >
+                                                    <CheckCircle size={16} weight="bold" />
+                                                    {checkingInEventId === event.id ? 'Đang check-in...' : 'Check-in'}
+                                                </button>
+                                            ) : userLocation ? (
+                                                <div className="popup-distance">
+                                                    📍 Cách {formatDistance(getDistanceToEvent(event) || 0)}
+                                                </div>
+                                            ) : null}
+                                        </>
+                                    )}
                                 </div>
                             </Popup>
                         </Marker>

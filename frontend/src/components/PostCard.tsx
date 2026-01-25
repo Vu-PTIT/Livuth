@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Heart, ChatCircle, ShareNetwork, DotsThree, MapPin, PencilSimple, Trash } from '@phosphor-icons/react';
 import type { Post } from '../types';
 import { postApi } from '../api/endpoints';
@@ -11,10 +11,10 @@ interface PostCardProps {
     post: Post;
     onUpdate?: (post: Post) => void;
     onDelete?: (postId: string) => void;
+    onOpenDetail?: (post: Post) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
-    const navigate = useNavigate();
+const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDetail }) => {
     const { user } = useAuth();
     const { showToast } = useToast();
     const [isLiked, setIsLiked] = useState(post.is_liked);
@@ -176,9 +176,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
             </div>
 
             {/* Content */}
-            <div className="post-content">
+            <div className="post-content" onClick={() => !isEditing && onOpenDetail?.(post)} style={{ cursor: isEditing ? 'default' : 'pointer' }}>
                 {isEditing ? (
-                    <div className="post-edit-form">
+                    <div className="post-edit-form" onClick={(e) => e.stopPropagation()}>
                         <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
@@ -210,7 +210,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
 
                         {/* Tags */}
                         {post.tags.length > 0 && (
-                            <div className="post-tags">
+                            <div className="post-tags" onClick={(e) => e.stopPropagation()}>
                                 {post.tags.map((tag, index) => (
                                     <Link key={index} to={`/search?tag=${tag}`} className="post-tag">
                                         #{tag}
@@ -224,11 +224,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
 
             {/* Media */}
             {post.media.length > 0 && !isEditing && (
-                <div className={`post-media post-media-${Math.min(post.media.length, 4)}`}>
+                <div
+                    className={`post-media post-media-${Math.min(post.media.length, 4)}`}
+                    onClick={() => onOpenDetail?.(post)}
+                    style={{ cursor: 'pointer' }}
+                >
                     {post.media.slice(0, 4).map((item, index) => (
                         <div key={index} className="post-media-item">
                             {item.type === 'video' ? (
-                                <video src={item.url} controls />
+                                <video src={item.url} controls onClick={(e) => e.stopPropagation()} />
                             ) : (
                                 <img src={item.url} alt={item.caption || 'Post image'} />
                             )}
@@ -254,7 +258,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
                     {post.comment_count > 0 && (
                         <span
                             className="post-stat post-stat-comments"
-                            onClick={() => navigate(`/posts/${post.id}`)}
+                            onClick={() => onOpenDetail?.(post)}
                         >
                             {post.comment_count} bình luận
                         </span>
@@ -275,7 +279,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete }) => {
                     </button>
                     <button
                         className="post-action"
-                        onClick={() => navigate(`/posts/${post.id}`)}
+                        onClick={() => onOpenDetail?.(post)}
                     >
                         <ChatCircle size={20} />
                         <span>Bình luận</span>

@@ -6,6 +6,8 @@ export interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (data: LoginRequest) => Promise<void>;
+    loginGoogle: (data: import('../types').GoogleLoginRequest) => Promise<void>;
+    loginFacebook: (data: import('../types').FacebookLoginRequest) => Promise<void>;
     register: (data: RegisterRequest) => Promise<void>;
     logout: () => void;
     refreshUser: () => Promise<void>;

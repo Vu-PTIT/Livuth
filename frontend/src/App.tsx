@@ -100,6 +100,7 @@ function AppContent() {
 
         {/* User Routes */}
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route path="/profile/upgrade" element={<RoleUpgradePage />} />
         <Route path="/chat" element={<ChatPage />} />
 

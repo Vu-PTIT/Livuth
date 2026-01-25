@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { GoogleLogin } from '@react-oauth/google';
+import FacebookLogin from 'react-facebook-login';
 import { Eye, EyeSlash, SignIn } from '@phosphor-icons/react';
 import './Auth.css';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login } = useAuth();
+    const { login, loginGoogle, loginFacebook } = useAuth();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -37,6 +39,36 @@ const LoginPage: React.FC = () => {
             setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+        setIsLoading(true);
+        try {
+            if (credentialResponse.credential) {
+                await loginGoogle({ id_token: credentialResponse.credential });
+                navigate(from, { replace: true });
+            }
+        } catch (err: any) {
+            setError(err.response?.data?.message || 'Đăng nhập Google thất bại');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleFacebookResponse = async (response: any) => {
+        if (response.accessToken) {
+            setIsLoading(true);
+            try {
+                await loginFacebook({ access_token: response.accessToken });
+                navigate(from, { replace: true });
+            } catch (err: any) {
+                setError(err.response?.data?.message || 'Đăng nhập Facebook thất bại');
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            // setError('Đăng nhập Facebook bị hủy hoặc thất bại');
         }
     };
 
@@ -110,6 +142,34 @@ const LoginPage: React.FC = () => {
                         )}
                     </button>
                 </form>
+
+                <div className="social-login-separator">
+                    <span>Hoặc đăng nhập với</span>
+                </div>
+
+                <div className="social-login-buttons">
+                    <div className="google-login-wrapper">
+                        <GoogleLogin
+                            onSuccess={handleGoogleSuccess}
+                            onError={() => setError('Đăng nhập Google thất bại')}
+                            useOneTap
+                        />
+                    </div>
+
+                    {import.meta.env.VITE_FACEBOOK_APP_ID && (
+                        <div className="facebook-login-wrapper">
+                            <FacebookLogin
+                                appId={import.meta.env.VITE_FACEBOOK_APP_ID}
+                                autoLoad={false}
+                                fields="name,email,picture"
+                                callback={handleFacebookResponse}
+                                cssClass="btn btn-facebook"
+                                icon="fa-facebook"
+                                textButton=" Facebook"
+                            />
+                        </div>
+                    )}
+                </div>
 
                 <div className="auth-footer">
                     <p>

@@ -29,6 +29,12 @@ export const authApi = {
     login: (data: LoginRequest) =>
         apiClient.post<ApiResponse<TokenResponse>>('/auth/login', data),
 
+    loginGoogle: (data: import('../types').GoogleLoginRequest) =>
+        apiClient.post<ApiResponse<TokenResponse>>('/auth/google', data),
+
+    loginFacebook: (data: import('../types').FacebookLoginRequest) =>
+        apiClient.post<ApiResponse<TokenResponse>>('/auth/facebook', data),
+
     register: (data: RegisterRequest) =>
         apiClient.post<ApiResponse<User>>('/auth/register', data),
 
@@ -190,6 +196,14 @@ export const chatApi = {
 
     deleteConversation: (conversationId: string) =>
         apiClient.delete(`/chat/conversations/${conversationId}`),
+
+    clearAllConversations: async () => {
+        const response = await apiClient.get<ApiResponse<ChatConversation[]>>('/chat/conversations');
+        const conversations = response.data.data || [];
+        await Promise.all(
+            conversations.map((conv) => apiClient.delete(`/chat/conversations/${conv.id}`))
+        );
+    },
 };
 
 // ============ REVIEW API ============
@@ -250,4 +264,39 @@ export const postApi = {
 
     deleteComment: (postId: string, commentId: string) =>
         apiClient.delete(`/posts/${postId}/comments/${commentId}`),
+};
+
+// ============ NOTIFICATION API ============
+export const notificationApi = {
+    getAll: (page: number = 1, pageSize: number = 20) =>
+        apiClient.get<ApiResponse<{
+            notifications: Array<{
+                id: string;
+                user_id: string;
+                actor: { id: string; username: string; full_name?: string; avatar_url?: string };
+                type: string;
+                message: string;
+                post_id?: string;
+                comment_id?: string;
+                read: boolean;
+                created_at: number;
+            }>;
+            total: number;
+            unread_count: number;
+            page: number;
+            page_size: number;
+            has_more: boolean;
+        }>>('/notifications', { params: { page, page_size: pageSize } }),
+
+    getUnreadCount: () =>
+        apiClient.get<ApiResponse<{ unread_count: number }>>('/notifications/unread-count'),
+
+    markAsRead: (notificationId: string) =>
+        apiClient.patch<ApiResponse<{ success: boolean }>>(`/notifications/${notificationId}/read`),
+
+    markAllAsRead: () =>
+        apiClient.patch<ApiResponse<{ modified_count: number }>>('/notifications/read-all'),
+
+    delete: (notificationId: string) =>
+        apiClient.delete(`/notifications/${notificationId}`),
 };

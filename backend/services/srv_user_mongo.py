@@ -86,8 +86,8 @@ class UserMongoService:
         if existing_user:
             raise CustomException(exception=ExceptionType.CONFLICT)
         
-        # Hash password
-        hashed_password = get_password_hash(data.password)
+        # Hash password if provided
+        hashed_password = get_password_hash(data.password) if data.password else None
         
         # Prepare user document
         user_dict = data.model_dump(exclude={"password"})

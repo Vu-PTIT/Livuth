@@ -25,11 +25,13 @@ class UserBaseRequest(BaseModel):
 class UserCreateRequest(UserBaseRequest):
     username: Optional[str]
     email: EmailStr
-    password: str
+    password: Optional[str] = None
     is_active: Optional[bool] = True
     roles: List[str] = [
         UserRole.USER.value,
     ]
+    sso_sub: Optional[str] = None
+    auth_provider: Optional[str] = "email"
 
 
 class UserUpdateRequest(UserBaseRequest):
