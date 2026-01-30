@@ -4,12 +4,10 @@ import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
-import { CATEGORY_NAMES } from '../../constants/categories';
+import { CATEGORIES } from '../../constants/categories';
+import CategoryChip from '../../components/CategoryChip';
 import { MagnifyingGlass, FunnelSimple, X, CaretLeft, CaretRight } from '@phosphor-icons/react';
 import './EventsPage.css';
-
-// Use shared categories
-const CATEGORIES = CATEGORY_NAMES;
 
 const ITEMS_PER_PAGE = 12;
 
@@ -193,15 +191,16 @@ const EventsPage: React.FC = () => {
 
                     <div className="filter-group">
                         <label className="filter-label">Danh mục</label>
-                        <div className="category-chips">
+                        <div className="category-chips-grid-6">
                             {CATEGORIES.map((cat) => (
-                                <button
-                                    key={cat}
-                                    className={`chip ${selectedCategories.includes(cat) ? 'active' : ''}`}
-                                    onClick={() => toggleCategory(cat)}
-                                >
-                                    {cat}
-                                </button>
+                                <CategoryChip
+                                    key={cat.id}
+                                    name={cat.name}
+                                    icon={cat.icon}
+                                    isActive={selectedCategories.includes(cat.name)}
+                                    onClick={() => toggleCategory(cat.name)}
+                                    variant="rounded"
+                                />
                             ))}
                         </div>
                     </div>

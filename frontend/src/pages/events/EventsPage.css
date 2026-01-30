@@ -44,16 +44,30 @@
 }
 
 .filter-toggle {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+    white-space: nowrap !important;
+    padding: 0.625rem 1rem !important;
+    border-radius: 8px !important;
+    background: var(--bg-secondary) !important;
+    border: 1.5px solid var(--border-color) !important;
 }
 
-.filter-toggle.active {
-    background: var(--primary-light);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+/* Hover state - color only, no size change */
+.filter-toggle:hover {
+    background: rgba(99, 102, 241, 0.1) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+
+/* Active state - full background coverage for both icon and text */
+.filter-toggle.active,
+.filter-toggle.active:hover {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
 }
 
 .filter-count {
@@ -100,32 +114,8 @@
     letter-spacing: 0.5px;
 }
 
-.category-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
+/* Old .category-chips and .chip styles removed - now using CategoryChip component */
 
-.chip {
-    padding: 0.5rem 1rem;
-    border-radius: 100px;
-    background: var(--bg-secondary);
-    border: 1.5px solid transparent;
-    font-size: 0.875rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    color: var(--text-primary);
-}
-
-.chip:hover {
-    background: var(--border-color);
-}
-
-.chip.active {
-    background: var(--primary-light);
-    border-color: var(--primary-color);
-    color: var(--primary-color);
-}
 
 /* Active Filters */
 .active-filters {

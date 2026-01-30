@@ -6,7 +6,8 @@ import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
-import { MagnifyingGlass, ArrowRight, Sparkle } from '@phosphor-icons/react';
+import CategoryChip from '../../components/CategoryChip';
+import { MagnifyingGlass, ArrowRight, Sparkle, Funnel } from '@phosphor-icons/react';
 import './HomePage.css';
 
 // Use first 6 categories for homepage display
@@ -19,6 +20,8 @@ const HomePage: React.FC = () => {
     const [recommendedEvents, setRecommendedEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -48,9 +51,14 @@ const HomePage: React.FC = () => {
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        if (searchQuery.trim()) {
-            navigate(`/events?q=${encodeURIComponent(searchQuery)}`);
-        }
+        const params = new URLSearchParams();
+        if (searchQuery.trim()) params.set('q', searchQuery);
+        if (selectedCategory) params.set('categories', selectedCategory);
+        navigate(`/events?${params.toString()}`);
+    };
+
+    const handleCategoryQuickFilter = (categoryName: string) => {
+        setSelectedCategory(selectedCategory === categoryName ? '' : categoryName);
     };
 
     return (
@@ -64,30 +72,55 @@ const HomePage: React.FC = () => {
                     className="hero-bg"
                     aria-hidden="true"
                 />
-                <div className="hero-content container">
-                    <h1 className="hero-title">
-                        Khám phá <span className="gradient-text">Văn hóa</span><br />
-                        và Lễ hội Việt Nam
-                    </h1>
-                    <p className="hero-subtitle">
-                        Tìm hiểu, tham gia và trải nghiệm những lễ hội truyền thống độc đáo trên khắp đất nước
-                    </p>
-
-                    <form className="hero-search" onSubmit={handleSearch}>
-                        <MagnifyingGlass size={24} className="search-icon" />
-                        <input
-                            type="text"
-                            placeholder="Tìm kiếm lễ hội, sự kiện..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <button type="submit" className="btn btn-primary">
-                            Tìm kiếm
-                        </button>
-                    </form>
-                </div>
                 <div className="hero-decoration"></div>
             </section>
+
+            {/* Floating Search Bar */}
+            <div className="search-bar-wrapper">
+                <div className="container">
+                    <form className="hero-search" onSubmit={handleSearch}>
+                        <div className="search-main">
+                            <MagnifyingGlass size={24} className="search-icon" />
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm lễ hội, sự kiện..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <button
+                                type="button"
+                                className={`filter-toggle ${showFilters ? 'active' : ''}`}
+                                onClick={() => setShowFilters(!showFilters)}
+                                title="Bộ lọc"
+                            >
+                                <Funnel size={20} />
+                            </button>
+                            <button type="submit" className="btn btn-primary">
+                                Tìm kiếm
+                            </button>
+                        </div>
+
+                        {/* Quick Category Filters */}
+                        <div className={`search-filters ${showFilters ? 'show' : ''}`}>
+                            <div className="filter-group">
+                                <span className="filter-label">Danh mục:</span>
+                                <div className="category-chips-flex">
+                                    {HOME_CATEGORIES.slice(0, 4).map((cat) => (
+                                        <CategoryChip
+                                            key={cat.id}
+                                            name={cat.name}
+                                            icon={cat.icon}
+                                            isActive={selectedCategory === cat.name}
+                                            onClick={() => handleCategoryQuickFilter(cat.name)}
+                                            size="sm"
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
             {/* Categories */}
             <section className="section categories-section">

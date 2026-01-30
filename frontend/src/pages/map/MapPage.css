@@ -302,50 +302,8 @@
     background: rgba(99, 102, 241, 0.1);
 }
 
-.category-chips {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-}
+/* Old category-chips styles removed - now using CategoryChip component */
 
-.category-chip {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    background: var(--bg-secondary);
-    border: 1.5px solid transparent;
-    border-radius: 10px;
-    padding: 0.625rem 0.75rem;
-    font-size: 0.8rem;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.category-chip .category-icon {
-    font-size: 1.1rem;
-    line-height: 1;
-    flex-shrink: 0;
-}
-
-.category-chip .category-name {
-    font-weight: 500;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.category-chip:hover {
-    border-color: var(--primary);
-    background: rgba(99, 102, 241, 0.1);
-}
-
-.category-chip.active {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-}
 
 /* Event Count Badge */
 .event-count {

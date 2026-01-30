@@ -1,0 +1,98 @@
+/* CategoryChip Component - Unified Category Button Styles */
+
+/* Base button styles */
+.category-chip {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1.5px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    white-space: nowrap;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+/* Pill variant (default) */
+.category-chip.category-chip--pill {
+    border-radius: 100px;
+}
+
+/* Rounded variant */
+.category-chip.category-chip--rounded {
+    border-radius: 10px;
+}
+
+/* Size variants */
+.category-chip.category-chip--md {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
+.category-chip.category-chip--sm {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+}
+
+/* Icon styles */
+.category-chip .category-chip__icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.category-chip .category-chip__name {
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+/* Hover state */
+.category-chip:hover {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary-color);
+}
+
+/* Active state - full coverage with primary color */
+.category-chip.active {
+    background: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Grid layout - default 2 columns */
+.category-chips-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.5rem !important;
+    width: 100%;
+}
+
+/* 6 columns variant for MapPage */
+.category-chips-grid-6 {
+    display: grid !important;
+    grid-template-columns: repeat(6, 1fr) !important;
+    gap: 0.5rem !important;
+    width: 100%;
+}
+
+/* Flex layout - horizontal wrap */
+.category-chips-flex {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+}
+
+/* Responsive: single column on small screens */
+@media (max-width: 480px) {
+    .category-chips-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .category-chips-grid-6 {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}

@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { eventApi, userApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import { CATEGORIES } from '../../constants/categories';
+import CategoryChip from '../../components/CategoryChip';
 import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
 import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank, CaretDown } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
@@ -695,16 +696,16 @@ const MapPage = () => {
                             </button>
                         )}
                     </div>
-                    <div className="category-chips">
+                    <div className="category-chips-grid">
                         {allCategories.map((category) => (
-                            <button
+                            <CategoryChip
                                 key={category.id}
-                                className={`category-chip ${selectedCategories.includes(category.name) ? 'active' : ''}`}
+                                name={category.name}
+                                icon={category.icon}
+                                isActive={selectedCategories.includes(category.name)}
                                 onClick={() => toggleCategory(category.name)}
-                            >
-                                <span className="category-icon">{category.icon}</span>
-                                <span className="category-name">{category.name}</span>
-                            </button>
+                                variant="rounded"
+                            />
                         ))}
                     </div>
                 </div>
