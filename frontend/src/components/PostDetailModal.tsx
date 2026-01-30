@@ -8,6 +8,7 @@ import {
     MapPin,
     PencilSimple,
     Trash,
+    Ticket,
 } from '@phosphor-icons/react';
 import type { Post, Comment } from '../types';
 import { postApi } from '../api/endpoints';
@@ -251,6 +252,13 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                                 <div className="post-location">
                                     <MapPin size={16} />
                                     <span>{[post.location.city, post.location.province].filter(Boolean).join(', ')}</span>
+                                </div>
+                            )}
+
+                            {post.checkin_event && (
+                                <div className="post-checkin">
+                                    <Ticket size={16} />
+                                    <strong>{post.checkin_event.name}</strong>
                                 </div>
                             )}
 

@@ -1,7 +1,7 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 // Use environment variable or default to production backend
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://livuth.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://livuth.onrender.com/api');
 
 // Create axios instance
 const apiClient = axios.create({

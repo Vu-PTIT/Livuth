@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { useNavigate } from 'react-router-dom';
 import { eventApi, userApi } from '../../api/endpoints';
@@ -151,6 +152,17 @@ const createEventIcon = (event: Event) => {
         iconSize: [size, size],
         iconAnchor: [size / 2, size / 2],
         popupAnchor: [0, -size / 2],
+    });
+};
+
+// Create custom cluster icon
+const createClusterIcon = (cluster: any) => {
+    return new L.DivIcon({
+        html: `<div class="cluster-icon">
+                <span>${cluster.getChildCount()}</span>
+              </div>`,
+        className: 'custom-marker-cluster',
+        iconSize: L.point(40, 40, true),
     });
 };
 
@@ -741,81 +753,88 @@ const MapPage = () => {
                 <ClosePopupOnZoom />
                 <MapEventHandler onViewportChange={handleViewportChange} />
 
-                {eventsWithLocation.map((event) => {
-                    const [lng, lat] = event.location!.coordinates!.coordinates;
-                    return (
-                        <Marker
-                            key={event.id}
-                            position={[lat, lng]}
-                            icon={createEventIcon(event)}
-                        >
-                            <Popup>
-                                <div className="event-popup">
-                                    {event.media && event.media.length > 0 && (
-                                        <div className="popup-image-wrapper">
-                                            <img
-                                                src={event.media[0].url}
-                                                alt={event.name}
-                                                className="popup-image"
-                                            />
-                                            <div className="popup-image-overlay" />
-                                            {event.categories && event.categories.length > 0 && (
-                                                <span className="popup-category-badge">
-                                                    {event.categories[0]}
-                                                </span>
-                                            )}
-                                        </div>
-                                    )}
-                                    <h3 className="popup-title">{event.name}</h3>
-                                    {event.location?.address && (
-                                        <p className="popup-address">
-                                            <MapPin size={14} weight="fill" />
-                                            {event.location.address}
-                                        </p>
-                                    )}
-                                    {event.time?.next_occurrence && (
-                                        <p className="popup-time">
-                                            <Calendar size={14} />
-                                            {event.time.next_occurrence}
-                                        </p>
-                                    )}
-                                    <button
-                                        className="popup-button"
-                                        onClick={() => handleEventClick(event.id)}
-                                    >
-                                        Xem chi tiết
-                                        <ArrowRight size={16} weight="bold" />
-                                    </button>
+                <MarkerClusterGroup
+                    chunkedLoading
+                    iconCreateFunction={createClusterIcon}
+                    maxClusterRadius={60}
+                    spiderfyOnMaxZoom={true}
+                >
+                    {eventsWithLocation.map((event) => {
+                        const [lng, lat] = event.location!.coordinates!.coordinates;
+                        return (
+                            <Marker
+                                key={event.id}
+                                position={[lat, lng]}
+                                icon={createEventIcon(event)}
+                            >
+                                <Popup>
+                                    <div className="event-popup">
+                                        {event.media && event.media.length > 0 && (
+                                            <div className="popup-image-wrapper">
+                                                <img
+                                                    src={event.media[0].url}
+                                                    alt={event.name}
+                                                    className="popup-image"
+                                                />
+                                                <div className="popup-image-overlay" />
+                                                {event.categories && event.categories.length > 0 && (
+                                                    <span className="popup-category-badge">
+                                                        {event.categories[0]}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
+                                        <h3 className="popup-title">{event.name}</h3>
+                                        {event.location?.address && (
+                                            <p className="popup-address">
+                                                <MapPin size={14} weight="fill" />
+                                                {event.location.address}
+                                            </p>
+                                        )}
+                                        {event.time?.next_occurrence && (
+                                            <p className="popup-time">
+                                                <Calendar size={14} />
+                                                {event.time.next_occurrence}
+                                            </p>
+                                        )}
+                                        <button
+                                            className="popup-button"
+                                            onClick={() => handleEventClick(event.id)}
+                                        >
+                                            Xem chi tiết
+                                            <ArrowRight size={16} weight="bold" />
+                                        </button>
 
-                                    {/* Check-in Button */}
-                                    {user && event.location?.coordinates?.coordinates && (
-                                        <>
-                                            {checkedInEvents.includes(event.id) ? (
-                                                <div className="popup-checkedin">
-                                                    <CheckCircle size={16} weight="fill" />
-                                                    Đã check-in
-                                                </div>
-                                            ) : isInCheckInRange(event) ? (
-                                                <button
-                                                    className="popup-checkin-btn"
-                                                    onClick={() => handleCheckIn(event)}
-                                                    disabled={checkingInEventId === event.id}
-                                                >
-                                                    <CheckCircle size={16} weight="bold" />
-                                                    {checkingInEventId === event.id ? 'Đang check-in...' : 'Check-in'}
-                                                </button>
-                                            ) : userLocation ? (
-                                                <div className="popup-distance">
-                                                    📍 Cách {formatDistance(getDistanceToEvent(event) || 0)}
-                                                </div>
-                                            ) : null}
-                                        </>
-                                    )}
-                                </div>
-                            </Popup>
-                        </Marker>
-                    );
-                })}
+                                        {/* Check-in Button */}
+                                        {user && event.location?.coordinates?.coordinates && (
+                                            <>
+                                                {checkedInEvents.includes(event.id) ? (
+                                                    <div className="popup-checkedin">
+                                                        <CheckCircle size={16} weight="fill" />
+                                                        Đã check-in
+                                                    </div>
+                                                ) : isInCheckInRange(event) ? (
+                                                    <button
+                                                        className="popup-checkin-btn"
+                                                        onClick={() => handleCheckIn(event)}
+                                                        disabled={checkingInEventId === event.id}
+                                                    >
+                                                        <CheckCircle size={16} weight="bold" />
+                                                        {checkingInEventId === event.id ? 'Đang check-in...' : 'Check-in'}
+                                                    </button>
+                                                ) : userLocation ? (
+                                                    <div className="popup-distance">
+                                                        📍 Cách {formatDistance(getDistanceToEvent(event) || 0)}
+                                                    </div>
+                                                ) : null}
+                                            </>
+                                        )}
+                                    </div>
+                                </Popup>
+                            </Marker>
+                        );
+                    })}
+                </MarkerClusterGroup>
 
                 {/* User Location Marker */}
                 {userLocation && (

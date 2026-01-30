@@ -27,6 +27,7 @@ class PostCreate(BaseModel):
     location: Optional[LocationSchema] = None
     tags: List[str] = Field(default_factory=list, max_length=10)
     visibility: str = Field(default="public", pattern="^(public|friends|private)$")
+    event_id: Optional[str] = None
 
 
 class PostUpdate(BaseModel):
@@ -46,6 +47,13 @@ class AuthorInfo(BaseModel):
     avatar_url: Optional[str] = None
 
 
+class CheckinEventInfo(BaseModel):
+    """Event info embedded in post response"""
+    id: str
+    name: str
+    image_url: Optional[str] = None
+
+
 class PostResponse(BaseModel):
     """Post response schema"""
     id: str
@@ -61,6 +69,7 @@ class PostResponse(BaseModel):
     visibility: str = "public"
     created_at: float
     updated_at: float
+    checkin_event: Optional[CheckinEventInfo] = None
 
 
 class PostListResponse(BaseModel):

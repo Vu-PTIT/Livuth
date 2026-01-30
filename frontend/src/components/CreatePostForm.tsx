@@ -1,21 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Image, MapPin, X, PaperPlaneTilt } from '@phosphor-icons/react';
+import { Image, MapPin, X, PaperPlaneTilt, Ticket } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuth';
-import { postApi } from '../api/endpoints';
-import type { Post, PostCreateRequest, MediaItem } from '../types';
+import { postApi, eventApi, uploadApi } from '../api/endpoints';
+import type { Post, PostCreateRequest, MediaItem, Event } from '../types';
 import './CreatePostForm.css';
 
 interface CreatePostFormProps {
     onPostCreated?: (post: Post) => void;
 }
 
+interface LocalMediaItem extends MediaItem {
+    file?: File;
+}
+
 const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
     const { user } = useAuth();
     const [content, setContent] = useState('');
-    const [media, setMedia] = useState<MediaItem[]>([]);
+    const [media, setMedia] = useState<LocalMediaItem[]>([]);
     const [location, setLocation] = useState<{ city?: string; province?: string } | null>(null);
     const [tags, setTags] = useState<string[]>([]);
     const [tagInput, setTagInput] = useState('');
+    const [checkinEvent, setCheckinEvent] = useState<Event | null>(null);
+    const [showCheckinSearch, setShowCheckinSearch] = useState(false);
+    const [eventQuery, setEventQuery] = useState('');
+    const [foundEvents, setFoundEvents] = useState<Event[]>([]);
+    const [isSearchingEvents, setIsSearchingEvents] = useState(false);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const formRef = useRef<HTMLDivElement>(null);
@@ -42,20 +52,78 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
         }
     }, [content]);
 
+    // Search events effect
+    useEffect(() => {
+        if (showCheckinSearch) {
+            const searchEvents = async () => {
+                setIsSearchingEvents(true);
+                try {
+                    const response = await eventApi.search({ q: eventQuery, limit: 5 });
+                    if (response.data.data) {
+                        setFoundEvents(response.data.data);
+                    }
+                } catch (error) {
+                    console.error("Error searching events", error);
+                } finally {
+                    setIsSearchingEvents(false);
+                }
+            };
+
+            const timeoutId = setTimeout(searchEvents, 500);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [showCheckinSearch, eventQuery]);
+
     const handleSubmit = async () => {
-        if (!content.trim() || isSubmitting) return;
+        if (!content.trim() && media.length === 0) return;
+        if (isSubmitting) return;
 
         setIsSubmitting(true);
         try {
+            // Upload files first
+            const uploadedMedia: MediaItem[] = [];
+            const filesToUpload: File[] = [];
+            const fileIndices: number[] = [];
+
+            // Separate already uploaded (if any logic changed) vs new files
+            // Currently all are new files in this form
+            for (let i = 0; i < media.length; i++) {
+                if (media[i].file) {
+                    filesToUpload.push(media[i].file!);
+                    fileIndices.push(i);
+                } else {
+                    uploadedMedia.push({ url: media[i].url, type: media[i].type });
+                }
+            }
+
+            if (filesToUpload.length > 0) {
+                const uploadResponse = await uploadApi.uploadMultipleFiles(filesToUpload);
+                if (uploadResponse.data.data) {
+                    uploadResponse.data.data.forEach(fileData => {
+                        // Determine type based on mimetype or filename extension logic from backend
+                        // Backend returns filename and content_type
+                        const type = fileData.content_type.startsWith('video') ? 'video' : 'image';
+                        uploadedMedia.push({
+                            url: fileData.url, // This is the persistent URL
+                            type: type
+                        });
+                    });
+                }
+            }
+
             const postData: PostCreateRequest = {
                 content: content.trim(),
-                media,
+                media: uploadedMedia,
                 tags,
                 visibility: 'public',
             };
 
             if (location) {
                 postData.location = location;
+            }
+
+            if (checkinEvent) {
+                postData.event_id = checkinEvent.id;
             }
 
             const response = await postApi.create(postData);
@@ -68,7 +136,10 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
             setMedia([]);
             setLocation(null);
             setTags([]);
+            setCheckinEvent(null);
+            setShowCheckinSearch(false);
             setIsExpanded(false);
+            if (textareaRef.current) textareaRef.current.style.height = 'auto';
         } catch (error) {
             console.error('Failed to create post:', error);
         } finally {
@@ -95,12 +166,20 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
         const files = e.target.files;
         if (!files) return;
 
-        for (let i = 0; i < files.length && media.length < 4; i++) {
+        const newMedia: LocalMediaItem[] = [];
+        for (let i = 0; i < files.length && media.length + newMedia.length < 4; i++) {
             const file = files[i];
-            const url = URL.createObjectURL(file);
-            setMedia(prev => [...prev, { url, type: file.type.startsWith('video') ? 'video' : 'image' }]);
+            const url = URL.createObjectURL(file); // Preview URL
+            newMedia.push({
+                url,
+                type: file.type.startsWith('video') ? 'video' : 'image',
+                file
+            });
         }
+        setMedia(prev => [...prev, ...newMedia]);
         setIsExpanded(true);
+        // Clear value to allow re-uploading same file if needed
+        e.target.value = '';
     };
 
     const removeMedia = (index: number) => {
@@ -183,6 +262,17 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
                         </div>
                     )}
 
+                    {/* Check-in display */}
+                    {checkinEvent && (
+                        <div className="checkin-tag">
+                            <Ticket size={16} />
+                            <span>Check-in: {checkinEvent.name}</span>
+                            <button onClick={() => setCheckinEvent(null)}>
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+
                     {/* Actions Row */}
                     <div className="create-post-actions">
                         <div className="create-post-tools">
@@ -203,6 +293,61 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
                             >
                                 <MapPin size={20} />
                             </button>
+
+                            <div style={{ position: 'relative' }}>
+                                <button
+                                    className={`tool-btn ${showCheckinSearch ? 'active' : ''}`}
+                                    title="Check-in sự kiện"
+                                    onClick={() => setShowCheckinSearch(!showCheckinSearch)}
+                                >
+                                    <Ticket size={20} />
+                                </button>
+
+                                {showCheckinSearch && (
+                                    <div className="checkin-dropdown">
+                                        <input
+                                            type="text"
+                                            value={eventQuery}
+                                            onChange={(e) => setEventQuery(e.target.value)}
+                                            placeholder="Tìm sự kiện..."
+                                            autoFocus
+                                            style={{
+                                                width: '100%',
+                                                padding: '8px',
+                                                border: 'none',
+                                                borderBottom: '1px solid #eee',
+                                                outline: 'none'
+                                            }}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                        {isSearchingEvents ? (
+                                            <div className="loading-dots">Đang tìm...</div>
+                                        ) : (
+                                            foundEvents.map(event => (
+                                                <div
+                                                    key={event.id}
+                                                    className="checkin-item"
+                                                    onClick={() => {
+                                                        setCheckinEvent(event);
+                                                        setShowCheckinSearch(false);
+                                                    }}
+                                                >
+                                                    {event.media && event.media.length > 0 && (
+                                                        <img src={event.media[0].url} alt="" />
+                                                    )}
+                                                    <div className="checkin-item-info">
+                                                        <div className="checkin-item-name">{event.name}</div>
+                                                        <div className="checkin-item-date">{event.time?.next_occurrence || event.time?.lunar}</div>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                        {!isSearchingEvents && foundEvents.length === 0 && (
+                                            <div className="loading-dots">Không tìm thấy sự kiện</div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {isExpanded && (

@@ -300,3 +300,26 @@ export const notificationApi = {
     delete: (notificationId: string) =>
         apiClient.delete(`/notifications/${notificationId}`),
 };
+
+// ============ UPLOAD API ============
+export const uploadApi = {
+    uploadFile: (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        return apiClient.post<ApiResponse<{ url: string; filename: string; content_type: string }>>('/upload/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+
+    uploadMultipleFiles: (files: File[]) => {
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+        return apiClient.post<ApiResponse<Array<{ url: string; filename: string; content_type: string }>>>('/upload/multiple', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+};

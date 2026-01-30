@@ -1117,3 +1117,55 @@
         min-width: 160px;
     }
 }
+
+/* Marker Clusters */
+.custom-marker-cluster {
+    background: none !important;
+    border: none !important;
+}
+
+.cluster-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    position: relative;
+    transition: transform 0.2s ease;
+}
+
+.cluster-icon::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: cluster-pulse 2s infinite;
+}
+
+.cluster-icon:hover {
+    transform: scale(1.1);
+    z-index: 1000;
+}
+
+@keyframes cluster-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}

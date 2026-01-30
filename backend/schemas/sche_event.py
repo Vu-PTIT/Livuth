@@ -83,6 +83,7 @@ class EventBaseResponse(BaseModelResponse):
     average_rating: float = 0.0
     review_count: int = 0
     participant_count: int = 0  # Number of users who participated
+    interested_count: int = 0   # FOMO: Number of users interested/checking in
     
     # Tour providers (populated when include_tours=True)
     tour_providers: Optional[List[Any]] = None

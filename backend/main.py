@@ -71,6 +71,12 @@ app.add_middleware(
 )
 
 # Include routers
+from fastapi.staticfiles import StaticFiles
+from backend.api.api_upload import router as upload_router
+
+# ... imports ...
+
+# Include routers
 app.include_router(auth_router, prefix=settings.API_PREFIX, tags=["Authentication"])
 app.include_router(user_router, prefix=settings.API_PREFIX, tags=["Users"])
 app.include_router(event_router, prefix=settings.API_PREFIX, tags=["Events"])
@@ -79,6 +85,10 @@ app.include_router(chat_router, prefix=settings.API_PREFIX, tags=["Chat"])
 app.include_router(review_router, prefix=settings.API_PREFIX, tags=["Reviews"])
 app.include_router(post_router, prefix=settings.API_PREFIX, tags=["Posts"])
 app.include_router(notification_router, prefix=settings.API_PREFIX, tags=["Notifications"])
+app.include_router(upload_router, prefix=settings.API_PREFIX, tags=["Uploads"])
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 
 # Register exception handlers
 app.add_exception_handler(Exception, fastapi_error_handler)

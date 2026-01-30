@@ -28,6 +28,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
             <div className="event-card-image">
                 <img src={getImageUrl()} alt={event.name} />
                 {event.info?.is_free && <span className="event-badge free">Miễn phí</span>}
+                {event.interested_count && event.interested_count > 0 && (
+                    <span className="event-badge interested">
+                        🔥 {event.interested_count} quan tâm
+                    </span>
+                )}
             </div>
             <div className="event-card-content">
                 <div className="event-card-date">

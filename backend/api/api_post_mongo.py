@@ -21,6 +21,9 @@ from backend.core.security import JWTBearer, decode_jwt
 router = APIRouter(prefix="/posts")
 user_service = UserMongoService()
 
+# ... (imports)
+from backend.services.srv_event_mongo import EventMongoService
+
 # Collection references
 def get_posts_collection():
     return db.get_collection("posts")
@@ -28,6 +31,8 @@ def get_posts_collection():
 def get_comments_collection():
     return db.get_collection("comments")
 
+def get_events_collection():
+    return db.get_collection("events")
 
 # Helper functions
 async def get_user_info(user_id: str) -> dict:
@@ -48,10 +53,36 @@ async def get_user_info(user_id: str) -> dict:
             "avatar_url": None
         }
 
+async def get_event_snapshot(event_id: str) -> dict:
+    """Get event snapshot for embedding in post"""
+    if not event_id:
+        return None
+    try:
+        # Use simple find_one for speed, or service if needed
+        # Assuming event_id is a valid int or ObjectId depending on schema
+        # Current Event schema uses int event_id, wait, let's check sche_event. 
+        # sche_event says event_id is Optional[int]. But usually MongoDB uses _id (ObjectId).
+        # Let's assume we store the ObjectId as string in post.event_id for reference
+        
+        event = await get_events_collection().find_one({"_id": ObjectId(event_id)})
+        if event:
+            return {
+                "id": str(event["_id"]),
+                "name": event.get("name", "Unknown Event"),
+                "image_url": event.get("media", [{}])[0].get("url") if event.get("media") else None
+            }
+    except:
+        return None
+    return None
 
 async def format_post_response(post: dict, current_user_id: str = None) -> dict:
     """Format post for response with author info"""
     author_info = await get_user_info(str(post.get("author_id")))
+    
+    # Get Check-in Event info
+    checkin_event = None
+    if post.get("event_id"):
+        checkin_event = await get_event_snapshot(str(post.get("event_id")))
     
     liked_by = post.get("liked_by", [])
     is_liked = False
@@ -71,7 +102,8 @@ async def format_post_response(post: dict, current_user_id: str = None) -> dict:
         "is_liked": is_liked,
         "visibility": post.get("visibility", "public"),
         "created_at": post.get("created_at", 0),
-        "updated_at": post.get("updated_at", 0)
+        "updated_at": post.get("updated_at", 0),
+        "checkin_event": checkin_event
     }
 
 
@@ -87,6 +119,23 @@ async def create_post(
     user_id = payload.get("sub")
     
     now = datetime.now().timestamp()
+    
+    # Handle Check-in logic
+    event_oid = None
+    if post_data.event_id:
+        try:
+            event_oid = ObjectId(post_data.event_id)
+            # Find and update FOMO count
+            event = await get_events_collection().find_one({"_id": event_oid})
+            if event:
+                 await get_events_collection().update_one(
+                    {"_id": event_oid},
+                    {"$inc": {"interested_count": 1}}
+                )
+        except:
+             # Ignore invalid event_id to prevent crashing post creation, or could raise error
+             pass
+
     post_doc = {
         "author_id": ObjectId(user_id),
         "content": post_data.content,
@@ -99,7 +148,8 @@ async def create_post(
         "liked_by": [],
         "visibility": post_data.visibility,
         "created_at": now,
-        "updated_at": now
+        "updated_at": now,
+        "event_id": event_oid
     }
     
     result = await get_posts_collection().insert_one(post_doc)
@@ -200,6 +250,28 @@ async def get_post(
     if not post:
         raise CustomException(exception=ExceptionType.NOT_FOUND)
     
+    # Access Control Check
+    visibility = post.get("visibility", "public")
+    
+    # 1. Author always has access
+    is_author = str(post["author_id"]) == user_id
+    
+    # 2. Public posts are accessible to everyone
+    if visibility == "public":
+        pass
+        
+    # 3. Private posts are capable of being viewed only by the author
+    elif visibility == "private" and not is_author:
+        # Check if user is admin (optional, but good for moderation)
+        # For now, strictly restrict to author
+        raise CustomException(exception=ExceptionType.FORBIDDEN)
+        
+    # 4. Friends visibility - Placeholder for now
+    # If we had a friend system, we would check connection here.
+    # For now, restrict to author to be safe.
+    elif visibility == "friends" and not is_author:
+        raise CustomException(exception=ExceptionType.FORBIDDEN)
+
     response = await format_post_response(post, user_id)
     return DataResponse(data=response)
 

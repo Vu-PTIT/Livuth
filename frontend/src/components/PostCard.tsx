@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ChatCircle, ShareNetwork, DotsThree, MapPin, PencilSimple, Trash } from '@phosphor-icons/react';
+import { Heart, ChatCircle, ShareNetwork, DotsThree, MapPin, PencilSimple, Trash, Ticket } from '@phosphor-icons/react';
 import type { Post } from '../types';
 import { postApi } from '../api/endpoints';
 import { useAuth } from '../hooks/useAuth';
@@ -205,6 +205,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
                                 <span>
                                     {[post.location.city, post.location.province].filter(Boolean).join(', ')}
                                 </span>
+                            </div>
+                        )}
+
+                        {/* Check-in Event */}
+                        {post.checkin_event && (
+                            <div className="post-checkin" onClick={(e) => e.stopPropagation()}>
+                                <Ticket size={16} color="var(--primary-color)" />
+                                <Link to={`/events/${post.checkin_event.id}`} className="checkin-link">
+                                    {post.checkin_event.name}
+                                </Link>
                             </div>
                         )}
 

@@ -48,6 +48,16 @@
     color: white;
 }
 
+.event-badge.interested {
+    background: white;
+    color: #ef4444;
+    /* Red for hot/fire */
+    top: auto;
+    bottom: 0.5rem;
+    right: 0.5rem;
+    left: auto;
+}
+
 .event-card-content {
     padding: 1rem;
     display: flex;

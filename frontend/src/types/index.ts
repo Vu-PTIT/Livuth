@@ -112,6 +112,7 @@ export interface Event {
     average_rating?: number;
     review_count?: number;
     participant_count?: number;
+    interested_count?: number;
     tour_providers?: TourProviderListing[];
     created_at: number;
     updated_at: number;
@@ -284,6 +285,11 @@ export interface Post {
     visibility: 'public' | 'friends' | 'private';
     created_at: number;
     updated_at: number;
+    checkin_event?: {
+        id: string;
+        name: string;
+        image_url?: string;
+    };
 }
 
 export interface PostCreateRequest {
@@ -292,6 +298,7 @@ export interface PostCreateRequest {
     location?: LocationInfo;
     tags?: string[];
     visibility?: 'public' | 'friends' | 'private';
+    event_id?: string;
 }
 
 export interface PostListResponse {
