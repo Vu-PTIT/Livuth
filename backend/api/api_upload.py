@@ -1,69 +1,69 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import JSONResponse
-import shutil
-import os
-import uuid
 from typing import List
+import cloudinary
+import cloudinary.uploader
 from backend.core.config import settings
 
 router = APIRouter(prefix="/upload")
 
-UPLOAD_DIR = "backend/static/uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+# Configure Cloudinary
+if settings.CLOUDINARY_CLOUD_NAME:
+    cloudinary.config( 
+        cloud_name = settings.CLOUDINARY_CLOUD_NAME, 
+        api_key = settings.CLOUDINARY_API_KEY, 
+        api_secret = settings.CLOUDINARY_API_SECRET,
+        secure = True
+    )
+
+def upload_to_cloudinary(file: UploadFile):
+    """Upload a file to Cloudinary, using chunked upload for videos."""
+    is_video = file.content_type and file.content_type.startswith("video")
+    resource_type = "video" if is_video else "image"
+    
+    upload_options = {
+        "resource_type": resource_type,
+        "folder": "livuth_uploads",
+        "timeout": 300,  # 5 minutes timeout
+    }
+    
+    # Use chunked upload for videos (handles large files better)
+    if is_video:
+        result = cloudinary.uploader.upload_large(
+            file.file,
+            chunk_size=6000000,  # 6MB chunks
+            **upload_options
+        )
+    else:
+        result = cloudinary.uploader.upload(
+            file.file,
+            **upload_options
+        )
+    
+    return {
+        "url": result.get("secure_url"),
+        "filename": result.get("public_id"),
+        "content_type": file.content_type,
+        "width": result.get("width"),
+        "height": result.get("height"),
+        "duration": result.get("duration"),  # For videos
+    }
 
 @router.post("/", response_model=dict)
 async def upload_file(file: UploadFile = File(...)):
     try:
-        # Generate unique filename
-        file_extension = os.path.splitext(file.filename)[1]
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = os.path.join(UPLOAD_DIR, unique_filename)
-        
-        # Save file
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-            
-        # Return URL
-        # Assuming the backend is served at root or via proxy
-        # We'll return a relative URL or absolute based on config
-        # For now, return relative path that frontend can prepend API_URL or STATIC_URL to
-        # Or better, return full URL if we know the domain.
-        # Let's return the static path which we will mount.
-        
-        url = f"/static/uploads/{unique_filename}"
-        
-        return {
-            "success": True,
-            "data": {
-                "url": url,
-                "filename": unique_filename,
-                "content_type": file.content_type
-            }
-        }
+        data = upload_to_cloudinary(file)
+        return {"success": True, "data": data}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {str(e)}")
 
 @router.post("/multiple", response_model=dict)
 async def upload_multiple_files(files: List[UploadFile] = File(...)):
     uploaded_files = []
     try:
         for file in files:
-            file_extension = os.path.splitext(file.filename)[1]
-            unique_filename = f"{uuid.uuid4()}{file_extension}"
-            file_path = os.path.join(UPLOAD_DIR, unique_filename)
-            
-            with open(file_path, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-                
-            uploaded_files.append({
-                "url": f"/static/uploads/{unique_filename}",
-                "filename": unique_filename,
-                "content_type": file.content_type
-            })
-            
-        return {
-            "success": True,
-            "data": uploaded_files
-        }
+            data = upload_to_cloudinary(file)
+            uploaded_files.append(data)
+        return {"success": True, "data": uploaded_files}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Cloudinary upload failed: {str(e)}")
+

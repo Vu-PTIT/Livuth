@@ -6,7 +6,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from keycloak.keycloak_openid import KeycloakOpenID
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-ENV_FILE = os.path.join(BASE_DIR, "backend", ".env")
+
+# Check multiple locations for .env file (local dev vs Render deployment)
+_possible_env_files = [
+    os.path.join(BASE_DIR, "backend", ".env"),  # Local development
+    os.path.join(BASE_DIR, ".env"),              # Root level (Render Secret Files)
+    "/etc/secrets/.env",                          # Render Secret Files alternate path
+]
+ENV_FILE = next((f for f in _possible_env_files if os.path.exists(f)), _possible_env_files[0])
 
 
 class Settings(BaseSettings):
@@ -49,7 +56,12 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = Field(default="gemini-2.0-flash-exp")
     WEB_DOMAIN: str = Field(default="")
     CHECK_TOKEN_URL: str = Field(default="")
-    DAILY_LIMIT_TIME: int = Field(default=900)  
+    DAILY_LIMIT_TIME: int = Field(default=900)
+    
+    # Cloudinary Configuration
+    CLOUDINARY_CLOUD_NAME: Optional[str] = Field(default=None)
+    CLOUDINARY_API_KEY: Optional[str] = Field(default=None)
+    CLOUDINARY_API_SECRET: Optional[str] = Field(default=None)
 
 
 settings = Settings()
