@@ -65,6 +65,12 @@ class UserMongo(BaseModel):
     avatar_url: Optional[str] = None  # Profile picture URL
     participated_events: List[PyObjectId] = Field(default_factory=list)
     
+    # Social
+    following: List[PyObjectId] = Field(default_factory=list)
+    followers: List[PyObjectId] = Field(default_factory=list)
+    following_count: int = 0
+    followers_count: int = 0
+    
     # Account Status
     is_active: bool = True
     roles: List[str] = Field(default_factory=lambda: [UserRole.USER.value])

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ChatCircle, ShareNetwork, DotsThree, MapPin, PencilSimple, Trash, Ticket } from '@phosphor-icons/react';
+import { Heart, ChatCircle, ShareNetwork, DotsThree, MapPin, PencilSimple, Trash, Ticket, LinkSimple, FacebookLogo, XLogo } from '@phosphor-icons/react';
 import type { Post } from '../types';
 import { postApi } from '../api/endpoints';
 import { useAuth } from '../hooks/useAuth';
@@ -22,9 +22,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
     const [isLiking, setIsLiking] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showShareMenu, setShowShareMenu] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
     const menuRef = useRef<HTMLDivElement>(null);
+    const shareMenuRef = useRef<HTMLDivElement>(null);
 
     const isOwner = user?.id === post.author.id;
 
@@ -33,6 +36,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowMenu(false);
+            }
+            if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+                setShowShareMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -75,9 +81,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
         }
     };
 
-    const handleDelete = async () => {
-        if (!confirm('Bạn có chắc muốn xóa bài viết này?')) return;
+    const handleDeleteClick = () => {
+        setShowDeleteConfirm(true);
+        setShowMenu(false);
+    };
 
+    const handleConfirmDelete = async () => {
         setIsDeleting(true);
         try {
             await postApi.delete(post.id);
@@ -89,7 +98,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
             showToast('Không thể xóa bài viết', 'error');
         } finally {
             setIsDeleting(false);
-            setShowMenu(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -116,6 +125,55 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
     const handleCancelEdit = () => {
         setEditContent(post.content);
         setIsEditing(false);
+    };
+
+    const getPostUrl = () => {
+        return `${window.location.origin}/posts/${post.id}`;
+    };
+
+    const handleShare = async () => {
+        const postUrl = getPostUrl();
+        const shareData = {
+            title: `Bài viết của ${post.author.full_name || post.author.username}`,
+            text: post.content.substring(0, 100) + (post.content.length > 100 ? '...' : ''),
+            url: postUrl
+        };
+
+        // Try native Web Share API first
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+                return;
+            } catch (err) {
+                // User cancelled or error, fall back to menu
+            }
+        }
+
+        // Show share menu as fallback
+        setShowShareMenu(true);
+    };
+
+    const handleCopyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(getPostUrl());
+            showToast('Đã sao chép liên kết', 'success');
+            setShowShareMenu(false);
+        } catch (err) {
+            showToast('Không thể sao chép liên kết', 'error');
+        }
+    };
+
+    const handleShareFacebook = () => {
+        const url = encodeURIComponent(getPostUrl());
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank', 'width=600,height=400');
+        setShowShareMenu(false);
+    };
+
+    const handleShareX = () => {
+        const url = encodeURIComponent(getPostUrl());
+        const text = encodeURIComponent(post.content.substring(0, 100));
+        window.open(`https://twitter.com/intent/tweet?url=${url}&text=${text}`, '_blank', 'width=600,height=400');
+        setShowShareMenu(false);
     };
 
     return (
@@ -157,12 +215,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
                                     </button>
                                     <button
                                         className="menu-item menu-item-danger"
-                                        onClick={handleDelete}
+                                        onClick={handleDeleteClick}
                                         disabled={isDeleting}
                                     >
                                         <Trash size={18} />
                                         <span>{isDeleting ? 'Đang xóa...' : 'Xóa bài viết'}</span>
                                     </button>
+
                                 </>
                             )}
                             {!isOwner && (
@@ -294,10 +353,58 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
                         <ChatCircle size={20} />
                         <span>Bình luận</span>
                     </button>
-                    <button className="post-action">
-                        <ShareNetwork size={20} />
-                        <span>Chia sẻ</span>
-                    </button>
+                    <div className="share-btn-wrapper" ref={shareMenuRef}>
+                        <button className="post-action" onClick={handleShare}>
+                            <ShareNetwork size={20} />
+                            <span>Chia sẻ</span>
+                        </button>
+
+                        {showShareMenu && (
+                            <div className="share-menu-dropdown">
+                                <button className="share-menu-item" onClick={handleCopyLink}>
+                                    <LinkSimple size={20} />
+                                    <span>Sao chép liên kết</span>
+                                </button>
+                                <button className="share-menu-item share-facebook" onClick={handleShareFacebook}>
+                                    <FacebookLogo size={20} weight="fill" />
+                                    <span>Chia sẻ lên Facebook</span>
+                                </button>
+                                <button className="share-menu-item share-x" onClick={handleShareX}>
+                                    <XLogo size={20} weight="fill" />
+                                    <span>Chia sẻ lên X</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteConfirm && (
+                <div className="delete-confirm-overlay" onClick={() => setShowDeleteConfirm(false)}>
+                    <div className="delete-confirm-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="delete-confirm-icon">
+                            <Trash size={32} color="var(--error-color)" />
+                        </div>
+                        <h3>Xóa bài viết?</h3>
+                        <p>Bạn có chắc muốn xóa bài viết này? Hành động này không thể hoàn tác.</p>
+                        <div className="delete-confirm-actions">
+                            <button
+                                className="btn btn-outline"
+                                onClick={() => setShowDeleteConfirm(false)}
+                                disabled={isDeleting}
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                className="btn btn-danger"
+                                onClick={handleConfirmDelete}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? 'Đang xóa...' : 'Xóa'}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </article>
@@ -305,3 +412,4 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
 };
 
 export default PostCard;
+

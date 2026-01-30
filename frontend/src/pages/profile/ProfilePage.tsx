@@ -27,6 +27,8 @@ import {
     UploadSimple,
     Notebook,
     CalendarCheck,
+    UserPlus,
+    UserMinus,
 } from '@phosphor-icons/react';
 import './ProfilePage.css';
 
@@ -73,11 +75,19 @@ const ProfilePage: React.FC = () => {
     const [userPosts, setUserPosts] = useState<Post[]>([]);
     const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
+    // Follow state
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followersCount, setFollowersCount] = useState(0);
+    const [followingCount, setFollowingCount] = useState(0);
+    const [isFollowLoading, setIsFollowLoading] = useState(false);
+
     // Fetch profile user
     useEffect(() => {
         const fetchProfileUser = async () => {
             if (isOwnProfile) {
                 setProfileUser(currentUser);
+                setFollowersCount(currentUser?.followers_count || 0);
+                setFollowingCount(currentUser?.following_count || 0);
                 return;
             }
 
@@ -85,9 +95,21 @@ const ProfilePage: React.FC = () => {
 
             setIsLoadingProfile(true);
             try {
+                // Fetch profile user
                 const response = await userApi.getById(userId);
                 if (response.data.data) {
-                    setProfileUser(response.data.data);
+                    const userData = response.data.data;
+                    setProfileUser(userData);
+                    setFollowersCount(userData.followers_count || 0);
+                    setFollowingCount(userData.following_count || 0);
+                }
+
+                // Check if following
+                if (currentUser) {
+                    const followResponse = await userApi.checkIsFollowing(userId);
+                    if (followResponse.data.data) {
+                        setIsFollowing(followResponse.data.data.is_following);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch user profile:', error);
@@ -98,7 +120,7 @@ const ProfilePage: React.FC = () => {
         };
 
         fetchProfileUser();
-    }, [userId, isOwnProfile, currentUser, toast]);
+    }, [userId, isOwnProfile, currentUser?.id, toast]);
 
     // Fetch participated events
     useEffect(() => {
@@ -163,7 +185,32 @@ const ProfilePage: React.FC = () => {
         };
 
         fetchUserPosts();
+        fetchUserPosts();
     }, [profileUser?.id, activeTab]);
+
+    const handleFollowToggle = async () => {
+        if (!currentUser || !profileUser) return;
+
+        setIsFollowLoading(true);
+        try {
+            if (isFollowing) {
+                await userApi.unfollow(profileUser.id);
+                setIsFollowing(false);
+                setFollowersCount(prev => Math.max(0, prev - 1));
+                toast.success(`Đã hủy theo dõi ${profileUser.full_name || profileUser.username}`);
+            } else {
+                await userApi.follow(profileUser.id);
+                setIsFollowing(true);
+                setFollowersCount(prev => prev + 1);
+                toast.success(`Đã theo dõi ${profileUser.full_name || profileUser.username}`);
+            }
+        } catch (error) {
+            console.error('Failed to toggle follow:', error);
+            toast.error('Có lỗi xảy ra, vui lòng thử lại');
+        } finally {
+            setIsFollowLoading(false);
+        }
+    };
 
     const handleEditProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -335,24 +382,57 @@ const ProfilePage: React.FC = () => {
 
                         {profileUser.bio && <p className="profile-bio">{profileUser.bio}</p>}
 
-                        {/* Only show edit buttons for own profile */}
-                        {isOwnProfile && (
-                            <div className="profile-actions">
-                                <button
-                                    className="btn btn-primary btn-block"
-                                    onClick={() => setShowEditModal(true)}
-                                >
-                                    <PencilSimple size={18} />
-                                    Chỉnh sửa thông tin
-                                </button>
-                                {(!isEventProvider || !isTourProvider) && !isAdmin && (
-                                    <Link to="/profile/upgrade" className="btn btn-outline btn-block">
-                                        <Sparkle size={18} />
-                                        Nâng cấp tài khoản
-                                    </Link>
-                                )}
+                        {/* Social Stats */}
+                        <div className="profile-stats">
+                            <div className="stat-item">
+                                <span className="stat-value">{followersCount}</span>
+                                <span className="stat-label">Người theo dõi</span>
                             </div>
-                        )}
+                            <div className="stat-divider"></div>
+                            <div className="stat-item">
+                                <span className="stat-value">{followingCount}</span>
+                                <span className="stat-label">Đang theo dõi</span>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="profile-actions">
+                            {isOwnProfile ? (
+                                <>
+                                    <button
+                                        className="btn btn-primary btn-block"
+                                        onClick={() => setShowEditModal(true)}
+                                    >
+                                        <PencilSimple size={18} />
+                                        Chỉnh sửa thông tin
+                                    </button>
+                                    {(!isEventProvider || !isTourProvider) && !isAdmin && (
+                                        <Link to="/profile/upgrade" className="btn btn-outline btn-block">
+                                            <Sparkle size={18} />
+                                            Nâng cấp tài khoản
+                                        </Link>
+                                    )}
+                                </>
+                            ) : (
+                                <button
+                                    className={`btn btn-block ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
+                                    onClick={handleFollowToggle}
+                                    disabled={isFollowLoading}
+                                >
+                                    {isFollowing ? (
+                                        <>
+                                            <UserMinus size={18} />
+                                            Hủy theo dõi
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus size={18} />
+                                            Theo dõi
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
 
                         {/* Pending upgrade notice - only for own profile */}
                         {isOwnProfile && currentUser?.pending_role_upgrade && (

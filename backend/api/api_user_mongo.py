@@ -417,3 +417,121 @@ async def reject_role_upgrade(
         raise e
     except Exception as e:
         raise CustomException(exception=e)
+
+
+# Follow Feature Endpoints
+
+@router.post(
+    "/{user_id}/follow",
+    response_model=DataResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def follow_user(user_id: str, token: str = Depends(JWTBearer())) -> Any:
+    """Follow a user"""
+    try:
+        payload = decode_jwt(token)
+        current_user_id = payload.get("sub")
+        
+        success = await user_service.follow_user(current_user_id=current_user_id, target_user_id=user_id)
+        
+        message = "Followed successfully" if success else "Already following"
+        return DataResponse(http_code=status.HTTP_200_OK, message=message, data={"success": success})
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.delete(
+    "/{user_id}/follow",
+    response_model=DataResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def unfollow_user(user_id: str, token: str = Depends(JWTBearer())) -> Any:
+    """Unfollow a user"""
+    try:
+        payload = decode_jwt(token)
+        current_user_id = payload.get("sub")
+        
+        success = await user_service.unfollow_user(current_user_id=current_user_id, target_user_id=user_id)
+        
+        message = "Unfollowed successfully" if success else "Not following"
+        return DataResponse(http_code=status.HTTP_200_OK, message=message, data={"success": success})
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.get(
+    "/{user_id}/followers",
+    response_model=DataResponse[List[UserBaseResponse]],
+    status_code=status.HTTP_200_OK,
+)
+async def get_followers(
+    user_id: str,
+    page: int = 1,
+    page_size: int = 20,
+    token: str = Depends(JWTBearer())  # Optional? Usually public info
+) -> Any:
+    """Get user's followers"""
+    try:
+        data, total = await user_service.get_followers(user_id=user_id, page=page, page_size=page_size)
+        
+        metadata = {
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        }
+        return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.get(
+    "/{user_id}/following",
+    response_model=DataResponse[List[UserBaseResponse]],
+    status_code=status.HTTP_200_OK,
+)
+async def get_following(
+    user_id: str,
+    page: int = 1,
+    page_size: int = 20,
+    token: str = Depends(JWTBearer())
+) -> Any:
+    """Get user's following list"""
+    try:
+        data, total = await user_service.get_following(user_id=user_id, page=page, page_size=page_size)
+        
+        metadata = {
+            "total": total,
+            "page": page,
+            "page_size": page_size
+        }
+        return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.get(
+    "/{user_id}/is-following",
+    response_model=DataResponse[dict],
+    status_code=status.HTTP_200_OK,
+)
+async def check_is_following(user_id: str, token: str = Depends(JWTBearer())) -> Any:
+    """Check if current user is following target user"""
+    try:
+        payload = decode_jwt(token)
+        current_user_id = payload.get("sub")
+        
+        is_following = await user_service.is_following(current_user_id=current_user_id, target_user_id=user_id)
+        
+        return DataResponse(http_code=status.HTTP_200_OK, data={"is_following": is_following})
+    except CustomException as e:
+        raise e
+    except Exception as e:
+        raise CustomException(exception=e)

@@ -74,3 +74,8 @@ class UserBaseResponse(BaseModelResponse):
     upgrade_request_reason: Optional[str] = None
     upgrade_request_date: Optional[float] = None
     upgrade_rejection_reason: Optional[str] = None
+    
+    # Social - READ ONLY (computed)
+    followers_count: Optional[int] = 0
+    following_count: Optional[int] = 0
+    is_following: Optional[bool] = None  # To check if current user is following this user

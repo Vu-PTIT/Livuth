@@ -411,3 +411,163 @@
         padding: 0.75rem;
     }
 }
+
+/* Delete Confirmation Modal */
+.delete-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.delete-confirm-modal {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.delete-confirm-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-confirm-modal h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.delete-confirm-modal p {
+    margin: 0 0 1.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.5;
+}
+
+.delete-confirm-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.delete-confirm-actions .btn {
+    min-width: 100px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-danger:disabled {
+    background: #fca5a5;
+    cursor: not-allowed;
+}
+
+/* Share Button Wrapper & Menu */
+.share-btn-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.share-btn-wrapper .post-action {
+    width: 100%;
+}
+
+.share-menu-dropdown {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    min-width: 220px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    overflow: hidden;
+    animation: shareMenuFadeIn 0.15s ease;
+}
+
+@keyframes shareMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.share-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.9375rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-align: left;
+}
+
+.share-menu-item:hover {
+    background: var(--bg-secondary);
+}
+
+.share-menu-item.share-facebook {
+    color: #1877f2;
+}
+
+.share-menu-item.share-x {
+    color: var(--text-primary);
+}

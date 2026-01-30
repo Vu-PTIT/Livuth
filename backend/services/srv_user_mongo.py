@@ -222,3 +222,128 @@ class UserMongoService:
             
         except Exception as e:
             raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+
+    async def follow_user(self, current_user_id: str, target_user_id: str) -> bool:
+        """Follow a user"""
+        if current_user_id == target_user_id:
+            raise CustomException(status_code=400, message="Cannot follow yourself", data=None)
+            
+        collection = self.get_collection()
+        target_oid = ObjectId(target_user_id)
+        current_oid = ObjectId(current_user_id)
+        
+        # Check if target user exists
+        target_user = await collection.find_one({"_id": target_oid})
+        if not target_user:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        # Check if already following
+        current_user = await collection.find_one({"_id": current_oid})
+        if target_oid in current_user.get("following", []):
+            return False  # Already following
+            
+        # Update current user's following list
+        await collection.update_one(
+            {"_id": current_oid},
+            {
+                "$addToSet": {"following": target_oid},
+                "$inc": {"following_count": 1}
+            }
+        )
+        
+        # Update target user's followers list
+        await collection.update_one(
+            {"_id": target_oid},
+            {
+                "$addToSet": {"followers": current_oid},
+                "$inc": {"followers_count": 1}
+            }
+        )
+        
+        return True
+
+    async def unfollow_user(self, current_user_id: str, target_user_id: str) -> bool:
+        """Unfollow a user"""
+        collection = self.get_collection()
+        target_oid = ObjectId(target_user_id)
+        current_oid = ObjectId(current_user_id)
+        
+        # Check if already following
+        current_user = await collection.find_one({"_id": current_oid})
+        if target_oid not in current_user.get("following", []):
+            return False  # Not following
+            
+        # Update current user's following list
+        await collection.update_one(
+            {"_id": current_oid},
+            {
+                "$pull": {"following": target_oid},
+                "$inc": {"following_count": -1}
+            }
+        )
+        
+        # Update target user's followers list
+        await collection.update_one(
+            {"_id": target_oid},
+            {
+                "$pull": {"followers": current_oid},
+                "$inc": {"followers_count": -1}
+            }
+        )
+        
+        return True
+
+    async def get_followers(self, user_id: str, page: int = 1, page_size: int = 20):
+        """Get user's followers"""
+        collection = self.get_collection()
+        if not ObjectId.is_valid(user_id):
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        follower_ids = user.get("followers", [])
+        total = len(follower_ids)
+        
+        # Pagination
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_ids = follower_ids[start:end]
+        
+        # Fetch user details
+        followers = await collection.find({"_id": {"$in": paginated_ids}}).to_list(length=None)
+        
+        return [UserBaseResponse(**f, id=str(f["_id"])) for f in followers], total
+
+    async def get_following(self, user_id: str, page: int = 1, page_size: int = 20):
+        """Get user's following list"""
+        collection = self.get_collection()
+        if not ObjectId.is_valid(user_id):
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        user = await collection.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        following_ids = user.get("following", [])
+        total = len(following_ids)
+        
+        # Pagination
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated_ids = following_ids[start:end]
+        
+        # Fetch user details
+        following = await collection.find({"_id": {"$in": paginated_ids}}).to_list(length=None)
+        
+        return [UserBaseResponse(**f, id=str(f["_id"])) for f in following], total
+
+    async def is_following(self, current_user_id: str, target_user_id: str) -> bool:
+        """Check if current user follows target user"""
+        collection = self.get_collection()
+        current_user = await collection.find_one({"_id": ObjectId(current_user_id)})
+        if not current_user:
+            return False
+            
+        return ObjectId(target_user_id) in current_user.get("following", [])

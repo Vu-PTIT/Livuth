@@ -85,6 +85,22 @@ export const userApi = {
 
     rejectUpgrade: (userId: string, reason: string) =>
         apiClient.patch<ApiResponse<User>>(`/users/admin/${userId}/reject-upgrade?reason=${encodeURIComponent(reason)}`),
+
+    // Social Graph
+    follow: (userId: string) =>
+        apiClient.post<ApiResponse<{ success: boolean }>>(`/users/${userId}/follow`),
+
+    unfollow: (userId: string) =>
+        apiClient.delete<ApiResponse<{ success: boolean }>>(`/users/${userId}/follow`),
+
+    getFollowers: (userId: string, page: number = 1, pageSize: number = 20) =>
+        apiClient.get<ApiResponse<User[]>>(`/users/${userId}/followers`, { params: { page, page_size: pageSize } }),
+
+    getFollowing: (userId: string, page: number = 1, pageSize: number = 20) =>
+        apiClient.get<ApiResponse<User[]>>(`/users/${userId}/following`, { params: { page, page_size: pageSize } }),
+
+    checkIsFollowing: (userId: string) =>
+        apiClient.get<ApiResponse<{ is_following: boolean }>>(`/users/${userId}/is-following`),
 };
 
 // ============ EVENT API ============
