@@ -6,7 +6,6 @@ import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
-import CategoryChip from '../../components/CategoryChip';
 import { MagnifyingGlass, ArrowRight, Sparkle, Funnel } from '@phosphor-icons/react';
 import './HomePage.css';
 
@@ -20,8 +19,9 @@ const HomePage: React.FC = () => {
     const [recommendedEvents, setRecommendedEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedCategory, setSelectedCategory] = useState('');
+    const [selectedCategory] = useState('');
     const [showFilters, setShowFilters] = useState(false);
+    const [city, setCity] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
@@ -52,13 +52,11 @@ const HomePage: React.FC = () => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         const params = new URLSearchParams();
-        if (searchQuery.trim()) params.set('q', searchQuery);
+        if (searchQuery.trim()) params.set('q', searchQuery.trim());
         if (selectedCategory) params.set('categories', selectedCategory);
-        navigate(`/events?${params.toString()}`);
-    };
+        if (city.trim()) params.set('city', city.trim());
 
-    const handleCategoryQuickFilter = (categoryName: string) => {
-        setSelectedCategory(selectedCategory === categoryName ? '' : categoryName);
+        navigate(`/events?${params.toString()}`);
     };
 
     return (
@@ -100,21 +98,19 @@ const HomePage: React.FC = () => {
                             </button>
                         </div>
 
-                        {/* Quick Category Filters */}
+                        {/* Expanded Filter Panel */}
                         <div className={`search-filters ${showFilters ? 'show' : ''}`}>
-                            <div className="filter-group">
-                                <span className="filter-label">Danh mục:</span>
-                                <div className="category-chips-flex">
-                                    {HOME_CATEGORIES.slice(0, 4).map((cat) => (
-                                        <CategoryChip
-                                            key={cat.id}
-                                            name={cat.name}
-                                            icon={cat.icon}
-                                            isActive={selectedCategory === cat.name}
-                                            onClick={() => handleCategoryQuickFilter(cat.name)}
-                                            size="sm"
-                                        />
-                                    ))}
+                            <div className="filters-row">
+                                {/* City/Location Column */}
+                                <div className="filter-group location-group" style={{ flex: 1, width: '100%' }}>
+                                    <span className="filter-label">Thành phố:</span>
+                                    <input
+                                        type="text"
+                                        className="form-input filter-input"
+                                        placeholder="Nhập thành phố (VD: Hà Nội)"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                    />
                                 </div>
                             </div>
                         </div>
