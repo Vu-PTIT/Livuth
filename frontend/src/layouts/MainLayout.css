@@ -297,7 +297,7 @@
 
 /* Remove padding for full-width hero pages */
 .main-content.no-padding-top {
-    padding-top: 0;
+    padding: 0;
 }
 
 /* Footer */

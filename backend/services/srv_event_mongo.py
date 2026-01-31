@@ -326,6 +326,8 @@ class EventMongoService:
         
         metadata = {
             "total": len(nearby_events),
+            "page": 1,
+            "page_size": len(nearby_events),
             "center": {"lat": lat, "lng": lng},
             "radius_km": radius_km,
             "limit": limit

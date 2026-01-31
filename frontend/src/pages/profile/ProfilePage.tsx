@@ -374,9 +374,22 @@ const ProfilePage: React.FC = () => {
 
                         {profileUser.roles && (
                             <div className="profile-roles">
-                                {profileUser.roles.map((role: string, idx: number) => (
-                                    <span key={idx} className="role-badge">{role}</span>
-                                ))}
+                                {profileUser.roles
+                                    .filter((role: string) => role !== 'Normal user' && role !== 'User' && role !== 'user')
+                                    .map((role: string, idx: number) => {
+                                        let displayRole = role;
+                                        const roleLower = role.toLowerCase();
+
+                                        if (roleLower === 'tour provider' || roleLower === 'tour_provider') {
+                                            displayRole = 'Nhà cung cấp Tour';
+                                        } else if (roleLower === 'event provider' || roleLower === 'event_provider') {
+                                            displayRole = 'Nhà tổ chức sự kiện';
+                                        } else if (roleLower === 'admin') {
+                                            displayRole = 'Quản trị viên';
+                                        }
+
+                                        return <span key={idx} className="role-badge">{displayRole}</span>;
+                                    })}
                             </div>
                         )}
 

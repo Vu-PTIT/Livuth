@@ -1,19 +1,25 @@
 /* Profile Page Styles */
 .profile-page {
-    padding-bottom: 3rem;
+    min-height: 100vh;
 }
 
 .profile-layout {
     display: grid;
     grid-template-columns: 340px 1fr;
     gap: 2rem;
+    align-items: start;
+
 }
 
 /* Sidebar */
 .profile-sidebar {
     position: sticky;
-    top: 80px;
+    top: 100px;
+    /* Tăng khoảng cách top để thoáng hơn */
     height: fit-content;
+    align-self: start;
+    /* Quan trọng: Ngăn sidebar bị stretch theo height của grid */
+    z-index: 10;
 }
 
 .profile-card {

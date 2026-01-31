@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, Tag, Ticket } from '@phosphor-icons/react';
+import { MapPin, Calendar, Tag, Image as ImageIcon } from '@phosphor-icons/react';
 import type { Event } from '../types';
 import './EventCard.css';
 
@@ -11,6 +11,34 @@ interface EventCardProps {
 }
 
 const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) => {
+    const [imageError, setImageError] = useState(false);
+    const categoriesRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const container = categoriesRef.current;
+        if (!container) return;
+
+        const checkOverflow = () => {
+            const tags = container.querySelectorAll('.event-card-tag');
+            const containerRight = container.getBoundingClientRect().right;
+
+            tags.forEach((tag) => {
+                const tagElement = tag as HTMLElement;
+                const tagRight = tagElement.getBoundingClientRect().right;
+
+                if (tagRight > containerRight) {
+                    tagElement.style.display = 'none';
+                } else {
+                    tagElement.style.display = '';
+                }
+            });
+        };
+
+        checkOverflow();
+        window.addEventListener('resize', checkOverflow);
+        return () => window.removeEventListener('resize', checkOverflow);
+    }, [event.categories]);
+
     const formatDate = (timestamp?: string) => {
         if (!timestamp) return 'Đang cập nhật';
         return timestamp;
@@ -20,15 +48,34 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
         if (event.media && event.media.length > 0) {
             return event.media[0].url;
         }
-        return '/placeholder-event.jpg';
+        return '';
     };
+
+    const imageUrl = getImageUrl();
+    const hasValidImage = imageUrl && !imageError;
 
     return (
         <Link to={`/events/${event.id}`} className="event-card">
-            <div className="event-card-image">
-                <img src={getImageUrl()} alt={event.name} />
-                {event.info?.is_free && <span className="event-badge free">Miễn phí</span>}
-                {event.interested_count && event.interested_count > 0 && (
+            <div className={`event-card-image ${!hasValidImage ? 'no-image' : ''}`}>
+                {hasValidImage ? (
+                    <img
+                        src={imageUrl}
+                        alt={event.name}
+                        onError={() => setImageError(true)}
+                        loading="lazy"
+                    />
+                ) : (
+                    <div className="event-card-placeholder">
+                        <ImageIcon size={40} weight="thin" />
+                        <span>{event.name}</span>
+                    </div>
+                )}
+                {event.info?.is_free ? (
+                    <span className="event-badge free">Miễn phí</span>
+                ) : (
+                    <span className="event-badge paid">Mất phí</span>
+                )}
+                {(event.interested_count || 0) > 0 && (
                     <span className="event-badge interested">
                         🔥 {event.interested_count} quan tâm
                     </span>
@@ -48,17 +95,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
                     )}
                 </div>
                 {event.categories && event.categories.length > 0 && (
-                    <div className="event-card-categories">
-                        <Tag size={14} />
-                        {event.categories.slice(0, 2).map((cat, idx) => (
-                            <span key={idx} className="category-chip">{cat}</span>
+                    <div className="event-card-categories" ref={categoriesRef}>
+                        {event.categories.slice(0, 3).map((cat, idx) => (
+                            <span key={idx} className="event-card-tag">
+                                <Tag size={12} />
+                                {cat}
+                            </span>
                         ))}
-                    </div>
-                )}
-                {event.info?.ticket_price && !event.info?.is_free && (
-                    <div className="event-card-price">
-                        <Ticket size={16} />
-                        <span>{event.info.ticket_price.toLocaleString('vi-VN')} VND</span>
                     </div>
                 )}
             </div>

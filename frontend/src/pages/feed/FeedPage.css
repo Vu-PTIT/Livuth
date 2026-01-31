@@ -2,7 +2,7 @@
 .feed-page {
     min-height: 100vh;
     background: var(--bg-primary);
-    padding: 2rem 0 4rem;
+    padding: 1rem 0 4rem;
 }
 
 .feed-page .container {
