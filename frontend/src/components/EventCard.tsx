@@ -20,16 +20,17 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
 
         const checkOverflow = () => {
             const tags = container.querySelectorAll('.event-card-tag');
-            const containerRight = container.getBoundingClientRect().right;
+            const containerRect = container.getBoundingClientRect();
+            const containerRight = containerRect.right - 2; // Small buffer
 
             tags.forEach((tag) => {
                 const tagElement = tag as HTMLElement;
+                tagElement.style.visibility = 'visible'; // Reset first
                 const tagRight = tagElement.getBoundingClientRect().right;
 
+                // Hide if tag extends past container
                 if (tagRight > containerRight) {
-                    tagElement.style.display = 'none';
-                } else {
-                    tagElement.style.display = '';
+                    tagElement.style.visibility = 'hidden';
                 }
             });
         };

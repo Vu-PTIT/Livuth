@@ -67,11 +67,11 @@ async def login(login_data: LoginRequest) -> Any:
         user = await user_service.get_by_username(login_data.username)
         
         if not user:
-            raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+            raise CustomException(http_code=401, message="Bạn nhập sai tài khoản hoặc mật khẩu")
         
         # Verify password
         if not verify_password(login_data.password, user["hashed_password"]):
-            raise CustomException(exception=ExceptionType.UNAUTHORIZED)
+            raise CustomException(http_code=401, message="Bạn nhập sai tài khoản hoặc mật khẩu")
         
         # Check if user is active
         if not user.get("is_active", True):

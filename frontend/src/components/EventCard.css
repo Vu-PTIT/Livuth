@@ -163,9 +163,7 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: nowrap;
-    /* Bắt buộc nằm trên 1 hàng */
     overflow: hidden;
-    /* Ẩn nếu quá dài */
     margin-top: 0.25rem;
 }
 
