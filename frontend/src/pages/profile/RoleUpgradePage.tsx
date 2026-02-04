@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { userApi } from '../../api/endpoints';
-import { ArrowLeft, Sparkle, CheckCircle, Warning } from '@phosphor-icons/react';
+import { ArrowLeft, CheckCircle, Warning } from '@phosphor-icons/react';
 import './RoleUpgradePage.css';
 
 const UPGRADE_ROLES = [
