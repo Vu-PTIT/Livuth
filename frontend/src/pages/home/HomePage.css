@@ -94,7 +94,8 @@
     flex-shrink: 0;
 }
 
-.hero-search input {
+
+.search-main input {
     flex: 1;
     border: none;
     background: none;
@@ -104,13 +105,14 @@
     min-width: 0;
 }
 
-.hero-search input:focus {
+.search-main input:focus {
     outline: none;
 }
 
-.hero-search input::placeholder {
+.search-main input::placeholder {
     color: var(--text-secondary);
 }
+
 
 /* Scoped to hero-search to avoid conflicts with EventsPage */
 .hero-search .filter-toggle {
@@ -178,7 +180,8 @@
 
 .filter-group {
     display: flex;
-    align-items: center;
+    align-items: center !important;
+    /* Force center alignment */
     gap: 0.75rem;
     flex-wrap: wrap;
 }
@@ -187,6 +190,31 @@
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--text-secondary);
+    margin: 0 !important;
+    /* Remove any inherited margins */
+    line-height: normal;
+    /* Prevent line-height issues */
+    white-space: nowrap;
+}
+
+.filter-input {
+    flex: 1;
+    min-width: 150px;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-primary);
+}
+
+.filter-input::placeholder {
+    color: var(--text-secondary) !important;
+    opacity: 1;
+}
+
+.filter-input:focus {
+    background: transparent !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 /* Old .filter-chips and .filter-chip styles removed - now using CategoryChip component */

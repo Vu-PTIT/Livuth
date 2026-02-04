@@ -135,87 +135,93 @@ const RoleUpgradePage: React.FC = () => {
     }
 
     return (
-        <div className="upgrade-page container container-sm">
-            <Link to="/profile" className="back-link">
-                <ArrowLeft size={18} />
-                Quay lại hồ sơ
-            </Link>
-
-            <div className="upgrade-header">
-                <Sparkle size={40} className="header-icon" />
-                <h1>Nâng cấp tài khoản</h1>
-                <p>Đăng ký làm đối tác và mở rộng khả năng của bạn trên p-INNO</p>
-            </div>
-
-            {/* Rejection Notice */}
-            {user?.upgrade_rejection_reason && (
-                <div className="alert alert-warning mb-4">
-                    <Warning size={20} />
-                    <div>
-                        <strong>Yêu cầu trước đã bị từ chối:</strong>
-                        <p style={{ margin: '0.5rem 0 0' }}>{user.upgrade_rejection_reason}</p>
+        <div className="upgrade-page container">
+            <div className="upgrade-container">
+                <div className="upgrade-header-compact">
+                    <Link to="/profile" className="back-link-icon">
+                        <ArrowLeft size={20} />
+                    </Link>
+                    <div className="header-text">
+                        <h1>Nâng cấp tài khoản</h1>
+                        <p>Đăng ký làm đối tác để mở rộng khả năng của bạn</p>
                     </div>
                 </div>
-            )}
 
-            {error && <div className="alert alert-error mb-3">{error}</div>}
+                {/* Rejection Notice */}
+                {user?.upgrade_rejection_reason && (
+                    <div className="alert alert-warning compact-alert">
+                        <Warning size={20} />
+                        <div>
+                            <strong>Đã bị từ chối:</strong> {user.upgrade_rejection_reason}
+                        </div>
+                    </div>
+                )}
 
-            <form onSubmit={handleSubmit} className="upgrade-form">
-                {/* Role Selection */}
-                <div className="role-options">
-                    {availableRoles.map((role) => (
-                        <label
-                            key={role.value}
-                            className={`role-option ${selectedRole === role.value ? 'selected' : ''}`}
-                        >
-                            <input
-                                type="radio"
-                                name="role"
-                                value={role.value}
-                                checked={selectedRole === role.value}
-                                onChange={(e) => setSelectedRole(e.target.value)}
+                {error && <div className="alert alert-error compact-alert">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="upgrade-form-grid">
+                    {/* Left Column: Role Selection */}
+                    <div className="form-section role-section">
+                        <h3 className="section-title">1. Chọn vai trò</h3>
+                        <div className="role-options">
+                            {availableRoles.map((role) => (
+                                <label
+                                    key={role.value}
+                                    className={`role-option ${selectedRole === role.value ? 'selected' : ''}`}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="role"
+                                        value={role.value}
+                                        checked={selectedRole === role.value}
+                                        onChange={(e) => setSelectedRole(e.target.value)}
+                                    />
+                                    <div className="role-content">
+                                        <span className="role-icon">{role.icon}</span>
+                                        <div className="role-info">
+                                            <span className="role-label">{role.label}</span>
+                                            <span className="role-description">{role.description}</span>
+                                        </div>
+                                        {selectedRole === role.value && (
+                                            <div className="role-check">
+                                                <CheckCircle size={24} weight="fill" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right Column: Reason & Submit */}
+                    <div className="form-section reason-section">
+                        <h3 className="section-title">2. Lý do yêu cầu</h3>
+                        <div className="reason-input-wrapper">
+                            <textarea
+                                id="reason"
+                                className="form-textarea custom-scrollbar"
+                                placeholder="Giới thiệu về bản thân, kinh nghiệm..."
+                                value={reason}
+                                onChange={(e) => setReason(e.target.value)}
+                                required
                             />
-                            <div className="role-content">
-                                <span className="role-icon">{role.icon}</span>
-                                <div className="role-info">
-                                    <span className="role-label">{role.label}</span>
-                                    <span className="role-description">{role.description}</span>
-                                </div>
-                                <div className="role-check">
-                                    <CheckCircle size={24} weight="fill" />
-                                </div>
-                            </div>
-                        </label>
-                    ))}
-                </div>
+                            <small className="form-hint">
+                                Tối thiểu 10 ký tự.
+                            </small>
+                        </div>
 
-                {/* Reason */}
-                <div className="form-group">
-                    <label className="form-label" htmlFor="reason">
-                        Lý do yêu cầu nâng cấp *
-                    </label>
-                    <textarea
-                        id="reason"
-                        className="form-textarea"
-                        placeholder="Giới thiệu về bản thân, kinh nghiệm hoặc lý do bạn muốn trở thành đối tác..."
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        rows={5}
-                        required
-                    />
-                    <small className="form-hint">
-                        Ít nhất 10 ký tự. Mô tả càng chi tiết, yêu cầu càng dễ được chấp thuận.
-                    </small>
-                </div>
-
-                <button
-                    type="submit"
-                    className="btn btn-primary btn-lg btn-block"
-                    disabled={isSubmitting || !selectedRole || reason.length < 10}
-                >
-                    {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu'}
-                </button>
-            </form>
+                        <div className="form-actions">
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-lg btn-block"
+                                disabled={isSubmitting || !selectedRole || reason.length < 10}
+                            >
+                                {isSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu nâng cấp'}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };
