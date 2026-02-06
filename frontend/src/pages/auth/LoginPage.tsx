@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
-import FacebookLogin from 'react-facebook-login';
+// import FacebookLogin from 'react-facebook-login';
 import { Eye, EyeSlash, SignIn } from '@phosphor-icons/react';
 import './Auth.css';
 
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { login, loginGoogle, loginFacebook } = useAuth();
+    const { login, loginGoogle /*, loginFacebook */ } = useAuth();
 
     const [formData, setFormData] = useState({
         username: '',
@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
         }
     };
 
-    const handleFacebookResponse = async (response: any) => {
+    /* const handleFacebookResponse = async (response: any) => {
         if (response.accessToken) {
             setIsLoading(true);
             try {
@@ -70,7 +70,7 @@ const LoginPage: React.FC = () => {
         } else {
             // setError('Đăng nhập Facebook bị hủy hoặc thất bại');
         }
-    };
+    }; */
 
     return (
         <div className="auth-page">
@@ -156,7 +156,7 @@ const LoginPage: React.FC = () => {
                         />
                     </div>
 
-                    {import.meta.env.VITE_FACEBOOK_APP_ID && (
+                    { /* import.meta.env.VITE_FACEBOOK_APP_ID && (
                         <div className="facebook-login-wrapper">
                             <FacebookLogin
                                 appId={import.meta.env.VITE_FACEBOOK_APP_ID}
@@ -168,7 +168,7 @@ const LoginPage: React.FC = () => {
                                 textButton=" Facebook"
                             />
                         </div>
-                    )}
+                    ) */ }
                 </div>
 
                 <div className="auth-footer">

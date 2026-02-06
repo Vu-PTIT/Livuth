@@ -1,7 +1,52 @@
-import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, type InternalAxiosRequestConfig, type AxiosResponse, type AxiosRequestConfig } from 'axios';
+import { Capacitor, CapacitorHttp, type HttpResponse } from '@capacitor/core';
 
 // Use environment variable or default to production backend
 const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://livuth.onrender.com/api');
+
+// Custom adapter for Capacitor to bypass CORS on native
+const capacitorAdapter = async (config: AxiosRequestConfig): Promise<AxiosResponse> => {
+    const { url, method, headers, data, params } = config;
+
+    // Construct full URL if needed
+    const fullUrl = url?.startsWith('http') ? url : `${config.baseURL}${url}`;
+
+    const response: HttpResponse = await CapacitorHttp.request({
+        url: fullUrl!,
+        method: method?.toUpperCase() || 'GET',
+        headers: headers as any,
+        data: data,
+        params: params,
+    });
+
+    return {
+        data: response.data,
+        status: response.status,
+        statusText: '', // CapacitorHttp doesn't return status text
+        headers: response.headers as any,
+        config: config as InternalAxiosRequestConfig,
+        request: {},
+    };
+};
+
+console.log('--- CAPACITOR DEBUG ---');
+console.log('isNativePlatform:', Capacitor.isNativePlatform());
+console.log('getPlatform:', Capacitor.getPlatform());
+console.log('Window Location:', window.location.href);
+
+// Robust check for Capacitor environment
+// 1. Standard native check
+// 2. Platform check
+// 3. URL Heuristic: https://localhost (without port) is strictly Capacitor Android
+const isStandardNative = Capacitor.isNativePlatform();
+const isPlatformNative = Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios';
+const isCapacitorUrl = window.location.hostname === 'localhost' &&
+    window.location.protocol === 'https:' &&
+    (window.location.port === '' || window.location.port === '443');
+
+const shouldUseNativeAdapter = isStandardNative || isPlatformNative || isCapacitorUrl;
+
+console.log('Final Decision - Use Native Adapter:', shouldUseNativeAdapter);
 
 // Create axios instance
 const apiClient = axios.create({
@@ -9,6 +54,8 @@ const apiClient = axios.create({
     headers: {
         'Content-Type': 'application/json',
     },
+    // Use custom adapter on native
+    adapter: shouldUseNativeAdapter ? capacitorAdapter : undefined,
 });
 
 // Request interceptor - add auth token
