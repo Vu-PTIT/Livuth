@@ -3,10 +3,8 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    max-width: 1920px;
-    margin: 0 auto;
+    width: 100%;
     background: var(--bg-secondary);
-    box-shadow: 0 0 60px rgba(0, 0, 0, 0.1);
 }
 
 /* Header */
@@ -22,9 +20,8 @@
 }
 
 .header-container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    width: 100%;
+    padding: 0 2rem;
     height: 64px;
     display: flex;
     align-items: center;
@@ -313,9 +310,8 @@
 }
 
 .footer-container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    width: 100%;
+    padding: 0 2rem;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2rem;
@@ -459,24 +455,6 @@
     }
 }
 
-/* Large screens - limit header/footer width */
-@media (min-width: 1440px) {
-
-    .header-container,
-    .footer-container {
-        max-width: 1320px;
-        padding: 0 2rem;
-    }
-}
-
-@media (min-width: 1920px) {
-
-    .header-container,
-    .footer-container {
-        max-width: 1440px;
-        padding: 0 2.5rem;
-    }
-}
 
 /* Font & Icon Alignment Overrides */
 .dropdown-item {
@@ -499,4 +477,114 @@
 
 .user-name {
     font-family: var(--font-family);
+}
+
+/* ============================================
+   Bottom Navigation for Mobile (Facebook-style)
+   ============================================ */
+.bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-color);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+    padding: 10px 0;
+}
+
+.bottom-nav-item svg {
+    flex-shrink: 0;
+}
+
+.bottom-nav-item:hover {
+    color: var(--text-primary);
+}
+
+.bottom-nav-item.active {
+    color: var(--primary-color);
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+
+    /* Show bottom nav on mobile */
+    .bottom-nav {
+        display: flex;
+    }
+
+    /* Show header but simplified - only logo */
+    .header {
+        display: block !important;
+    }
+
+    .header-container {
+        height: 48px;
+        padding: 0 1rem;
+        justify-content: center;
+    }
+
+    /* Show logo and text */
+    .logo {
+        display: flex;
+    }
+
+    .logo-text {
+        display: block;
+        font-size: 1rem;
+    }
+
+    /* Hide navigation and actions */
+    .nav-desktop,
+    .header-actions,
+    .mobile-menu-toggle {
+        display: none !important;
+    }
+
+    /* Hide the dropdown nav-mobile since we have bottom nav */
+    .nav-mobile {
+        display: none !important;
+    }
+
+    /* Adjust main content for smaller header */
+    .main-content {
+        margin-top: 48px;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+
+    /* Smaller container padding */
+    .container {
+        padding: 0 1rem;
+    }
+
+    /* Hide footer on mobile (bottom nav replaces it) */
+    .footer {
+        display: none;
+    }
+
+    /* Map Page specific styles for mobile */
+    .main-layout[data-page^="map"] .header {
+        display: none !important;
+    }
+
+    .main-layout[data-page^="map"] .main-content {
+        margin-top: 0;
+        padding-top: env(safe-area-inset-top);
+        height: 100vh;
+        /* Ensure full height for map */
+    }
 }

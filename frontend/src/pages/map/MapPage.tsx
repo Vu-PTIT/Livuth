@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'react';
+import { useToast } from '../../components/Toast';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { eventApi, userApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import { CATEGORIES } from '../../constants/categories';
@@ -257,6 +258,8 @@ interface SearchResult {
 
 const MapPage = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const toast = useToast();
     const auth = useContext(AuthContext);
     const user = auth?.user;
     const [events, setEvents] = useState<Event[]>([]);
@@ -303,8 +306,27 @@ const MapPage = () => {
     useEffect(() => {
         if (initialFetchDone.current) return;
 
-        // Initial fetch with large radius for Vietnam overview
         const initialFetch = async () => {
+            // Check for query params first
+            const latParam = searchParams.get('lat');
+            const lngParam = searchParams.get('lng');
+            // const eventIdParam = searchParams.get('eventId');
+
+            if (latParam && lngParam) {
+                const lat = parseFloat(latParam);
+                const lng = parseFloat(lngParam);
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    setCenter([lat, lng]);
+                    setZoom(15);
+                    // Fetch specifically around this point
+                    fetchNearbyEvents(lat, lng, 10);
+                    initialFetchDone.current = true;
+                    // If we have an event ID, we might want to highlight it or open popup later
+                    // For now, centering is enough
+                    return;
+                }
+            }
+
             try {
                 // First try to get user location
                 if (navigator.geolocation) {
@@ -335,7 +357,7 @@ const MapPage = () => {
         };
 
         initialFetch();
-    }, [fetchNearbyEvents]);
+    }, [fetchNearbyEvents, searchParams]);
 
     // Use shared categories from constants
     const allCategories = CATEGORIES;
@@ -534,7 +556,7 @@ const MapPage = () => {
         const distance = calculateDistance(userLocation[0], userLocation[1], lat, lng);
 
         if (distance > CHECKIN_RADIUS_METERS) {
-            alert(`Bạn cần đến gần sự kiện hơn. Khoảng cách hiện tại: ${formatDistance(distance)} (cần trong ${CHECKIN_RADIUS_METERS}m)`);
+            toast.warning(`Bạn cần đến gần sự kiện hơn. Khoảng cách: ${formatDistance(distance)} (cần trong ${CHECKIN_RADIUS_METERS}m)`);
             return;
         }
 
@@ -542,9 +564,9 @@ const MapPage = () => {
         try {
             await userApi.addParticipatedEvent(user.id, event.id);
             setCheckedInEvents(prev => [...prev, event.id]);
-            alert('Check-in thành công! 🎉');
+            toast.success('Check-in thành công! 🎉');
         } catch (err: any) {
-            alert(err.response?.data?.message || 'Không thể check-in');
+            toast.error(err.response?.data?.message || 'Không thể check-in');
         } finally {
             setCheckingInEventId(null);
         }

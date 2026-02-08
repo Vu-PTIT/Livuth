@@ -18,8 +18,8 @@ class NotificationMongo(BaseModel):
     # Actor - who triggered this notification
     actor_id: PyObjectId
     
-    # Notification type: "like" or "comment"
-    type: str = Field(..., pattern="^(like|comment)$")
+    # Notification type: "like", "comment", "checkin", or "proximity"
+    type: str = Field(..., pattern="^(like|comment|checkin|proximity)$")
     
     # Message content
     message: str
@@ -27,6 +27,7 @@ class NotificationMongo(BaseModel):
     # Reference IDs
     post_id: Optional[PyObjectId] = None
     comment_id: Optional[PyObjectId] = None
+    event_id: Optional[PyObjectId] = None
     
     # Status
     read: bool = False

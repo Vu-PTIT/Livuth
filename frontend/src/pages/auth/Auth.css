@@ -219,6 +219,24 @@
     .form-row {
         grid-template-columns: 1fr;
     }
+
+    /* Improve input touch targets and prevent iOS zoom */
+    .form-input,
+    .form-select {
+        font-size: 16px;
+        padding: 0.875rem 1rem;
+    }
+
+    .password-toggle {
+        padding: 8px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .btn-block {
+        padding: 0.875rem;
+        font-size: 1rem;
+    }
 }
 
 /* Social Login */

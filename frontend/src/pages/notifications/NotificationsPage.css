@@ -1,0 +1,249 @@
+/* Notifications Page Styles */
+.notifications-page {
+    min-height: 100vh;
+    padding: 1rem 0;
+    background: var(--bg-primary);
+}
+
+.notifications-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.notifications-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.mark-all-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mark-all-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Notifications List */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.notification-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--card-bg);
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    border: 1px solid var(--border-color);
+    position: relative;
+}
+
+.notification-card:hover {
+    background: var(--bg-secondary);
+    transform: translateX(4px);
+}
+
+.notification-card.unread {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.notification-icon-wrapper {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notif-icon {
+    color: var(--text-secondary);
+}
+
+.notif-icon-like {
+    color: #ef4444;
+}
+
+.notif-icon-comment {
+    color: #3b82f6;
+}
+
+.notif-icon-checkin {
+    color: #10b981;
+}
+
+.notif-icon-proximity {
+    color: #f59e0b;
+}
+
+.notification-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.notification-message {
+    margin: 0 0 0.25rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    line-height: 1.5;
+}
+
+.notification-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.unread-indicator {
+    width: 10px;
+    height: 10px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+}
+
+/* Loading State */
+.notifications-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--text-secondary);
+}
+
+.notifications-loading .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Empty State */
+.notifications-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.notifications-empty svg {
+    color: var(--text-tertiary);
+    margin-bottom: 1rem;
+}
+
+.notifications-empty h3 {
+    font-size: 1.125rem;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem;
+}
+
+.notifications-empty p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .notifications-page {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    }
+
+    .notifications-header {
+        margin-bottom: 1rem;
+    }
+
+    .notifications-header h1 {
+        font-size: 1.25rem;
+    }
+
+    .mark-all-btn span {
+        display: none;
+    }
+
+    .mark-all-btn {
+        padding: 0.5rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .notification-card {
+        padding: 0.875rem;
+        gap: 0.75rem;
+        /* Swipe hint styling */
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Swipe hint indicator on hover/focus */
+    .notification-card::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: transparent;
+        transition: background 0.2s;
+    }
+
+    .notification-card:active::after {
+        background: var(--primary-color);
+    }
+
+    .notification-card:hover {
+        transform: none;
+        /* Disable hover transform on mobile */
+    }
+
+    .notification-icon-wrapper {
+        width: 44px;
+        height: 44px;
+    }
+
+    .notification-message {
+        font-size: 0.875rem;
+    }
+
+    /* Touch-friendly unread indicator */
+    .unread-indicator {
+        width: 12px;
+        height: 12px;
+    }
+}

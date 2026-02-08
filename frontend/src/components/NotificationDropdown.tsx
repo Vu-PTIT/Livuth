@@ -5,6 +5,8 @@ import {
     Heart,
     ChatCircle,
     Checks,
+    MapPin,
+    CheckCircle,
 } from '@phosphor-icons/react';
 import { useAuth } from '../hooks/useAuth';
 import { notificationApi } from '../api/endpoints';
@@ -27,7 +29,7 @@ const NotificationDropdown: React.FC = () => {
             setIsLoading(true);
             const response = await notificationApi.getAll(1, 20);
             if (response.data.data) {
-                setNotifications(response.data.data.notifications);
+                setNotifications(response.data.data.notifications as Notification[]);
                 setUnreadCount(response.data.data.unread_count);
             }
         } catch (error) {
@@ -97,9 +99,23 @@ const NotificationDropdown: React.FC = () => {
                 return <Heart size={18} weight="fill" className="notif-icon notif-icon-like" />;
             case 'comment':
                 return <ChatCircle size={18} weight="fill" className="notif-icon notif-icon-comment" />;
+            case 'checkin':
+                return <CheckCircle size={18} weight="fill" className="notif-icon notif-icon-checkin" />;
+            case 'proximity':
+                return <MapPin size={18} weight="fill" className="notif-icon notif-icon-proximity" />;
             default:
                 return <Bell size={18} className="notif-icon" />;
         }
+    };
+
+    const getNotificationLink = (notification: Notification): string => {
+        if (notification.event_id) {
+            return `/events/${notification.event_id}`;
+        }
+        if (notification.post_id) {
+            return `/feed`;
+        }
+        return '#';
     };
 
     const handleNotificationClick = async (notification: Notification) => {
@@ -163,7 +179,7 @@ const NotificationDropdown: React.FC = () => {
                             notifications.map((notification) => (
                                 <Link
                                     key={notification.id}
-                                    to={notification.post_id ? `/feed` : '#'}
+                                    to={getNotificationLink(notification)}
                                     className={`notification-item ${!notification.read ? 'unread' : ''}`}
                                     onClick={() => handleNotificationClick(notification)}
                                 >
@@ -172,7 +188,7 @@ const NotificationDropdown: React.FC = () => {
                                     </div>
                                     <div className="notification-content">
                                         <p className="notification-text">
-                                            <strong>{notification.actor.full_name || notification.actor.username}</strong> {notification.message}
+                                            {notification.message}
                                         </p>
                                         <span className="notification-time">{formatTimeAgo(notification.created_at)}</span>
                                     </div>

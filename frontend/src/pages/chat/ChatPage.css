@@ -377,9 +377,23 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .chat-page {
+        height: calc(100vh - 56px - env(safe-area-inset-bottom));
+        height: calc(100dvh - 56px);
+        /* Dynamic viewport for keyboard support */
+        padding: 0;
+    }
+
+    .chat-page .container {
+        padding: 0;
+        height: 100%;
+    }
+
     .chat-layout {
         grid-template-columns: 1fr;
         position: relative;
+        border-radius: 0;
+        height: 100%;
     }
 
     .mobile-sidebar-toggle {
@@ -412,11 +426,40 @@
     }
 
     .message-input {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+        position: sticky;
+        bottom: 0;
+        background: var(--card-bg);
+    }
+
+    .message-input input {
+        padding: 0.875rem 1rem;
+        font-size: 16px;
+        /* Prevent zoom on iOS */
+    }
+
+    .send-btn {
+        width: 48px;
+        height: 48px;
     }
 
     .empty-messages h3,
     .no-active-chat h3 {
         font-size: 1.1rem;
+    }
+
+    .messages-container {
+        padding: 1rem;
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Ensure chat main fills available height */
+    .chat-main {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 }

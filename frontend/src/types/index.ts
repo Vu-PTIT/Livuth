@@ -350,10 +350,11 @@ export interface Notification {
     id: string;
     user_id: string;
     actor: NotificationActor;
-    type: 'like' | 'comment' | string;
+    type: 'like' | 'comment' | 'checkin' | 'proximity';
     message: string;
     post_id?: string;
     comment_id?: string;
+    event_id?: string;
     read: boolean;
     created_at: number;
 }

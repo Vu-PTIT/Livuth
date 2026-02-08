@@ -166,6 +166,10 @@
     color: #10b981;
 }
 
+.notif-icon-proximity {
+    color: #3b82f6;
+}
+
 .notification-content {
     flex: 1;
     min-width: 0;

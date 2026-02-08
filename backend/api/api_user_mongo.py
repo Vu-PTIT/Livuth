@@ -230,6 +230,22 @@ async def add_participated_event(user_id: str, event_id: str, token: str = Depen
             current_events.append(event_id)
             update_data = UserUpdateRequest(participated_events=current_events)
             updated_user = await user_service.update_by_id(user_id=user_id, data=update_data)
+            
+            # Create check-in success notification
+            from backend.api.api_notification_mongo import create_event_notification
+            from backend.services.srv_event_mongo import EventMongoService
+            try:
+                event_service = EventMongoService()
+                event = await event_service.get_by_id(event_id)
+                await create_event_notification(
+                    user_id=user_id,
+                    notification_type="checkin",
+                    event_id=event_id,
+                    event_name=event.name
+                )
+            except Exception:
+                pass  # Don't fail check-in if notification fails
+            
             return DataResponse(http_code=status.HTTP_200_OK, data=updated_user)
         
         return DataResponse(http_code=status.HTTP_200_OK, data=user)

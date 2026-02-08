@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './providers/AuthProvider';
 import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -31,6 +31,7 @@ import TourProviderModerationPage from './pages/admin/TourProviderModerationPage
 import AdminEventsPage from './pages/admin/AdminEventsPage';
 import PostDetailPage from './pages/posts/PostDetailPage';
 import FeedPage from './pages/feed/FeedPage';
+import NotificationsPage from './pages/notifications/NotificationsPage';
 
 // Inner component that uses auth context
 function AppContent() {
@@ -103,6 +104,7 @@ function AppContent() {
         <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route path="/profile/upgrade" element={<RoleUpgradePage />} />
         <Route path="/chat" element={<ChatPage />} />
+        <Route path="/notifications" element={<NotificationsPage />} />
 
         {/* Posts Routes */}
         <Route path="/create-post" element={<FeedPage />} />
@@ -215,9 +217,9 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <HashRouter>
             <AppContent />
-          </BrowserRouter>
+          </HashRouter>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>

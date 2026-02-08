@@ -309,6 +309,9 @@ class EventMongoService:
                     
                     if distance <= radius_km:
                         event["id"] = str(event["_id"])
+                        # Convert creator_id to string if present
+                        if event.get("creator_id"):
+                            event["creator_id"] = str(event["creator_id"])
                         event["distance_km"] = round(distance, 2)
                         nearby_events.append(event)
         

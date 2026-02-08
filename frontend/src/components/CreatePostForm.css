@@ -256,9 +256,38 @@
         height: 36px;
     }
 
+    .create-post-textarea {
+        min-height: 48px;
+        /* Larger touch area */
+        font-size: 1rem;
+        /* Prevent zoom */
+    }
+
+    .tool-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .tool-btn svg {
+        width: 22px;
+        height: 22px;
+    }
+
     .create-post-submit {
-        width: 36px;
-        height: 36px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .media-preview-item {
+        width: 100px;
+        height: 100px;
+    }
+
+    .media-remove-btn {
+        width: 24px;
+        height: 24px;
+        top: 6px;
+        right: 6px;
     }
 }
 

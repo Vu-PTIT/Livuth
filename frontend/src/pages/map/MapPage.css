@@ -1056,8 +1056,84 @@
     color: #a5b4fc;
 }
 
-/* Mobile responsive for date filter */
+/* Mobile responsive for map page */
 @media (max-width: 768px) {
+
+    /* Adjust map page for mobile - no header, has bottom nav */
+    .map-page {
+        top: 0;
+        bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+
+    .map-page-loading {
+        top: 0;
+        bottom: calc(56px + env(safe-area-inset-bottom));
+    }
+
+    /* Compact search bar on mobile */
+    .map-controls {
+        top: calc(0.75rem + env(safe-area-inset-top));
+        left: 0.75rem;
+        right: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .search-input-wrapper {
+        border-radius: 24px;
+        padding: 0 0.875rem;
+    }
+
+    .search-input {
+        padding: 0.75rem 0.5rem;
+        font-size: 16px;
+    }
+
+    /* Collapsible search - shows as icon when not focused */
+    .search-container.collapsed {
+        flex: 0;
+        width: 48px;
+    }
+
+    .search-container.collapsed .search-input-wrapper {
+        width: 48px;
+        padding: 0;
+        justify-content: center;
+    }
+
+    .search-container.collapsed .search-input,
+    .search-container.collapsed .clear-search {
+        display: none;
+    }
+
+    .search-container.collapsed .search-icon {
+        padding: 0.75rem;
+    }
+
+    /* Control buttons touch-friendly */
+    .locate-button,
+    .filter-button {
+        width: 48px;
+        height: 48px;
+        border-radius: 24px;
+    }
+
+    /* Adjust event count position for mobile */
+    .event-count {
+        bottom: 1rem;
+        left: 0.75rem;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8rem;
+    }
+
+    /* Legend responsive */
+    .map-legend {
+        bottom: 1rem;
+        right: 0.75rem;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.7rem;
+    }
+
+    /* Make date filter more compact on mobile */
     .date-filter-button {
         padding: 0.7rem 0.75rem;
     }
@@ -1073,6 +1149,13 @@
     .date-filter-dropdown {
         right: 0;
         min-width: 160px;
+    }
+
+    /* Category filters panel full width on mobile */
+    .category-filters {
+        left: 0.75rem;
+        right: 0.75rem;
+        width: auto;
     }
 }
 

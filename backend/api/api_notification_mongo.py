@@ -50,6 +50,7 @@ async def format_notification_response(notification: dict) -> dict:
         "message": notification.get("message", ""),
         "post_id": str(notification["post_id"]) if notification.get("post_id") else None,
         "comment_id": str(notification["comment_id"]) if notification.get("comment_id") else None,
+        "event_id": str(notification["event_id"]) if notification.get("event_id") else None,
         "read": notification.get("read", False),
         "created_at": notification.get("created_at", 0)
     }
@@ -215,3 +216,38 @@ async def create_notification(
     }
     
     await get_notifications_collection().insert_one(notification_doc)
+
+
+async def create_event_notification(
+    user_id: str,
+    notification_type: str,
+    event_id: str,
+    event_name: str,
+    message: str = None
+) -> None:
+    """
+    Create notification for event-related actions (checkin, proximity).
+    This is a self-notification, so actor_id equals user_id.
+    """
+    from datetime import datetime
+    
+    if message is None:
+        if notification_type == "checkin":
+            message = f"Check-in thành công tại {event_name}! 🎉"
+        elif notification_type == "proximity":
+            message = f"Bạn đang ở gần sự kiện {event_name}. Ghé thăm nhé!"
+        else:
+            message = f"Thông báo về sự kiện {event_name}"
+    
+    notification_doc = {
+        "user_id": ObjectId(user_id),
+        "actor_id": ObjectId(user_id),  # Self-notification
+        "type": notification_type,
+        "message": message,
+        "event_id": ObjectId(event_id),
+        "read": False,
+        "created_at": datetime.now().timestamp()
+    }
+    
+    await get_notifications_collection().insert_one(notification_doc)
+

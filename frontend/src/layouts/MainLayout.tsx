@@ -17,6 +17,8 @@ import {
     Sun,
     Moon,
     UsersThree,
+    Compass,
+    Bell,
 } from '@phosphor-icons/react';
 import './MainLayout.css';
 
@@ -44,7 +46,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <div className="main-layout">
+        <div className="main-layout" data-page={location.pathname.substring(1) || 'home'}>
             {/* Header */}
             <header className="header">
                 <div className="header-container">
@@ -263,6 +265,27 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Bottom Navigation for Mobile */}
+            {isAuthenticated && (
+                <nav className="bottom-nav">
+                    <Link to="/create-post" className={`bottom-nav-item ${isActive('/create-post') ? 'active' : ''}`} title="Cộng đồng">
+                        <UsersThree size={26} weight={isActive('/create-post') ? 'fill' : 'regular'} />
+                    </Link>
+                    <Link to="/events" className={`bottom-nav-item ${isActive('/events') ? 'active' : ''}`} title="Sự kiện">
+                        <CalendarBlank size={26} weight={isActive('/events') ? 'fill' : 'regular'} />
+                    </Link>
+                    <Link to="/map" className={`bottom-nav-item ${isActive('/map') ? 'active' : ''}`} title="Khám phá">
+                        <Compass size={26} weight={isActive('/map') ? 'fill' : 'regular'} />
+                    </Link>
+                    <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
+                        <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
+                    </Link>
+                    <Link to="/profile" className={`bottom-nav-item ${isActive('/profile') ? 'active' : ''}`} title="Hồ sơ">
+                        <User size={26} weight={isActive('/profile') ? 'fill' : 'regular'} />
+                    </Link>
+                </nav>
+            )}
         </div>
     );
 };

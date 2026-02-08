@@ -249,11 +249,24 @@
 
 @media (max-width: 640px) {
     .feed-page {
-        padding: 1rem 0 3rem;
+        padding: 0.5rem 0 calc(70px + env(safe-area-inset-bottom));
+        min-height: 100vh;
+    }
+
+    .feed-page .container {
+        padding: 0 1rem;
+    }
+
+    .feed-header {
+        margin-bottom: 1rem;
     }
 
     .feed-header h1 {
-        font-size: 1.5rem;
+        font-size: 1.25rem;
+    }
+
+    .feed-header p {
+        font-size: 0.875rem;
     }
 
     .feed-create-post {
@@ -261,9 +274,29 @@
     }
 
     .scroll-top-btn {
-        bottom: 1.5rem;
-        right: 1.5rem;
-        width: 44px;
-        height: 44px;
+        bottom: calc(70px + env(safe-area-inset-bottom) + 1rem);
+        right: 1rem;
+        width: 48px;
+        height: 48px;
+    }
+
+    /* Shimmer animation for skeletons */
+    .skeleton {
+        background: linear-gradient(90deg,
+                var(--bg-secondary) 25%,
+                var(--bg-tertiary) 50%,
+                var(--bg-secondary) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            background-position: 200% 0;
+        }
+
+        100% {
+            background-position: -200% 0;
+        }
     }
 }

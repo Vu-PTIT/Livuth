@@ -17,6 +17,7 @@ import {
     UserCircle,
     PaperPlaneRight,
     PencilSimple,
+    MapTrifold,
 } from '@phosphor-icons/react';
 import './EventDetailPage.css';
 
@@ -329,16 +330,44 @@ const EventDetailPage: React.FC = () => {
                     {/* Location */}
                     {event.location?.address && (
                         <div className="card info-card">
-                            <h3>
-                                <MapPin size={20} />
-                                Địa điểm
-                            </h3>
-                            <p>{event.location.address}</p>
-                            {event.location.city && (
-                                <p className="text-secondary">
-                                    {event.location.city}{event.location.province ? `, ${event.location.province}` : ''}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                <h3 style={{ marginBottom: 0 }}>
+                                    <MapPin size={20} />
+                                    Địa điểm
+                                </h3>
+
+                                {event.location.coordinates?.coordinates && (
+                                    <Link
+                                        to={`/map?lat=${event.location.coordinates.coordinates[1]}&lng=${event.location.coordinates.coordinates[0]}&eventId=${event.id}`}
+                                        className="btn btn-outline btn-sm"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem',
+                                            padding: '0.3rem 0.8rem',
+                                            fontSize: '0.85rem',
+                                            borderRadius: '20px',
+                                            whiteSpace: 'nowrap',
+                                            borderColor: 'var(--border-color)',
+                                            color: 'var(--text-secondary)'
+                                        }}
+                                    >
+                                        <MapTrifold size={16} weight="bold" />
+                                        Xem bản đồ
+                                    </Link>
+                                )}
+                            </div>
+
+                            <div style={{ paddingLeft: '0.25rem' }}>
+                                <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
+                                    {event.location.address}
                                 </p>
-                            )}
+                                {event.location.city && (
+                                    <p className="text-secondary" style={{ fontSize: '0.9rem' }}>
+                                        {event.location.city}{event.location.province ? `, ${event.location.province}` : ''}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     )}
 
