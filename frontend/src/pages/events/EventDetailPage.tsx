@@ -4,6 +4,7 @@ import { eventApi, reviewApi } from '../../api/endpoints';
 import type { Event, TourProviderListing, Review, ReviewStats } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import CheckInButton from '../../components/sui/CheckInButton';
 import {
     MapPin,
     Calendar,
@@ -532,8 +533,22 @@ const EventDetailPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Sidebar - Tour Providers */}
+                {/* Sidebar */}
                 <aside className="event-sidebar">
+                    {/* NFT Check-in Section */}
+                    {id && event && (
+                        <div className="sidebar-section checkin-section">
+                            <h3>Check-in với NFT</h3>
+                            <CheckInButton
+                                eventId={id}
+                                eventName={event.name}
+                                eventLocation={event.location?.address || event.location?.city || 'Việt Nam'}
+                                eventImageUrl={event.media?.[0]?.url}
+                            />
+                        </div>
+                    )}
+
+                    {/* Tour Providers Section */}
                     <div className="sidebar-section">
                         <h3>Dịch vụ tour</h3>
                         {event.tour_providers && event.tour_providers.length > 0 ? (
