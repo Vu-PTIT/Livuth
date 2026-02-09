@@ -8,6 +8,9 @@ import EventCard from '../../components/EventCard';
 import PostCard from '../../components/PostCard';
 import CreatePostForm from '../../components/CreatePostForm';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import NFTCard from '../../components/NFTCard';
+import { useOwnedNFTs } from '../../hooks/useOwnedNFTs';
+import { ConnectButton } from '@mysten/dapp-kit';
 import Modal from '../../components/Modal';
 import { CATEGORIES } from '../../constants/categories';
 import {
@@ -27,6 +30,7 @@ import {
     UploadSimple,
     Notebook,
     CalendarCheck,
+    Wallet,
     UserPlus,
     UserMinus,
 } from '@phosphor-icons/react';
@@ -71,7 +75,10 @@ const ProfilePage: React.FC = () => {
     const [isSavingAvatar, setIsSavingAvatar] = useState(false);
 
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState<'events' | 'posts'>('posts');
+    const [activeTab, setActiveTab] = useState<'events' | 'posts' | 'nfts'>('posts');
+
+    // NFT data (from Sui wallet)
+    const { nfts, isLoading: isLoadingNFTs, isConnected: isWalletConnected } = useOwnedNFTs();
     const [userPosts, setUserPosts] = useState<Post[]>([]);
     const [isLoadingPosts, setIsLoadingPosts] = useState(false);
 
@@ -594,6 +601,13 @@ const ProfilePage: React.FC = () => {
                                 <Notebook size={20} />
                                 <span>Bài đăng</span>
                             </button>
+                            <button
+                                className={`profile-tab ${activeTab === 'nfts' ? 'active' : ''}`}
+                                onClick={() => setActiveTab('nfts')}
+                            >
+                                <Wallet size={20} />
+                                <span>NFTs {nfts.length > 0 && <span className="nft-count">({nfts.length})</span>}</span>
+                            </button>
                         </div>
 
                         {/* Events Tab Content */}
@@ -648,6 +662,38 @@ const ProfilePage: React.FC = () => {
                                         <Notebook size={48} weight="light" />
                                         <p>{isOwnProfile ? 'Bạn chưa có bài đăng nào' : 'Người dùng chưa có bài đăng nào'}</p>
                                         {isOwnProfile && <span>Chia sẻ khoảnh khắc du lịch của bạn!</span>}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* NFTs Tab Content */}
+                        {activeTab === 'nfts' && (
+                            <div className="tab-content">
+                                {isOwnProfile && !isWalletConnected ? (
+                                    <div className="nft-connect-wallet">
+                                        <Wallet size={48} weight="light" />
+                                        <p>Kết nối ví Sui để xem NFT Check-in của bạn</p>
+                                        <ConnectButton />
+                                    </div>
+                                ) : isLoadingNFTs ? (
+                                    <LoadingSpinner size="small" />
+                                ) : nfts.length > 0 ? (
+                                    <div className="nft-gallery-grid">
+                                        {nfts.map((nft) => (
+                                            <NFTCard key={nft.id} nft={nft} />
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="nft-empty-state">
+                                        <Wallet size={48} weight="light" />
+                                        <h3>Chưa có NFT nào</h3>
+                                        <p>
+                                            {isOwnProfile
+                                                ? 'Check-in tại các sự kiện để nhận NFT kỷ niệm!'
+                                                : 'Người dùng chưa có NFT Check-in nào'
+                                            }
+                                        </p>
                                     </div>
                                 )}
                             </div>

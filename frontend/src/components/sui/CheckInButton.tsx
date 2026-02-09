@@ -69,6 +69,21 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
         setState('minting');
 
         try {
+            // Sanitize image URL to prevent size limit exceeded error
+            // Sui has a maximum pure argument size of 16384 bytes
+            let safeImageUrl = eventImageUrl || '';
+
+            // Skip base64 data URIs as they are too large
+            if (safeImageUrl.startsWith('data:')) {
+                safeImageUrl = '';
+            }
+
+            // Truncate URL if too long (keep under 2KB to be safe)
+            const MAX_URL_LENGTH = 2000;
+            if (safeImageUrl.length > MAX_URL_LENGTH) {
+                safeImageUrl = safeImageUrl.substring(0, MAX_URL_LENGTH);
+            }
+
             // Build the transaction
             const tx = new Transaction();
 
@@ -79,7 +94,7 @@ export const CheckInButton: React.FC<CheckInButtonProps> = ({
                     tx.pure.vector('u8', new TextEncoder().encode(eventId)),
                     tx.pure.vector('u8', new TextEncoder().encode(eventName)),
                     tx.pure.vector('u8', new TextEncoder().encode(eventLocation)),
-                    tx.pure.vector('u8', new TextEncoder().encode(eventImageUrl)),
+                    tx.pure.vector('u8', new TextEncoder().encode(safeImageUrl)),
                     tx.object(CLOCK_OBJECT_ID),
                 ],
             });

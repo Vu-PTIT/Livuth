@@ -4,7 +4,7 @@ CheckIn Service - Business logic for check-in operations
 from typing import Optional, Tuple, List, Dict, Any
 from bson import ObjectId
 from datetime import datetime
-from backend.core.db import get_database
+from backend.core.database import Database
 from backend.models.mongo_checkin import CheckInMongo
 from backend.schemas.sche_checkin import CheckInCreateRequest, CheckInResponse
 
@@ -20,7 +20,7 @@ class CheckInService:
     
     async def _get_collection(self):
         if self.collection is None:
-            self.db = await get_database()
+            self.db = Database.get_database()
             self.collection = self.db["checkins"]
             self.events_collection = self.db["events"]
             self.users_collection = self.db["users"]
