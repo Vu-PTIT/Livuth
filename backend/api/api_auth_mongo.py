@@ -82,7 +82,11 @@ async def login(login_data: LoginRequest) -> Any:
         
         # Create a new conversation if user has no active conversations
         # (keeps old chat history, just doesn't auto-load them)
-        await chat_service.ensure_active_conversation(str(user["_id"]))
+        try:
+            await chat_service.ensure_active_conversation(str(user["_id"]))
+        except Exception as e:
+            print(f"Failed to ensure active conversation: {e}")
+            # Continue login even if chat init fails
         
         # Create access token
         token_payload = TokenRequest(

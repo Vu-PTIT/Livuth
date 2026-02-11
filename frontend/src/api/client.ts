@@ -24,7 +24,7 @@ const capacitorAdapter = async (config: AxiosRequestConfig): Promise<AxiosRespon
         params: params,
     });
 
-    return {
+    const axiosResponse: AxiosResponse = {
         data: response.data,
         status: response.status,
         statusText: '', // CapacitorHttp doesn't return status text
@@ -32,6 +32,8 @@ const capacitorAdapter = async (config: AxiosRequestConfig): Promise<AxiosRespon
         config: config as InternalAxiosRequestConfig,
         request: {},
     };
+
+    return axiosResponse;
 };
 
 console.log('--- CAPACITOR DEBUG ---');
@@ -61,12 +63,16 @@ const apiClient = axios.create({
     },
     // Use custom adapter on native
     adapter: shouldUseNativeAdapter ? capacitorAdapter : undefined,
+    validateStatus: function (status) {
+        return status >= 200 && status < 300;
+    },
 });
 
 // Request interceptor - add auth token
 apiClient.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('access_token');
+        console.log(`[API] Request to ${config.url}`, { title: 'API Request', body: config.data });
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
         }
@@ -85,6 +91,7 @@ apiClient.interceptors.response.use(
 
         // If 401 and not already retried, try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
+            console.warn('[API] 401 Unauthorized encountered', { url: originalRequest.url });
             // Skip refresh attempt for auth-check endpoint to prevent loops
             const isAuthCheck = originalRequest.url?.includes('/users/me');
 
@@ -107,6 +114,7 @@ apiClient.interceptors.response.use(
                     return apiClient(originalRequest);
                 } catch (refreshError) {
                     // Refresh failed, clear tokens
+                    console.error('[API] Refresh failed', refreshError);
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
                     // Only redirect if not already on login/register/landing page
@@ -117,6 +125,7 @@ apiClient.interceptors.response.use(
                 }
             } else {
                 // No refresh token or auth check failed, just clear tokens
+                console.warn('[API] No refresh token or auth check failed, clearing tokens');
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
                 // Only redirect if not already on public pages

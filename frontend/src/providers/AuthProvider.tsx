@@ -17,15 +17,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     useEffect(() => {
         const initAuth = async () => {
             const token = localStorage.getItem('access_token');
+            console.log('[AuthProvider] initAuth started', { hasToken: !!token });
+
             if (token) {
                 try {
                     const response = await authApi.getMe();
+                    console.log('[AuthProvider] getMe success', response.data);
                     setUser(response.data.data || null);
                 } catch (error) {
+                    console.error('[AuthProvider] getMe failed', error);
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
+                    setUser(null);
                 }
+            } else {
+                console.log('[AuthProvider] No token found, skipping getMe');
             }
+            console.log('[AuthProvider] Setting isLoading to false');
             setIsLoading(false);
         };
         initAuth();

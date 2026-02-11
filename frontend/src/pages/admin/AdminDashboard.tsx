@@ -60,7 +60,7 @@ const AdminDashboard: React.FC = () => {
         <div className="admin-page container">
             <div className="page-header">
                 <h1 className="page-title">Dashboard</h1>
-                <p className="page-subtitle">Tổng quan hệ thống p-INNO</p>
+                <p className="page-subtitle">Tổng quan hệ thống Ganvo</p>
             </div>
 
             {/* Stats Grid */}

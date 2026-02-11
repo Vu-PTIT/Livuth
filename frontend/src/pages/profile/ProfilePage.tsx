@@ -559,20 +559,23 @@ const ProfilePage: React.FC = () => {
 
                         {profileUser.hobbies && profileUser.hobbies.length > 0 ? (
                             <div className="hobbies-list">
-                                {profileUser.hobbies.map((hobby: string, idx: number) => (
-                                    <span key={idx} className="hobby-tag">
-                                        {HOBBY_CATEGORIES.find(c => c.name === hobby)?.icon || '🏷️'} {hobby}
-                                        {isOwnProfile && (
-                                            <button
-                                                className="remove-hobby"
-                                                onClick={() => handleRemoveHobby(hobby)}
-                                                title="Xóa"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        )}
-                                    </span>
-                                ))}
+                                {profileUser.hobbies.map((hobby: string, idx: number) => {
+                                    const category = HOBBY_CATEGORIES.find(c => c.id === hobby || c.name === hobby);
+                                    return (
+                                        <span key={idx} className="hobby-tag">
+                                            {category?.icon || '🏷️'} {category?.name || hobby}
+                                            {isOwnProfile && (
+                                                <button
+                                                    className="remove-hobby"
+                                                    onClick={() => handleRemoveHobby(hobby)}
+                                                    title="Xóa"
+                                                >
+                                                    <X size={14} />
+                                                </button>
+                                            )}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         ) : (
                             <p className="no-hobbies">

@@ -309,7 +309,7 @@ const ChatPage: React.FC = () => {
                                     <div className="empty-messages">
                                         <Robot size={48} />
                                         <h3>Xin chào! 👋</h3>
-                                        <p>Tôi là trợ lý AI của p-INNO. Hãy hỏi tôi bất cứ điều gì về lễ hội và văn hóa Việt Nam!</p>
+                                        <p>Tôi là trợ lý AI của Ganvo. Hãy hỏi tôi bất cứ điều gì về lễ hội và văn hóa Việt Nam!</p>
                                     </div>
                                 )}
                             </div>

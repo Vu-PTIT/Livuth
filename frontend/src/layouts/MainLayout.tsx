@@ -10,15 +10,14 @@ import {
     ChatCircle,
     User,
     SignOut,
-    List,
-    X,
     GearSix,
     MapTrifold,
     Sun,
     Moon,
     UsersThree,
-    Compass,
     Bell,
+    Plus,
+    MagnifyingGlass,
 } from '@phosphor-icons/react';
 import './MainLayout.css';
 
@@ -30,6 +29,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const { user, isAuthenticated, logout, isAdmin, isEventProvider, isTourProvider } = useAuth();
     const { toggleTheme, isDark } = useTheme();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const location = useLocation();
 
@@ -45,15 +45,44 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     const isActive = (path: string) => location.pathname === path;
 
+    // Hide header on landing, login, register pages for cleaner mobile experience
+    const hideHeader = ['/', '/login', '/register'].includes(location.pathname) && !isAuthenticated;
+
     return (
-        <div className="main-layout" data-page={location.pathname.substring(1) || 'home'}>
-            {/* Header */}
+        <div className={`main-layout ${hideHeader ? 'hide-header-mobile' : ''}`} data-page={location.pathname.substring(1) || 'home'}>
+            {/* Header - Hidden on landing/auth pages for unauthenticated users (mobile only via CSS) */}
+            {/* Header - Hidden on landing/auth pages for unauthenticated users (mobile only via CSS) */}
             <header className="header">
                 <div className="header-container">
                     <Link to="/" className="logo">
                         <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                         <span className="logo-text">Ganvo</span>
                     </Link>
+
+                    {/* Mobile Header Right Actions (Visible only on mobile) */}
+                    <div className="mobile-header-right">
+                        <Link to="/create-post" className="mobile-action-btn" title="Tạo bài viết">
+                            <Plus size={24} weight="bold" />
+                        </Link>
+                        <button
+                            className="mobile-action-btn"
+                            onClick={() => setIsSearchOpen(!isSearchOpen)}
+                            title="Tìm kiếm"
+                        >
+                            <MagnifyingGlass size={24} />
+                        </button>
+                        {isAuthenticated && (
+                            <Link to="/profile" className="mobile-profile-link">
+                                <div className="avatar" style={{ width: 28, height: 28, fontSize: '0.75rem' }}>
+                                    {user?.avatar_url ? (
+                                        <img src={user.avatar_url} alt={user.username} className="avatar-img" />
+                                    ) : (
+                                        user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'
+                                    )}
+                                </div>
+                            </Link>
+                        )}
+                    </div>
 
                     {/* Desktop Navigation - Only show for authenticated users */}
                     {isAuthenticated && (
@@ -152,15 +181,21 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             </div>
                         )}
 
-                        {/* Mobile menu toggle */}
-                        <button
-                            className="mobile-menu-toggle"
-                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        >
-                            {isMobileMenuOpen ? <X size={24} /> : <List size={24} />}
-                        </button>
+                        {/* Mobile Profile Link was here but moved to mobile-header-right */}
                     </div>
                 </div>
+
+                {/* Mobile Search Bar */}
+                {isSearchOpen && (
+                    <div className="mobile-search-bar">
+                        <input
+                            type="text"
+                            className="mobile-search-input"
+                            placeholder="Tìm kiếm sự kiện, địa điểm, người dùng..."
+                            autoFocus
+                        />
+                    </div>
+                )}
             </header>
 
             {/* Mobile Navigation */}
@@ -275,14 +310,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <Link to="/events" className={`bottom-nav-item ${isActive('/events') ? 'active' : ''}`} title="Sự kiện">
                         <CalendarBlank size={26} weight={isActive('/events') ? 'fill' : 'regular'} />
                     </Link>
-                    <Link to="/map" className={`bottom-nav-item ${isActive('/map') ? 'active' : ''}`} title="Khám phá">
-                        <Compass size={26} weight={isActive('/map') ? 'fill' : 'regular'} />
+                    <Link to="/map" className={`bottom-nav-item ${isActive('/map') ? 'active' : ''}`} title="Bản đồ">
+                        <MapTrifold size={26} weight={isActive('/map') ? 'fill' : 'regular'} />
                     </Link>
                     <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
                         <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
                     </Link>
-                    <Link to="/profile" className={`bottom-nav-item ${isActive('/profile') ? 'active' : ''}`} title="Hồ sơ">
-                        <User size={26} weight={isActive('/profile') ? 'fill' : 'regular'} />
+                    <Link to="/chat" className={`bottom-nav-item ${isActive('/chat') ? 'active' : ''}`} title="Trợ lý AI">
+                        <ChatCircle size={26} weight={isActive('/chat') ? 'fill' : 'regular'} />
                     </Link>
                 </nav>
             )}

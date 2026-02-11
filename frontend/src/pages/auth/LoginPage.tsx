@@ -78,7 +78,7 @@ const LoginPage: React.FC = () => {
                 <div className="auth-header">
                     <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                     <h1>Đăng nhập</h1>
-                    <p>Chào mừng bạn quay trở lại p-INNO</p>
+                    <p>Chào mừng bạn quay trở lại Ganvo</p>
                 </div>
 
                 {error && <div className="alert alert-error">{error}</div>}

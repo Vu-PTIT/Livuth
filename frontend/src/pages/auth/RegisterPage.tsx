@@ -126,7 +126,7 @@ const RegisterPage: React.FC = () => {
                 <div className="auth-header">
                     <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                     <h1>Tạo tài khoản</h1>
-                    <p>Tham gia cộng đồng p-INNO</p>
+                    <p>Tham gia cộng đồng Ganvo</p>
                 </div>
 
                 {/* Progress Steps */}

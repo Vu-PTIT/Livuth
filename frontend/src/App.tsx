@@ -36,6 +36,7 @@ import NotificationsPage from './pages/notifications/NotificationsPage';
 // Inner component that uses auth context
 function AppContent() {
   const { isLoading, isAuthenticated, user } = useAuth();
+  console.log('[AppContent] Render', { isLoading, isAuthenticated, user: user?.email });
 
   // Check if user needs onboarding (user without hobbies)
   const needsOnboarding = isAuthenticated && user && (!user.hobbies || user.hobbies.length === 0);
@@ -43,6 +44,7 @@ function AppContent() {
   // Hide HTML initial-loader when React is ready
   React.useEffect(() => {
     if (!isLoading) {
+      console.log('[AppContent] Loading finished, removing initial-loader');
       const loader = document.getElementById('initial-loader');
       if (loader) {
         loader.style.opacity = '0';

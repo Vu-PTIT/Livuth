@@ -67,6 +67,65 @@
     gap: 0.5rem;
 }
 
+/* Mobile Header Actions */
+/* Mobile Header Actions */
+.mobile-header-right {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mobile-search-bar {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    animation: slideDown 0.2s ease-out;
+    width: 100%;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mobile-search-input {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 99px;
+    border: 1px solid var(--border-color);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.mobile-search-input:focus {
+    border-color: var(--primary-color);
+}
+
+.mobile-action-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-profile-link {
+    display: none;
+    text-decoration: none;
+}
+
 .nav-link {
     display: inline-flex;
     align-items: center;
@@ -521,47 +580,64 @@
 /* Mobile-specific styles */
 @media (max-width: 768px) {
 
-    /* Show bottom nav on mobile */
+    /* SHOW Bottom Nav */
     .bottom-nav {
-        display: flex;
+        display: flex !important;
     }
 
-    /* Show header but simplified - only logo */
+    /* SHOW Header */
     .header {
         display: block !important;
     }
 
+    /* Header Layout */
     .header-container {
-        height: 48px;
+        height: 56px;
         padding: 0 1rem;
-        justify-content: center;
+        justify-content: space-between !important;
     }
 
-    /* Show logo and text */
-    .logo {
-        display: flex;
+    /* SHOW Mobile Right Actions (Create, Search) */
+    .mobile-header-right {
+        display: flex !important;
+        align-items: center;
+        gap: 1rem;
     }
 
-    .logo-text {
-        display: block;
-        font-size: 1rem;
+    /* SHOW Mobile Profile Link (Right) */
+    .mobile-profile-link {
+        display: block !important;
     }
 
-    /* Hide navigation and actions */
+    /* HIDE Desktop Navigation & Actions */
     .nav-desktop,
-    .header-actions,
-    .mobile-menu-toggle {
+    .theme-toggle,
+    .user-menu,
+    .auth-buttons,
+    .mobile-menu-toggle,
+    .notification-dropdown-wrapper {
         display: none !important;
     }
 
-    /* Hide the dropdown nav-mobile since we have bottom nav */
+    /* HIDE Header Actions grouping (since we moved profile out) */
+    .header-actions {
+        display: none !important;
+    }
+
+    /* Logo Text - Adjust size */
+    .logo-text {
+        font-size: 1.1rem;
+        display: block;
+    }
+
+    /* Hide the dropdown nav-mobile */
     .nav-mobile {
         display: none !important;
     }
 
-    /* Adjust main content for smaller header */
+    /* Adjust main content for fixed header */
     .main-content {
-        margin-top: 48px;
+        margin-top: 56px;
         padding-top: env(safe-area-inset-top);
         padding-bottom: calc(56px + env(safe-area-inset-bottom));
     }
@@ -571,7 +647,7 @@
         padding: 0 1rem;
     }
 
-    /* Hide footer on mobile (bottom nav replaces it) */
+    /* Hide footer on mobile */
     .footer {
         display: none;
     }
@@ -585,6 +661,19 @@
         margin-top: 0;
         padding-top: env(safe-area-inset-top);
         height: 100vh;
-        /* Ensure full height for map */
+    }
+
+    /* Hide header on specific pages */
+    .main-layout.hide-header-mobile .header {
+        display: none !important;
+    }
+
+    .main-layout.hide-header-mobile .main-content {
+        margin-top: 0;
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .main-layout.hide-header-mobile .bottom-nav {
+        display: none !important;
     }
 }

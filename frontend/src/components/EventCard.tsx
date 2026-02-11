@@ -100,7 +100,7 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
                         {event.categories.slice(0, 3).map((cat, idx) => (
                             <span key={idx} className="event-card-tag">
                                 <Tag size={12} />
-                                {cat}
+                                {cat === 'Lê hội' ? 'Lễ hội' : cat}
                             </span>
                         ))}
                     </div>

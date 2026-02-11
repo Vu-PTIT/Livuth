@@ -202,7 +202,7 @@ const HomePage: React.FC = () => {
                     <div className="container">
                         <div className="cta-card">
                             <div className="cta-content">
-                                <h2>Tham gia cộng đồng p-INNO</h2>
+                                <h2>Tham gia cộng đồng Ganvo</h2>
                                 <p>Đăng ký để nhận gợi ý sự kiện phù hợp và trải nghiệm trợ lý AI thông minh</p>
                             </div>
                             <div className="cta-actions">

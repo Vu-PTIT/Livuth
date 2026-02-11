@@ -44,7 +44,7 @@ async def get_all(token: str = Depends(AdminRequired())) -> Any:
     response_model=DataResponse[UserBaseResponse],
     status_code=status.HTTP_200_OK,
 )
-async def get_by_id(user_id: str, token: str = Depends(AdminRequired())) -> Any:
+async def get_by_id(user_id: str, token: str = Depends(JWTBearer())) -> Any:
     """Get user by ID (Admin only)"""
     try:
         user = await user_service.get_by_id(user_id=user_id)
