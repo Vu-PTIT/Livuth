@@ -11,10 +11,11 @@
 .auth-container {
     width: 100%;
     max-width: 100%;
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-md);
+    /* Mobile: Flat design (no border/shadow/bg) */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0.5rem 0;
 }
 
 .auth-header {
@@ -317,6 +318,7 @@
     .auth-container {
         max-width: 420px;
         padding: 2rem;
+        /* Kept flat on tablet/large mobile to ensure "one block" look */
     }
 
     .auth-header h1 {
@@ -353,42 +355,56 @@
 /* ==================== DESKTOP (768px+) ==================== */
 @media (min-width: 768px) {
     .auth-page {
-        padding: 3rem 2rem;
+        padding: 1.35rem 1rem 1rem 1rem;
+        /* Slightly reduced top padding (1.35rem) for precise visual centering */
+        height: calc(100vh - 64px);
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .auth-container {
-        max-width: 480px;
-        padding: 2.5rem;
-        border-radius: 20px;
+        max-width: 440px;
+        padding: 2rem;
+        /* Restore card look on desktop only */
+        background: var(--card-bg);
+        border-radius: 16px;
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--border-color);
     }
 
     .auth-header {
-        margin-bottom: 2rem;
+        margin-bottom: 1.25rem;
     }
 
     .auth-header .logo-img {
-        height: 56px;
+        height: 48px;
     }
 
     .auth-header h1 {
-        font-size: 1.875rem;
+        font-size: 1.5rem;
     }
 
     .auth-steps {
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
 
     .step-number {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
     }
 
     .form-group {
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
     }
 
     .auth-footer {
-        margin-top: 2rem;
-        padding-top: 1.5rem;
+        margin-top: 1.25rem;
+        padding-top: 1rem;
+    }
+
+    .social-login-separator {
+        margin: 1rem 0;
     }
 }

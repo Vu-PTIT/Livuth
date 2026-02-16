@@ -125,17 +125,9 @@ async def update_my_profile(user_data: UserUpdateMeRequest, token: str = Depends
             raise CustomException(exception=ExceptionType.FORBIDDEN)
         
         # Convert to UserUpdateRequest for service
-        update_data = UserUpdateRequest(
-            full_name=user_data.full_name,
-            phone=user_data.phone,
-            address=user_data.address,
-            gender=user_data.gender,
-            bio=user_data.bio,
-            avatar_url=user_data.avatar_url,
-            dob=user_data.dob,
-            hobbies=user_data.hobbies,
-            participated_events=user_data.participated_events
-        )
+        # Convert to UserUpdateRequest for service
+        # Use exclude_unset=True to avoid overwriting existing fields with None
+        update_data = UserUpdateRequest(**user_data.model_dump(exclude_unset=True))
         
         updated_user = await user_service.update_by_id(user_id=user_id, data=update_data)
         return DataResponse(http_code=status.HTTP_200_OK, data=updated_user)

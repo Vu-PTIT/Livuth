@@ -57,6 +57,7 @@ const ProfilePage: React.FC = () => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [editForm, setEditForm] = useState({
         full_name: '',
+        nickname: '',
         phone: '',
         address: '',
         gender: '',
@@ -163,6 +164,7 @@ const ProfilePage: React.FC = () => {
         if (profileUser && isOwnProfile) {
             setEditForm({
                 full_name: profileUser.full_name || '',
+                nickname: profileUser.nickname || '',
                 phone: profileUser.phone || '',
                 address: profileUser.address || '',
                 gender: profileUser.gender || '',
@@ -377,7 +379,7 @@ const ProfilePage: React.FC = () => {
                             )}
                         </div>
                         <h1 className="profile-name">{profileUser.full_name || profileUser.username}</h1>
-                        <p className="profile-email">{profileUser.email}</p>
+                        {profileUser.nickname && <p className="profile-nickname">@{profileUser.nickname}</p>}
 
                         {profileUser.roles && (
                             <div className="profile-roles">
@@ -615,7 +617,7 @@ const ProfilePage: React.FC = () => {
 
                         {/* Events Tab Content */}
                         {activeTab === 'events' && (
-                            <div className="tab-content">
+                            <div className="tab-content tab-events">
                                 {profileUser.participated_events && profileUser.participated_events.length > 4 && (
                                     <div className="tab-header">
                                         <Link to="/events" className="section-link">
@@ -641,7 +643,7 @@ const ProfilePage: React.FC = () => {
 
                         {/* Posts Tab Content */}
                         {activeTab === 'posts' && (
-                            <div className="tab-content">
+                            <div className="tab-content tab-posts">
                                 {/* Create Post Form - only for own profile */}
                                 {isOwnProfile && (
                                     <div className="profile-create-post">
@@ -672,7 +674,7 @@ const ProfilePage: React.FC = () => {
 
                         {/* NFTs Tab Content */}
                         {activeTab === 'nfts' && (
-                            <div className="tab-content">
+                            <div className="tab-content tab-nfts">
                                 {isOwnProfile && !isWalletConnected ? (
                                     <div className="nft-connect-wallet">
                                         <Wallet size={48} weight="light" />
@@ -728,6 +730,20 @@ const ProfilePage: React.FC = () => {
                                     placeholder="Nhập họ và tên"
                                     value={editForm.full_name}
                                     onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="nickname">
+                                    Biệt danh (Nickname)
+                                </label>
+                                <input
+                                    type="text"
+                                    id="nickname"
+                                    className="form-input"
+                                    placeholder="Nhập biệt danh (VD: @cool_user)"
+                                    value={editForm.nickname}
+                                    onChange={(e) => setEditForm({ ...editForm, nickname: e.target.value })}
                                 />
                             </div>
 

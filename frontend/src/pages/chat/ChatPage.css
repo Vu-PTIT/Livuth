@@ -14,6 +14,10 @@
     box-shadow: var(--shadow-md);
 }
 
+.chat-mobile-header {
+    display: none;
+}
+
 /* Sidebar */
 .chat-sidebar {
     background: var(--bg-secondary);
@@ -378,13 +382,15 @@
 /* Responsive */
 @media (max-width: 768px) {
     .chat-page {
-        height: calc(100vh - 56px - env(safe-area-inset-bottom));
-        height: calc(100dvh - 56px);
+        /* 100dvh - Header Margin (60px) - Bottom Nav (56px) - Safe Area */
+        height: calc(100dvh - 60px - 56px - env(safe-area-inset-bottom));
         /* Dynamic viewport for keyboard support */
         padding: 0;
+        overflow: hidden;
+        /* Prevent outer scroll */
     }
 
-    .chat-page .container {
+    .chat-page.container {
         padding: 0;
         height: 100%;
     }
@@ -396,10 +402,42 @@
         height: 100%;
     }
 
+    /* Mobile Header */
+    .chat-mobile-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 0.5rem;
+        background: var(--bg-secondary);
+        /* border-bottom: 1px solid var(--border-color); */
+    }
+
+    .chat-mobile-header h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin: 0;
+        line-height: 1;
+        /* Fix vertical alignment with icon */
+        position: relative;
+        top: 4px;
+        /* Manual alignment: Push text down to align baseline with bottom icon bar */
+    }
+
     .mobile-sidebar-toggle {
         display: flex;
         align-items: center;
         justify-content: center;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        position: static;
+        /* Reset absolute positioning */
+        color: var(--text-primary);
+        line-height: 1;
+        /* Match h1 line-height */
     }
 
     .sidebar-overlay {

@@ -39,6 +39,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         initAuth();
     }, []);
 
+    // Listen for auth:logout events from API client
+    useEffect(() => {
+        const handleLogoutEvent = () => {
+            console.log('[AuthProvider] Received auth:logout event');
+            logout();
+        };
+
+        window.addEventListener('auth:logout', handleLogoutEvent);
+        return () => window.removeEventListener('auth:logout', handleLogoutEvent);
+    }, []);
+
     const login = async (data: LoginRequest) => {
         const response = await authApi.login(data);
         const tokenData = response.data.data as TokenResponse;

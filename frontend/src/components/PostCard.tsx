@@ -54,7 +54,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, onDelete, onOpenDet
         if (hours < 24) return `${hours} giờ trước`;
         const days = Math.floor(hours / 24);
         if (days < 7) return `${days} ngày trước`;
-        return new Date(timestamp * 1000).toLocaleDateString('vi-VN');
+        const date = new Date(timestamp * 1000);
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const thisYear = new Date().getFullYear();
+        return `${day} thg ${month}${year !== thisYear ? `, ${year}` : ''}`;
     };
 
     const handleLike = async () => {

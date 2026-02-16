@@ -7,14 +7,15 @@ import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
 import { MagnifyingGlass, ArrowRight, Sparkle, Funnel } from '@phosphor-icons/react';
+import useIsMobile from '../../hooks/useIsMobile';
 import './HomePage.css';
 
-// Use first 6 categories for homepage display
-const HOME_CATEGORIES = CATEGORIES.slice(0, 6);
+
 
 const HomePage: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
+    const isMobile = useIsMobile();
     const [events, setEvents] = useState<Event[]>([]);
     const [recommendedEvents, setRecommendedEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,9 +35,16 @@ const HomePage: React.FC = () => {
                 if (isAuthenticated && user?.id) {
                     try {
                         const recRes = await eventApi.getRecommendations(user.id, 4);
-                        setRecommendedEvents(recRes.data.data || []);
+                        if (recRes.data.data && recRes.data.data.length > 0) {
+                            setRecommendedEvents(recRes.data.data);
+                        } else {
+                            // Fallback to latest events if no recommendations
+                            setRecommendedEvents((eventsRes.data.data || []).slice(0, 4));
+                        }
                     } catch (err) {
                         console.log('No recommendations available');
+                        // Fallback on error
+                        setRecommendedEvents((eventsRes.data.data || []).slice(0, 4));
                     }
                 }
             } catch (error) {
@@ -57,6 +65,57 @@ const HomePage: React.FC = () => {
         if (city.trim()) params.set('city', city.trim());
 
         navigate(`/events?${params.toString()}`);
+    };
+
+    const carouselRef = React.useRef<HTMLDivElement>(null);
+    const isDown = React.useRef(false);
+    const startX = React.useRef(0);
+    const scrollLeft = React.useRef(0);
+    const isDragging = React.useRef(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!carouselRef.current) return;
+        isDown.current = true;
+        isDragging.current = false;
+        startX.current = e.pageX - carouselRef.current.offsetLeft;
+        scrollLeft.current = carouselRef.current.scrollLeft;
+        carouselRef.current.style.cursor = 'grabbing';
+    };
+
+    const handleMouseLeave = () => {
+        isDown.current = false;
+        if (carouselRef.current) {
+            carouselRef.current.style.cursor = 'grab';
+        }
+    };
+
+    const handleMouseUp = () => {
+        isDown.current = false;
+        if (carouselRef.current) {
+            carouselRef.current.style.cursor = 'grab';
+        }
+        setTimeout(() => {
+            isDragging.current = false;
+        }, 0);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDown.current || !carouselRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - carouselRef.current.offsetLeft;
+        const walk = (x - startX.current) * 2;
+
+        if (Math.abs(walk) > 5) {
+            isDragging.current = true;
+        }
+
+        carouselRef.current.scrollLeft = scrollLeft.current - walk;
+    };
+
+    const handleCategoryItemClick = (categoryName: string) => {
+        if (!isDragging.current) {
+            navigate(`/events?categories=${encodeURIComponent(categoryName)}`);
+        }
     };
 
     return (
@@ -93,8 +152,9 @@ const HomePage: React.FC = () => {
                             >
                                 <Funnel size={20} />
                             </button>
-                            <button type="submit" className="btn btn-primary">
-                                Tìm kiếm
+                            <button type="submit" className="btn btn-primary search-btn">
+                                <span className="search-text">Tìm kiếm</span>
+                                <MagnifyingGlass size={20} className="search-btn-icon" />
                             </button>
                         </div>
 
@@ -124,16 +184,24 @@ const HomePage: React.FC = () => {
                     <div className="section-header">
                         <h2>Khám phá theo danh mục</h2>
                     </div>
-                    <div className="categories-grid">
-                        {HOME_CATEGORIES.map((cat) => (
-                            <Link
+                    <div
+                        className="categories-scroll-container"
+                        ref={carouselRef}
+                        onMouseDown={handleMouseDown}
+                        onMouseLeave={handleMouseLeave}
+                        onMouseUp={handleMouseUp}
+                        onMouseMove={handleMouseMove}
+                        style={{ cursor: 'grab' }}
+                    >
+                        {CATEGORIES.map((cat) => (
+                            <div
                                 key={cat.id}
-                                to={`/events?categories=${cat.name}`}
                                 className="category-card"
+                                onClick={() => handleCategoryItemClick(cat.name)}
                             >
                                 <span className="category-icon">{cat.icon}</span>
                                 <span className="category-name">{cat.name}</span>
-                            </Link>
+                            </div>
                         ))}
                     </div>
                 </div>
@@ -157,9 +225,11 @@ const HomePage: React.FC = () => {
                                 Xem tất cả <ArrowRight size={18} />
                             </Link>
                         </div>
-                        <div className="events-grid grid grid-4">
+                        <div className="events-scroll-container">
                             {recommendedEvents.map((event) => (
-                                <EventCard key={event.id} event={event} />
+                                <div key={event.id} className="event-scroll-item">
+                                    <EventCard event={event} variant={isMobile ? "list" : "card"} />
+                                </div>
                             ))}
                         </div>
                     </div>
@@ -183,9 +253,9 @@ const HomePage: React.FC = () => {
                             ))}
                         </div>
                     ) : events.length > 0 ? (
-                        <div className="events-grid grid grid-4">
+                        <div className="events-list-container">
                             {events.map((event) => (
-                                <EventCard key={event.id} event={event} />
+                                <EventCard key={event.id} event={event} variant={isMobile ? "list" : "card"} />
                             ))}
                         </div>
                     ) : (

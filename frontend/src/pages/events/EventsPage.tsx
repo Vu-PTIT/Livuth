@@ -7,12 +7,16 @@ import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
 import { MagnifyingGlass, FunnelSimple, X, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import useIsMobile from '../../hooks/useIsMobile';
 import './EventsPage.css';
-
-const ITEMS_PER_PAGE = 12;
 
 const EventsPage: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
+    const isMobile = useIsMobile();
+
+    // Dynamic items per page
+    const itemsPerPage = isMobile ? 10 : 12;
+
     const [events, setEvents] = useState<Event[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
@@ -75,9 +79,9 @@ const EventsPage: React.FC = () => {
     }, [query, selectedCategories, city]);
 
     // Pagination calculations
-    const totalPages = Math.ceil(events.length / ITEMS_PER_PAGE);
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const totalPages = Math.ceil(events.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
     const currentEvents = events.slice(startIndex, endIndex);
 
     const handlePageChange = (page: number) => {
@@ -152,35 +156,41 @@ const EventsPage: React.FC = () => {
             </div>
 
             {/* Search Bar */}
+            {/* Search Bar - Consolidated Row */}
             <div className="search-section">
                 <form className="search-bar" onSubmit={handleSearch}>
                     <MagnifyingGlass size={20} className="search-icon" />
                     <input
                         type="text"
-                        placeholder="Tìm kiếm sự kiện..."
+                        placeholder="Tìm kiếm sự kiện, địa điểm..."
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                     />
-                    <button type="submit" className="btn btn-primary btn-sm">
-                        Tìm kiếm
+
+                    {/* Filter Icon Button inside Search Bar */}
+                    <button
+                        type="button"
+                        className={`filter-icon-btn ${showFilters || hasFilters ? 'active' : ''}`}
+                        onClick={() => setShowFilters(!showFilters)}
+                        title="Bộ lọc"
+                    >
+                        <FunnelSimple size={20} weight={hasFilters ? "fill" : "regular"} />
+                        {hasFilters && <span className="filter-dot"></span>}
                     </button>
                 </form>
-
-                <button
-                    className={`btn btn-secondary filter-toggle ${showFilters ? 'active' : ''}`}
-                    onClick={() => setShowFilters(!showFilters)}
-                >
-                    <FunnelSimple size={18} />
-                    Bộ lọc
-                    {hasFilters && <span className="filter-count">{selectedCategories.length + (city ? 1 : 0)}</span>}
-                </button>
             </div>
 
             {/* Filters */}
             {showFilters && (
                 <div className="filters-panel card">
                     <div className="filters-header">
-                        <h3>Bộ lọc</h3>
+                        <div className="filters-title-row" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <h3>Bộ lọc</h3>
+                            {/* Moved Results Count Here */}
+                            <span className="results-count-text" style={{ fontSize: '0.85rem', color: '#9ca3af', fontWeight: 400 }}>
+                                Tìm thấy <strong style={{ color: '#f97316' }}>{events.length}</strong> kết quả
+                            </span>
+                        </div>
                         {hasFilters && (
                             <button className="btn btn-sm btn-outline" onClick={clearFilters}>
                                 <X size={16} />
@@ -191,7 +201,7 @@ const EventsPage: React.FC = () => {
 
                     <div className="filter-group">
                         <label className="filter-label">Danh mục</label>
-                        <div className="category-chips-grid-6">
+                        <div className="category-chips-flex">
                             {CATEGORIES.map((cat) => (
                                 <CategoryChip
                                     key={cat.id}
@@ -246,22 +256,17 @@ const EventsPage: React.FC = () => {
             {/* Results */}
             <div className="results-section">
                 {isLoading ? (
-                    <div className="events-grid grid grid-4">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+                    <div className="events-list">
+                        {[1, 2, 3, 4, 5, 6].map((i) => (
                             <EventCardSkeleton key={i} />
                         ))}
                     </div>
                 ) : events.length > 0 ? (
                     <>
-                        <div className="results-count">
-                            Tìm thấy <strong>{events.length}</strong> sự kiện
-                            {totalPages > 1 && (
-                                <span> • Trang {currentPage}/{totalPages}</span>
-                            )}
-                        </div>
-                        <div className="events-grid grid grid-4">
+                        {/* Removed pagination info from here to keep it simple */}
+                        <div className="events-list">
                             {currentEvents.map((event) => (
-                                <EventCard key={event.id} event={event} />
+                                <EventCard key={event.id} event={event} variant={isMobile ? "list" : "card"} />
                             ))}
                         </div>
 

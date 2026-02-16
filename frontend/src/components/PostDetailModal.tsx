@@ -9,11 +9,13 @@ import {
     PencilSimple,
     Trash,
     Ticket,
+    Image as ImageIcon,
 } from '@phosphor-icons/react';
 import type { Post, Comment } from '../types';
-import { postApi } from '../api/endpoints';
+import { postApi, uploadApi } from '../api/endpoints';
 import { useAuth } from '../hooks/useAuth';
 import { useToast } from './Toast';
+import useIsMobile from '../hooks/useIsMobile';
 import './PostDetailModal.css';
 
 interface PostDetailModalProps {
@@ -30,6 +32,7 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
     onPostDelete,
 }) => {
     const { user } = useAuth();
+    const isMobile = useIsMobile(900);
     const { showToast } = useToast();
     const [comments, setComments] = useState<Comment[]>([]);
     const [isLoadingComments, setIsLoadingComments] = useState(true);
@@ -42,8 +45,10 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
     const [isEditing, setIsEditing] = useState(false);
     const [editContent, setEditContent] = useState(post.content);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const modalRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isOwner = user?.id === post.author.id;
 
@@ -101,7 +106,12 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
         if (hours < 24) return `${hours} giờ trước`;
         const days = Math.floor(hours / 24);
         if (days < 7) return `${days} ngày trước`;
-        return new Date(timestamp * 1000).toLocaleDateString('vi-VN');
+        const date = new Date(timestamp * 1000);
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+        const thisYear = new Date().getFullYear();
+        return `${day} thg ${month}${year !== thisYear ? `, ${year}` : ''}`;
     };
 
     const handleLike = async () => {
@@ -143,6 +153,36 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
         }
     };
 
+    const handleImageClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Reset input value to allow selecting same file again
+        e.target.value = '';
+
+        setIsUploading(true);
+        try {
+            const response = await uploadApi.uploadFile(file);
+            if (response.data.success && response.data.data) {
+                const imageUrl = response.data.data.url;
+                // Append image markdown to comment
+                setNewComment(prev => prev ? `${prev}\n![image](${imageUrl})` : `![image](${imageUrl})`);
+            } else {
+                showToast('Upload ảnh thất bại', 'error');
+            }
+        } catch (error: any) {
+            console.error('Upload error:', error);
+            const msg = error.response?.data?.message || 'Không thể upload ảnh';
+            showToast(msg, 'error');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
     const handleEditPost = async () => {
         if (!editContent.trim()) return;
         try {
@@ -177,6 +217,46 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
             onClose();
         }
     };
+
+    const commentFormJSX = (
+        <form className="comment-form" onSubmit={handleSubmitComment}>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageChange}
+                accept="image/*"
+                style={{ display: 'none' }}
+            />
+            <div className="comment-input-wrapper">
+                {user?.avatar_url ? (
+                    <img src={user.avatar_url} alt="" className="comment-avatar" />
+                ) : (
+                    <div className="comment-avatar-placeholder">
+                        {user?.full_name?.[0] || user?.username?.[0]}
+                    </div>
+                )}
+                <button
+                    type="button"
+                    className="comment-upload-btn"
+                    onClick={handleImageClick}
+                    disabled={isUploading || isSubmitting}
+                >
+                    <ImageIcon size={24} weight="regular" />
+                </button>
+                <input
+                    type="text"
+                    placeholder={isUploading ? "Đang tải ảnh..." : "Viết bình luận..."}
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    className="comment-input"
+                    disabled={isUploading}
+                />
+                <button type="submit" className="comment-submit" disabled={!newComment.trim() || isSubmitting || isUploading}>
+                    <PaperPlaneRight size={20} weight="fill" />
+                </button>
+            </div>
+        </form>
+    );
 
     return (
         <div className="post-modal-overlay" onClick={handleBackdropClick}>
@@ -292,29 +372,6 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                     <div className="post-modal-comments">
                         <h3>Bình luận ({comments.length})</h3>
 
-                        {/* Comment Input */}
-                        <form className="comment-form" onSubmit={handleSubmitComment}>
-                            <div className="comment-input-wrapper">
-                                {user?.avatar_url ? (
-                                    <img src={user.avatar_url} alt="" className="comment-avatar" />
-                                ) : (
-                                    <div className="comment-avatar-placeholder">
-                                        {user?.full_name?.[0] || user?.username?.[0]}
-                                    </div>
-                                )}
-                                <input
-                                    type="text"
-                                    placeholder="Viết bình luận..."
-                                    value={newComment}
-                                    onChange={(e) => setNewComment(e.target.value)}
-                                    className="comment-input"
-                                />
-                                <button type="submit" className="comment-submit" disabled={!newComment.trim() || isSubmitting}>
-                                    <PaperPlaneRight size={20} weight="fill" />
-                                </button>
-                            </div>
-                        </form>
-
                         {/* Comments List */}
                         <div className="comments-list">
                             {isLoadingComments ? (
@@ -342,8 +399,14 @@ const PostDetailModal: React.FC<PostDetailModalProps> = ({
                                 <div className="comments-empty">Chưa có bình luận nào</div>
                             )}
                         </div>
+
+                        {/* Desktop: form inside comments section */}
+                        {!isMobile && commentFormJSX}
                     </div>
                 </div>
+
+                {/* Mobile: form outside scrollable content, at bottom of modal */}
+                {isMobile && commentFormJSX}
             </div>
         </div>
     );

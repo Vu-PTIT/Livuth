@@ -23,7 +23,10 @@
 }
 
 .search-bar:focus-within {
-    border-color: var(--primary-color);
+    border-color: #f97316;
+    /* Ganvo Orange */
+    box-shadow: 0 0 0 1px #f97316;
+    /* Add glow */
 }
 
 .search-bar .search-icon {
@@ -43,41 +46,58 @@
     outline: none;
 }
 
-.filter-toggle {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 0.5rem !important;
-    white-space: nowrap !important;
-    padding: 0.625rem 1rem !important;
-    border-radius: 8px !important;
-    background: var(--bg-secondary) !important;
-    border: 1.5px solid var(--border-color) !important;
+.search-bar input::placeholder {
+    color: #9ca3af;
 }
 
-/* Hover state - color only, no size change */
-.filter-toggle:hover {
-    background: rgba(99, 102, 241, 0.1) !important;
-    border-color: var(--primary-color) !important;
-    color: var(--primary-color) !important;
+.form-input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
 }
 
-/* Active state - full background coverage for both icon and text */
-.filter-toggle.active,
-.filter-toggle.active:hover {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
-    border-color: var(--primary-color) !important;
-    color: white !important;
+/* Ensure filters panel doesn't overlap bottom nav */
+.filters-panel {
+    padding-bottom: 1rem;
 }
 
-.filter-count {
+/* New Filter Icon Button */
+.filter-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    /* Touch target */
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+}
+
+.filter-icon-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--primary-color);
+}
+
+.filter-icon-btn.active {
+    color: var(--primary-color);
+}
+
+.filter-dot {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 8px;
+    height: 8px;
     background: var(--primary-color);
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 10px;
-    font-weight: 600;
+    border-radius: 50%;
+    border: 1.5px solid var(--card-bg);
 }
+
+/* REMOVED: .filter-toggle, .filter-count styles */
 
 /* Filters Panel */
 .filters-panel {
@@ -113,6 +133,7 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
+
 
 /* Old .category-chips and .chip styles removed - now using CategoryChip component */
 
@@ -154,21 +175,52 @@
 }
 
 /* Results */
+.events-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
 .results-section {
-    margin-top: 1.5rem;
+    margin-top: 1rem;
 }
 
 .results-count {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     color: var(--text-secondary);
-    margin-bottom: 1.25rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    /* Removed background for cleaner look as requested */
+    padding: 0;
+    border-radius: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    /* Align left */
+    gap: 0.5rem;
 }
 
-.results-count strong {
-    color: var(--text-primary);
+.results-count .count-number {
+    color: var(--primary-color);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.results-count .count-text {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
 }
 
 /* Responsive */
+@media (min-width: 769px) {
+    .events-list {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+    }
+}
+
 @media (max-width: 768px) {
     .search-section {
         flex-direction: column;
@@ -248,24 +300,37 @@
         padding-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 
-    .events-page .container {
+    .events-page.container {
+        padding: 0;
+    }
+
+    .search-section {
         padding: 0 1rem;
     }
 
-    /* Hide page header on mobile */
-    .events-page .page-header {
-        display: none;
+    .events-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
-    .page-header {
-        margin-bottom: 1rem;
+    /* Show page header on mobile */
+    .events-page .page-header {
+        display: block;
+        margin-bottom: 0;
+        padding: 1rem;
+        background: var(--bg-secondary);
+        /* Removed sticky positioning as requested */
+        border-bottom: 1px solid transparent;
+        /* Optional: add border if needed */
     }
 
     .page-title {
         font-size: 1.25rem;
+        margin: 0;
     }
 
     .page-subtitle {
-        font-size: 0.875rem;
+        display: none;
     }
 }

@@ -47,12 +47,19 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     // Hide header on landing, login, register pages for cleaner mobile experience
     const hideHeader = ['/', '/login', '/register'].includes(location.pathname) && !isAuthenticated;
+    const isAuthPage = ['/login', '/register'].includes(location.pathname);
+
+    // Check if we are on the home page
+    const isHome = location.pathname === '/';
+
+    // Mobile: Header visible ONLY on Social pages (Feed, Create Post, Post Detail)
+    const isSocialPage = ['/feed', '/create-post', '/posts'].some(path => location.pathname.startsWith(path));
+    const mobileHeaderHidden = !isSocialPage && isAuthenticated; // Only applies to authenticated users inside app
 
     return (
-        <div className={`main-layout ${hideHeader ? 'hide-header-mobile' : ''}`} data-page={location.pathname.substring(1) || 'home'}>
+        <div className={`main-layout ${isAuthPage ? 'no-scroll' : ''} ${hideHeader ? 'hide-header-mobile' : ''} ${mobileHeaderHidden ? 'mobile-header-hidden' : ''} ${isHome ? 'home-layout' : ''}`} data-page={location.pathname.substring(1) || 'home'}>
             {/* Header - Hidden on landing/auth pages for unauthenticated users (mobile only via CSS) */}
-            {/* Header - Hidden on landing/auth pages for unauthenticated users (mobile only via CSS) */}
-            <header className="header">
+            <header className={`header ${isHome ? 'home-header' : ''}`}>
                 <div className="header-container">
                     <Link to="/" className="logo">
                         <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
@@ -251,10 +258,10 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             )}
 
             {/* Main Content */}
-            <main className={`main-content ${['/', '/create-post', '/profile'].includes(location.pathname) ? 'no-padding-top' : ''}`}>{children}</main>
+            <main className={`main-content ${['/', '/create-post', '/profile', '/login', '/register'].includes(location.pathname) ? 'no-padding-top' : ''}`}>{children}</main>
 
             {/* Footer - Hide on specific pages */}
-            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post'].some(path => location.pathname.startsWith(path)) && (
+            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register'].some(path => location.pathname.startsWith(path)) && (
                 <footer className="footer">
                     <div className="footer-container">
                         <div className="footer-info">
@@ -310,8 +317,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     <Link to="/events" className={`bottom-nav-item ${isActive('/events') ? 'active' : ''}`} title="Sự kiện">
                         <CalendarBlank size={26} weight={isActive('/events') ? 'fill' : 'regular'} />
                     </Link>
-                    <Link to="/map" className={`bottom-nav-item ${isActive('/map') ? 'active' : ''}`} title="Bản đồ">
-                        <MapTrifold size={26} weight={isActive('/map') ? 'fill' : 'regular'} />
+                    <Link to="/map" className={`bottom-nav-item bottom-nav-center ${isActive('/map') ? 'active' : ''}`} title="Bản đồ">
+                        <MapTrifold size={26} weight="regular" />
                     </Link>
                     <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
                         <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />

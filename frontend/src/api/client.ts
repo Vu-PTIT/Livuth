@@ -117,9 +117,13 @@ apiClient.interceptors.response.use(
                     console.error('[API] Refresh failed', refreshError);
                     localStorage.removeItem('access_token');
                     localStorage.removeItem('refresh_token');
+
+                    // Dispatch logout event to notify AuthProvider
+                    window.dispatchEvent(new Event('auth:logout'));
+
                     // Only redirect if not already on login/register/landing page
                     if (!['/', '/login', '/register'].includes(window.location.pathname)) {
-                        window.location.href = '/login';
+                        window.location.href = '#/login';
                     }
                     return Promise.reject(refreshError);
                 }
@@ -128,9 +132,13 @@ apiClient.interceptors.response.use(
                 console.warn('[API] No refresh token or auth check failed, clearing tokens');
                 localStorage.removeItem('access_token');
                 localStorage.removeItem('refresh_token');
+
+                // Dispatch logout event to notify AuthProvider
+                window.dispatchEvent(new Event('auth:logout'));
+
                 // Only redirect if not already on public pages
                 if (!['/', '/login', '/register'].includes(window.location.pathname)) {
-                    window.location.href = '/login';
+                    window.location.href = '#/login'; // Use hash routing if applicable, or just rely on AuthProvider
                 }
             }
         }

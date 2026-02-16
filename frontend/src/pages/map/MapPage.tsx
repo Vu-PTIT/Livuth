@@ -520,7 +520,7 @@ const MapPage = () => {
     // Get current location
     const getCurrentLocation = () => {
         if (!navigator.geolocation) {
-            alert('Trình duyệt của bạn không hỗ trợ định vị');
+            toast.error('Trình duyệt của bạn không hỗ trợ định vị');
             return;
         }
 
@@ -537,7 +537,7 @@ const MapPage = () => {
             },
             (error) => {
                 console.error('Error getting location:', error);
-                alert('Không thể lấy vị trí của bạn. Vui lòng kiểm tra quyền truy cập vị trí.');
+                toast.error('Không thể lấy vị trí của bạn. Vui lòng kiểm tra quyền truy cập vị trí.');
                 setIsLocating(false);
             }
         );

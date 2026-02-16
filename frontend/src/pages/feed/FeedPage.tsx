@@ -127,7 +127,7 @@ const FeedPage: React.FC = () => {
                     {/* Main Feed */}
                     <div className="feed-main">
                         {/* Create Post */}
-                        <div className="feed-create-post card">
+                        <div className="feed-create-post">
                             <CreatePostForm onPostCreated={handlePostCreated} />
                         </div>
 

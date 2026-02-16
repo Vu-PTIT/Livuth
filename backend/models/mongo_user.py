@@ -49,6 +49,7 @@ class UserMongo(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     full_name: Optional[str] = None
+    nickname: Optional[str] = None
     dob: Optional[float] = None  # timestamp
     gender: Optional[str] = None
     phone: Optional[str] = None

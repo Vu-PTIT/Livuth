@@ -6,7 +6,8 @@
     align-items: center;
     justify-content: flex-start;
     gap: 0.5rem;
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.1);
+    /* Lighter background for better contrast */
     border: 1.5px solid var(--border-color);
     color: var(--text-primary);
     cursor: pointer;
@@ -84,6 +85,13 @@
     display: flex !important;
     flex-wrap: wrap !important;
     gap: 0.5rem !important;
+}
+
+.category-chips-flex .category-chip {
+    width: auto !important;
+    flex-grow: 1;
+    /* Allow growing to fill gaps if needed, or remove if you want strict auto */
+    justify-content: center;
 }
 
 /* Responsive: single column on small screens */

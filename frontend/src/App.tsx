@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './providers/AuthProvider';
 import { useAuth } from './hooks/useAuth';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -219,9 +219,9 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <AuthProvider>
-          <HashRouter>
+          <BrowserRouter>
             <AppContent />
-          </HashRouter>
+          </BrowserRouter>
         </AuthProvider>
       </ToastProvider>
     </ThemeProvider>

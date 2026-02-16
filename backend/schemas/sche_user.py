@@ -11,6 +11,7 @@ class UserBaseRequest(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     full_name: Optional[str] = None
+    nickname: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     identity_card: Optional[str] = None
@@ -57,6 +58,7 @@ class UserBaseResponse(BaseModelResponse):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     full_name: Optional[str] = None
+    nickname: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
     identity_card: Optional[str] = None

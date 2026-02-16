@@ -185,14 +185,6 @@ const ChatPage: React.FC = () => {
     return (
         <div className="chat-page container">
             <div className="chat-layout">
-                {/* Mobile Sidebar Toggle */}
-                <button
-                    className="mobile-sidebar-toggle"
-                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                >
-                    <List size={24} />
-                </button>
-
                 {/* Sidebar Overlay */}
                 {isSidebarOpen && (
                     <div
@@ -256,6 +248,17 @@ const ChatPage: React.FC = () => {
 
                 {/* Chat Area */}
                 <main className="chat-main">
+                    {/* Mobile Header */}
+                    <div className="chat-mobile-header">
+                        <button
+                            className="mobile-sidebar-toggle"
+                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                        >
+                            <List size={24} />
+                        </button>
+                        <h1>Chat</h1>
+                    </div>
+
                     {activeConversationId ? (
                         <>
                             <div className="messages-container" ref={messagesContainerRef}>
@@ -344,7 +347,7 @@ const ChatPage: React.FC = () => {
                     )}
                 </main>
             </div>
-        </div>
+        </div >
     );
 };
 

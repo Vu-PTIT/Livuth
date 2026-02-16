@@ -1,16 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Calendar, Tag, Image as ImageIcon } from '@phosphor-icons/react';
+import { MapPin, Calendar, Tag, Image as ImageIcon, Heart } from '@phosphor-icons/react';
 import type { Event } from '../types';
 import './EventCard.css';
 
 interface EventCardProps {
     event: Event;
-    showDistance?: boolean;
-    distance?: number;
+    variant?: 'card' | 'list';
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) => {
+const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
     const [imageError, setImageError] = useState(false);
     const categoriesRef = useRef<HTMLDivElement>(null);
 
@@ -40,9 +39,36 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
         return () => window.removeEventListener('resize', checkOverflow);
     }, [event.categories]);
 
+    // Format date to Vietnamese format: "25 thg 4, 2026"
     const formatDate = (timestamp?: string) => {
         if (!timestamp) return 'Đang cập nhật';
-        return timestamp;
+
+        // Return textual times as-is
+        if (timestamp.includes('Hàng ngày') || timestamp.includes('thg')) {
+            return timestamp;
+        }
+
+        let date: Date;
+
+        // Check for DD/MM/YYYY format (common in VN APIs)
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(timestamp)) {
+            const [day, month, year] = timestamp.split('/').map(Number);
+            date = new Date(year, month - 1, day);
+        } else {
+            date = new Date(timestamp);
+        }
+
+        if (isNaN(date.getTime())) return timestamp;
+
+        // Check if it's this year
+        const thisYear = new Date().getFullYear();
+        const isThisYear = date.getFullYear() === thisYear;
+
+        const day = date.getDate();
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        return `${day} thg ${month}${!isThisYear ? `, ${year}` : ''}`;
     };
 
     const getImageUrl = () => {
@@ -55,59 +81,114 @@ const EventCard: React.FC<EventCardProps> = ({ event, showDistance, distance }) 
     const imageUrl = getImageUrl();
     const hasValidImage = imageUrl && !imageError;
 
-    return (
-        <Link to={`/events/${event.id}`} className="event-card">
-            <div className={`event-card-image ${!hasValidImage ? 'no-image' : ''}`}>
-                {hasValidImage ? (
-                    <img
-                        src={imageUrl}
-                        alt={event.name}
-                        onError={() => setImageError(true)}
-                        loading="lazy"
-                    />
-                ) : (
-                    <div className="event-card-placeholder">
-                        <ImageIcon size={40} weight="thin" />
-                        <span>{event.name}</span>
-                    </div>
-                )}
+    // Helper to render the badge
+    const renderBadge = (className = "event-badge") => {
+        return (
+            <>
                 {event.info?.is_free ? (
-                    <span className="event-badge free">Miễn phí</span>
+                    <span className={`${className} free`}>Miễn phí</span>
                 ) : (
-                    <span className="event-badge paid">Mất phí</span>
+                    <span className={`${className} paid`}>Mất phí</span>
                 )}
-                {(event.interested_count || 0) > 0 && (
-                    <span className="event-badge interested">
-                        🔥 {event.interested_count} quan tâm
-                    </span>
-                )}
-            </div>
-            <div className="event-card-content">
-                <div className="event-card-date">
-                    <Calendar size={16} />
-                    <span>{formatDate(event.time?.next_occurrence || event.time?.lunar)}</span>
-                </div>
-                <h3 className="event-card-title">{event.name}</h3>
-                <div className="event-card-location">
-                    <MapPin size={16} />
-                    <span>{event.location?.city || event.location?.province || 'Việt Nam'}</span>
-                    {showDistance && distance !== undefined && (
-                        <span className="distance">({distance} km)</span>
+            </>
+        );
+    };
+
+    return (
+        <div className={`event-card ${variant === 'list' ? 'event-card-list' : ''}`}>
+            {/* Heart Icon - Top Right (Absolute on Card) */}
+            <button
+                className="favorite-btn"
+                onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    // Handle like logic here
+                }}
+            >
+                <Heart size={20} weight="regular" />
+            </button>
+            <Link to={`/events/${event.id}`} className="event-card-link-wrapper">
+                <div className={`event-card-image ${!hasValidImage ? 'no-image' : ''}`}>
+                    {hasValidImage ? (
+                        <img
+                            src={imageUrl}
+                            alt={event.name}
+                            onError={() => setImageError(true)}
+                            loading="lazy"
+                        />
+                    ) : (
+                        <div className="event-card-placeholder">
+                            <ImageIcon size={40} weight="thin" />
+                            <span>{event.name}</span>
+                        </div>
+                    )}
+
+                    {/* Category Check */}
+                    {event.categories && event.categories.length > 0 && (
+                        <div className="event-badge category">
+                            {event.categories[0]}
+                        </div>
+                    )}
+
+                    {/* Badge always on image now - Bottom Right */}
+                    <div className="event-badge-wrapper">
+                        {renderBadge(variant === 'list' ? "event-badge-corner" : "event-badge")}
+                    </div>
+
+                    {variant !== 'list' && (event.interested_count || 0) > 0 && (
+                        <span className="event-badge interested">
+                            🔥 {event.interested_count} quan tâm
+                        </span>
                     )}
                 </div>
-                {event.categories && event.categories.length > 0 && (
-                    <div className="event-card-categories" ref={categoriesRef}>
-                        {event.categories.slice(0, 3).map((cat, idx) => (
-                            <span key={idx} className="event-card-tag">
-                                <Tag size={12} />
-                                {cat === 'Lê hội' ? 'Lễ hội' : cat}
-                            </span>
-                        ))}
+            </Link>
+
+            <div className="event-card-content">
+                {/* Heart Icon - Top Right (Absolute in List View) */}
+
+
+                <Link to={`/events/${event.id}`} className="event-content-link">
+
+
+                    {/* Row 2: Title */}
+                    <h3 className="event-card-title">{event.name}</h3>
+
+                    {/* Row 3: Date & Location */}
+                    <div className="event-meta-row">
+                        <div className="event-meta-item">
+                            <Calendar size={14} weight="fill" className="meta-icon" />
+                            <span>{formatDate(event.time?.next_occurrence || event.time?.lunar)}</span>
+                        </div>
+                        <span className="meta-divider">•</span>
+                        <div className="event-meta-item">
+                            <MapPin size={14} weight="fill" className="meta-icon" />
+                            <span className="location-text">{event.location?.city || event.location?.province || 'Việt Nam'}</span>
+                        </div>
                     </div>
-                )}
+
+                    {/* Row 4: Social Proof - List View Only here */}
+                    {variant === 'list' && (event.interested_count || 0) > 0 && (
+                        <div className="event-social-proof">
+                            🔥 {event.interested_count} quan tâm
+                        </div>
+                    )}
+
+                    {/* Categories - Enabled for all variants now */}
+                    {event.categories && event.categories.length > 0 && (
+                        <div className="event-card-categories" ref={categoriesRef}>
+                            {event.categories.slice(0, 3).map((cat, idx) => (
+                                <span key={idx} className="event-card-tag">
+                                    <Tag size={12} />
+                                    {cat === 'Lê hội' ? 'Lễ hội' : cat}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                </Link>
             </div>
-        </Link>
+        </div>
     );
 };
+
 
 export default EventCard;

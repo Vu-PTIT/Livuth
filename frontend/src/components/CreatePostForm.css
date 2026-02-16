@@ -246,9 +246,10 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .create-post-form {
         padding: 0.75rem;
+        border-radius: 0 0 16px 16px;
     }
 
     .create-post-avatar {

@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../../hooks/useAuth';
 import { notificationApi } from '../../api/endpoints';
 import type { Notification } from '../../types';
+import LoadingSpinner from '../../components/LoadingSpinner';
 import './NotificationsPage.css';
 
 const NotificationsPage: React.FC = () => {
@@ -117,12 +118,8 @@ const NotificationsPage: React.FC = () => {
                 </div>
 
                 <div className="notifications-list">
-                    {isLoading ? (
-                        <div className="notifications-loading">
-                            <div className="loading-spinner"></div>
-                            <p>Đang tải thông báo...</p>
-                        </div>
-                    ) : notifications.length > 0 ? (
+                    {/* Loading/Fetch logic */}
+                    {isLoading ? null : notifications.length > 0 ? (
                         notifications.map((notification) => (
                             <Link
                                 key={notification.id}

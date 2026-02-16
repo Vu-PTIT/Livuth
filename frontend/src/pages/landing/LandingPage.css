@@ -27,13 +27,16 @@
 
 .landing-cta {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    /* Force row layout */
     gap: 0.75rem;
 }
 
 .landing-cta .btn {
-    width: 100%;
-    padding: 0.875rem 1.5rem;
+    width: auto;
+    flex: 1;
+    /* Equal width buttons */
+    padding: 0.875rem 0.5rem;
     font-size: 1rem;
     font-weight: 600;
     border-radius: 12px;
@@ -41,6 +44,7 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    white-space: nowrap;
 }
 
 .landing-cta .btn-primary {
@@ -307,13 +311,23 @@
     line-height: 1.4;
 }
 
+.cta-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+}
+
 .cta-buttons .btn {
     background: white;
     color: var(--primary-color);
     font-weight: 600;
-    width: 100%;
-    padding: 0.875rem 1.5rem;
+    flex: 1;
+    /* Make buttons take equal width */
+    padding: 0.875rem 0.5rem;
+    /* Reduce side padding slightly if needed */
     border-radius: 10px;
+    white-space: nowrap;
+    /* Prevent text wrapping */
 }
 
 .cta-buttons .btn:hover {
