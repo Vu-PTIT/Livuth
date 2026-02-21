@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { eventApi } from '../../api/endpoints';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
+import { useAuth } from '../../hooks/useAuth';
 import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
@@ -11,6 +12,7 @@ import useIsMobile from '../../hooks/useIsMobile';
 import './EventsPage.css';
 
 const EventsPage: React.FC = () => {
+    const { user, isAuthenticated } = useAuth();
     const [searchParams, setSearchParams] = useSearchParams();
     const isMobile = useIsMobile();
 
@@ -21,6 +23,7 @@ const EventsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalEvents, setTotalEvents] = useState(0);
 
     // Filter states
     const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -33,56 +36,56 @@ const EventsPage: React.FC = () => {
         const fetchEvents = async () => {
             setIsLoading(true);
             try {
-                // Always fetch all events, then filter locally
-                const response = await eventApi.getAll(100);
-                let allEvents = response.data.data || [];
+                // Use search endpoint for everything (it handles filters + pagination)
+                const response = await eventApi.search({
+                    q: query,
+                    city: city,
+                    categories: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
+                    page: currentPage,
+                    pageSize: itemsPerPage
+                });
 
-                // Apply filters locally
-                if (query) {
-                    const searchQuery = query.toLowerCase();
-                    allEvents = allEvents.filter((event: any) =>
-                        event.name?.toLowerCase().includes(searchQuery) ||
-                        event.content?.intro?.toLowerCase().includes(searchQuery) ||
-                        event.location?.city?.toLowerCase().includes(searchQuery)
-                    );
+                if (response.data.data) {
+                    setEvents(response.data.data);
+                    // Use metadata to set total events for pagination
+                    if (response.data.metadata && typeof response.data.metadata.total === 'number') {
+                        setTotalEvents(response.data.metadata.total);
+                    } else {
+                        setTotalEvents(response.data.data.length);
+                    }
+                } else {
+                    setEvents([]);
+                    setTotalEvents(0);
                 }
 
-                if (selectedCategories.length > 0) {
-                    allEvents = allEvents.filter((event: any) =>
-                        event.categories?.some((cat: string) =>
-                            selectedCategories.some(selected =>
-                                cat.toLowerCase() === selected.toLowerCase()
-                            )
-                        )
-                    );
-                }
-
-                if (city) {
-                    const cityQuery = city.toLowerCase();
-                    allEvents = allEvents.filter((event: any) =>
-                        event.location?.city?.toLowerCase().includes(cityQuery) ||
-                        event.location?.province?.toLowerCase().includes(cityQuery)
-                    );
-                }
-
-                setEvents(allEvents);
-                setCurrentPage(1); // Reset to first page when filters change
             } catch (error) {
                 console.error('Failed to fetch events:', error);
                 setEvents([]);
+                setTotalEvents(0);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        fetchEvents();
+        // Debounce fetching if query changes, but fetch immediately for page/category changes if possible.
+        // For simplicity, we just fetch. In a real app, you might want to debounce the text search.
+        const timeoutId = setTimeout(() => {
+            fetchEvents();
+        }, 300);
+
+        return () => clearTimeout(timeoutId);
+    }, [query, selectedCategories, city, currentPage, itemsPerPage]);
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
     }, [query, selectedCategories, city]);
 
     // Pagination calculations
-    const totalPages = Math.ceil(events.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const currentEvents = events.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(totalEvents / itemsPerPage);
+
+    // No more client-side slicing
+    const currentEvents = events;
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -115,6 +118,7 @@ const EventsPage: React.FC = () => {
         setSelectedCategories([]);
         setCity('');
         setSearchParams({});
+        setCurrentPage(1);
     };
 
     const hasFilters = query || selectedCategories.length > 0 || city;
@@ -150,9 +154,24 @@ const EventsPage: React.FC = () => {
 
     return (
         <div className="events-page container">
-            <div className="page-header">
-                <h1 className="page-title">Sự kiện & Lễ hội</h1>
-                <p className="page-subtitle">Khám phá các sự kiện văn hóa trên khắp Việt Nam</p>
+            <div className="events-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                    <h1 className="page-title">Sự kiện & Lễ hội</h1>
+                    <p className="page-subtitle">Khám phá các sự kiện văn hóa trên khắp Việt Nam</p>
+                </div>
+                {isAuthenticated && (
+                    <Link to="/profile" className="header-profile-icon" style={{ flexShrink: 0 }}>
+                        <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.8rem', borderRadius: '50%', overflow: 'hidden' }}>
+                            {user?.avatar_url ? (
+                                <img src={user.avatar_url} alt={user.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <div style={{ width: '100%', height: '100%', backgroundColor: '#f97316', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                    {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                                </div>
+                            )}
+                        </div>
+                    </Link>
+                )}
             </div>
 
             {/* Search Bar */}
@@ -188,7 +207,7 @@ const EventsPage: React.FC = () => {
                             <h3>Bộ lọc</h3>
                             {/* Moved Results Count Here */}
                             <span className="results-count-text" style={{ fontSize: '0.85rem', color: '#9ca3af', fontWeight: 400 }}>
-                                Tìm thấy <strong style={{ color: '#f97316' }}>{events.length}</strong> kết quả
+                                Tìm thấy <strong style={{ color: '#f97316' }}>{totalEvents}</strong> kết quả
                             </span>
                         </div>
                         {hasFilters && (
@@ -258,7 +277,7 @@ const EventsPage: React.FC = () => {
                 {isLoading ? (
                     <div className="events-list">
                         {[1, 2, 3, 4, 5, 6].map((i) => (
-                            <EventCardSkeleton key={i} />
+                            <EventCardSkeleton key={i} variant={isMobile ? 'list' : 'card'} />
                         ))}
                     </div>
                 ) : events.length > 0 ? (

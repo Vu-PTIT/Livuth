@@ -9,7 +9,7 @@ import type { Event } from '../../types';
 import { CATEGORIES } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
 import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
-import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank, CaretDown } from '@phosphor-icons/react';
+import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -279,7 +279,6 @@ const MapPage = () => {
     const [checkingInEventId, setCheckingInEventId] = useState<string | null>(null);
     const [checkedInEvents, setCheckedInEvents] = useState<string[]>([]);
     const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'today' | 'week' | 'month' | 'year' | 'past'>('all');
-    const [showDateFilter, setShowDateFilter] = useState(false);
 
     // Fetch events based on viewport using getNearby API
     const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
@@ -672,64 +671,73 @@ const MapPage = () => {
                         <span className="filter-count">{selectedCategories.length}</span>
                     )}
                 </button>
-
-                {/* Date Filter Dropdown */}
-                <div className="date-filter-container">
-                    <button
-                        className={`date-filter-button ${dateFilter !== 'all' ? 'has-filter' : ''}`}
-                        onClick={() => setShowDateFilter(!showDateFilter)}
-                        title="Lọc theo thời gian"
-                    >
-                        <CalendarBlank size={20} />
-                        <span className="date-filter-label">
-                            {dateFilterOptions.find(opt => opt.value === dateFilter)?.label || 'Thời gian'}
-                        </span>
-                        <CaretDown size={14} className={`caret-icon ${showDateFilter ? 'open' : ''}`} />
-                    </button>
-
-                    {showDateFilter && (
-                        <div className="date-filter-dropdown">
-                            {dateFilterOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    className={`date-filter-option ${dateFilter === option.value ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setDateFilter(option.value);
-                                        setShowDateFilter(false);
-                                    }}
-                                >
-                                    <span className="option-icon">{option.icon}</span>
-                                    <span className="option-label">{option.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
             </div>
 
-            {/* Category Filters */}
-            {showFilters && allCategories.length > 0 && (
-                <div className="category-filters">
-                    <div className="category-filters-header">
-                        <span>Lọc theo danh mục:</span>
-                        {selectedCategories.length > 0 && (
-                            <button className="clear-filters" onClick={clearCategoryFilters}>
-                                Xóa bộ lọc
+            {/* Unified Filter Panel */}
+            {showFilters && (
+                <div className="unified-filters-panel">
+                    <div className="filters-header">
+                        <h3>Bộ lọc tìm kiếm</h3>
+                        {(selectedCategories.length > 0 || dateFilter !== 'all') && (
+                            <button
+                                className="clear-all-filters"
+                                onClick={() => {
+                                    clearCategoryFilters();
+                                    setDateFilter('all');
+                                }}
+                            >
+                                Xóa tất cả
                             </button>
                         )}
                     </div>
-                    <div className="category-chips-grid">
-                        {allCategories.map((category) => (
-                            <CategoryChip
-                                key={category.id}
-                                name={category.name}
-                                icon={category.icon}
-                                isActive={selectedCategories.includes(category.name)}
-                                onClick={() => toggleCategory(category.name)}
-                                variant="rounded"
-                            />
-                        ))}
+
+                    <div className="filters-content">
+                        {/* Date Filter Section */}
+                        <div className="filter-section">
+                            <div className="filter-section-title">
+                                <CalendarBlank size={18} />
+                                <span>Thời gian</span>
+                            </div>
+                            <div className="date-options-grid">
+                                {dateFilterOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        className={`date-option-chip ${dateFilter === option.value ? 'active' : ''}`}
+                                        onClick={() => setDateFilter(option.value)}
+                                    >
+                                        <span className="option-icon">{option.icon}</span>
+                                        <span className="option-label">{option.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="filter-divider"></div>
+
+                        {/* Category Filter Section */}
+                        <div className="filter-section">
+                            <div className="filter-section-title">
+                                <FunnelSimple size={18} />
+                                <span>Danh mục</span>
+                            </div>
+                            <div className="category-chips-grid">
+                                {allCategories.map((category) => (
+                                    <CategoryChip
+                                        key={category.id}
+                                        name={category.name}
+                                        icon={category.icon}
+                                        isActive={selectedCategories.includes(category.name)}
+                                        onClick={() => toggleCategory(category.name)}
+                                        variant="rounded"
+                                    />
+                                ))}
+                            </div>
+                        </div>
                     </div>
+
+                    <button className="close-filters-btn" onClick={() => setShowFilters(false)}>
+                        Đóng
+                    </button>
                 </div>
             )}
 
@@ -740,29 +748,13 @@ const MapPage = () => {
             </div>
 
             {/* Legend */}
-            <div className="map-legend">
-                <div className="legend-item">
-                    <span className="legend-dot legend-dot--cold"></span>
-                    <span>Ít người tham gia</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-dot legend-dot--medium"></span>
-                    <span>Trung bình</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-dot legend-dot--warm"></span>
-                    <span>Đông đúc</span>
-                </div>
-                <div className="legend-item">
-                    <span className="legend-dot legend-dot--hot"></span>
-                    <span>Rất hot</span>
-                </div>
-            </div>
+            {/* Legend removed */}
 
             {/* Map */}
             <MapContainer
                 center={center}
                 zoom={zoom}
+                zoomControl={false}
                 className="map-container"
                 scrollWheelZoom={true}
                 maxZoom={18}

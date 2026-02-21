@@ -25,13 +25,13 @@ from backend.utils.exception_handler import (
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan events"""
-    print("🚀 Starting up FastAPI application...")
+    print("Starting up FastAPI application...")
     # Connect to MongoDB
     await db.connect_db()
     yield
     # Close MongoDB connection
     await db.close_db()
-    print("👋 Shutting down...")
+    print("Shutting down...")
 
 
 # Initialize FastAPI app

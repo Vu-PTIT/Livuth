@@ -16,6 +16,7 @@ export interface User {
     hobbies?: string[];
     bio?: string;
     avatar_url?: string;
+    cover_url?: string;
     participated_events?: string[];
     is_active?: boolean;
     last_login?: number;
@@ -118,6 +119,8 @@ export interface Event {
     review_count?: number;
     participant_count?: number;
     interested_count?: number;
+    like_count?: number;
+    is_liked?: boolean;
     tour_providers?: TourProviderListing[];
     created_at: number;
     updated_at: number;

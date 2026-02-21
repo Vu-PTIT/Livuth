@@ -20,6 +20,7 @@ class UserBaseRequest(BaseModel):
     hobbies: Optional[List[str]] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
     participated_events: Optional[List[str]] = None
 
 
@@ -67,6 +68,7 @@ class UserBaseResponse(BaseModelResponse):
     hobbies: Optional[List[str]] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    cover_url: Optional[str] = None
     participated_events: Optional[List[str]] = None
     is_active: Optional[bool] = None
     last_login: Optional[float] = None

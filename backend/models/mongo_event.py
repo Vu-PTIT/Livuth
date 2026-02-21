@@ -86,6 +86,11 @@ class EventMongo(BaseModel):
     # Review Stats
     average_rating: float = 0.0
     review_count: int = 0
+    participant_count: int = 0
+    
+    # Social Stats
+    likes: List[PyObjectId] = Field(default_factory=list)  # List of user IDs who liked
+    like_count: int = 0
     
     # Timestamps
     created_at: float = Field(default_factory=lambda: datetime.now().timestamp())

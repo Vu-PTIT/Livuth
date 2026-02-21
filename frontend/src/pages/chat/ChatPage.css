@@ -382,17 +382,17 @@
 /* Responsive */
 @media (max-width: 768px) {
     .chat-page {
-        /* 100dvh - Header Margin (60px) - Bottom Nav (56px) - Safe Area */
-        height: calc(100dvh - 60px - 56px - env(safe-area-inset-bottom));
-        /* Dynamic viewport for keyboard support */
+        height: calc(100dvh - 56px);
+        /* Full viewport minus bottom nav */
         padding: 0;
         overflow: hidden;
-        /* Prevent outer scroll */
+        background: var(--bg-primary);
+        /* Match header background */
     }
 
     .chat-page.container {
         padding: 0;
-        height: 100%;
+        /* height: 100%; - Removed to allow .chat-page height to apply */
     }
 
     .chat-layout {
@@ -400,16 +400,22 @@
         position: relative;
         border-radius: 0;
         height: 100%;
+        background: var(--bg-primary);
+        /* Match header background on mobile */
+        box-shadow: none;
     }
 
     /* Mobile Header */
     .chat-mobile-header {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         gap: 0.5rem;
-        padding: 1rem 0.5rem;
-        background: var(--bg-secondary);
-        /* border-bottom: 1px solid var(--border-color); */
+        padding: 0 1rem;
+        height: 56px;
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-color);
+        flex-shrink: 0;
     }
 
     .chat-mobile-header h1 {
@@ -417,11 +423,9 @@
         font-weight: 700;
         color: var(--text-primary);
         margin: 0;
-        line-height: 1;
-        /* Fix vertical alignment with icon */
-        position: relative;
-        top: 4px;
-        /* Manual alignment: Push text down to align baseline with bottom icon bar */
+        display: block;
+        line-height: 32px;
+        padding-top: 10px;
     }
 
     .mobile-sidebar-toggle {
@@ -434,10 +438,10 @@
         margin: 0;
         box-shadow: none;
         position: static;
-        /* Reset absolute positioning */
         color: var(--text-primary);
-        line-height: 1;
-        /* Match h1 line-height */
+        width: 32px;
+        height: 32px;
+        font-size: 24px;
     }
 
     .sidebar-overlay {
@@ -465,10 +469,16 @@
 
     .message-input {
         padding: 0.75rem 1rem;
-        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-        position: sticky;
-        bottom: 0;
+        padding-bottom: 0.75rem;
+        position: fixed;
+        bottom: 56px;
+        /* Height of bottom nav */
+        left: 0;
+        right: 0;
         background: var(--card-bg);
+        z-index: 90;
+        /* Above page content */
+        border-top: 1px solid var(--border-color);
     }
 
     .message-input input {
@@ -489,6 +499,8 @@
 
     .messages-container {
         padding: 1rem;
+        padding-bottom: 80px;
+        /* Space for fixed input */
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;

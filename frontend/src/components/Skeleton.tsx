@@ -30,20 +30,22 @@ const Skeleton: React.FC<SkeletonProps> = ({
 };
 
 // Pre-built skeleton components for common use cases
-export const EventCardSkeleton: React.FC = () => (
-    <div className="event-card-skeleton">
-        <Skeleton variant="rectangular" height={180} className="skeleton-image" />
+export const EventCardSkeleton: React.FC<{ variant?: 'card' | 'list' }> = ({ variant = 'card' }) => (
+    <div className={`event-card-skeleton ${variant}`}>
+        <Skeleton variant="rectangular" height={variant === 'list' ? 100 : 180} className="skeleton-image" />
         <div className="skeleton-content">
-            <Skeleton variant="text" height={24} width="80%" />
-            <Skeleton variant="text" height={16} width="60%" />
+            <Skeleton variant="text" height={24} width={variant === 'list' ? "90%" : "80%"} />
+            <Skeleton variant="text" height={16} width={variant === 'list' ? "70%" : "60%"} />
             <div className="skeleton-meta">
                 <Skeleton variant="text" height={14} width="40%" />
                 <Skeleton variant="text" height={14} width="30%" />
             </div>
-            <div className="skeleton-tags">
-                <Skeleton variant="rectangular" width={60} height={24} />
-                <Skeleton variant="rectangular" width={50} height={24} />
-            </div>
+            {variant === 'card' && (
+                <div className="skeleton-tags">
+                    <Skeleton variant="rectangular" width={60} height={24} />
+                    <Skeleton variant="rectangular" width={50} height={24} />
+                </div>
+            )}
         </div>
     </div>
 );

@@ -20,12 +20,11 @@ import {
     MapPin,
     Calendar,
     GenderIntersex,
-    Tag,
-    X,
     ArrowRight,
     Sparkle,
     PencilSimple,
     Check,
+    CheckCircle,
     Camera,
     UploadSimple,
     Notebook,
@@ -74,6 +73,11 @@ const ProfilePage: React.FC = () => {
     const [showAvatarModal, setShowAvatarModal] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState('');
     const [isSavingAvatar, setIsSavingAvatar] = useState(false);
+
+    // Cover Photo state
+    const [showCoverModal, setShowCoverModal] = useState(false);
+    const [coverUrl, setCoverUrl] = useState('');
+    const [isSavingCover, setIsSavingCover] = useState(false);
 
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'events' | 'posts' | 'nfts'>('posts');
@@ -128,7 +132,7 @@ const ProfilePage: React.FC = () => {
         };
 
         fetchProfileUser();
-    }, [userId, isOwnProfile, currentUser?.id, toast]);
+    }, [userId, isOwnProfile, currentUser, toast]);
 
     // Fetch participated events
     useEffect(() => {
@@ -172,6 +176,8 @@ const ProfilePage: React.FC = () => {
             });
             setSelectedHobbies(profileUser.hobbies || []);
             setAvatarUrl(profileUser.avatar_url || '');
+            // Typescript may not know about cover_url yet, fallback to empty string
+            setCoverUrl((profileUser as any).cover_url || '');
         }
     }, [profileUser, isOwnProfile]);
 
@@ -283,19 +289,6 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const handleRemoveHobby = async (hobby: string) => {
-        if (!currentUser) return;
-
-        try {
-            await userApi.removeHobby(currentUser.id, hobby);
-            await refreshUser();
-            toast.success(`Đã xóa sở thích: ${hobby}`);
-        } catch (err: any) {
-            console.error('Failed to remove hobby:', err);
-            toast.error('Không thể xóa sở thích');
-        }
-    };
-
     const handleSaveAvatar = async () => {
         if (!currentUser) return;
 
@@ -316,9 +309,30 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const handleSaveCover = async () => {
+        if (!currentUser) return;
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIsSavingCover(true);
+        setError('');
+
+        try {
+            await userApi.updateMe({ cover_url: coverUrl || undefined } as any);
+            await refreshUser();
+            setShowCoverModal(false);
+            toast.success('Cập nhật ảnh bìa thành công!');
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.message || 'Không thể cập nhật ảnh bìa');
+            setError(err.response?.data?.message || 'Không thể cập nhật ảnh bìa');
+        } finally {
+            setIsSavingCover(false);
+        }
+    };
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, isCover = false) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -334,7 +348,11 @@ const ProfilePage: React.FC = () => {
 
         const reader = new FileReader();
         reader.onload = () => {
-            setAvatarUrl(reader.result as string);
+            if (isCover) {
+                setCoverUrl(reader.result as string);
+            } else {
+                setAvatarUrl(reader.result as string);
+            }
             setError('');
         };
         reader.onerror = () => {
@@ -361,9 +379,22 @@ const ProfilePage: React.FC = () => {
             <div className="profile-layout">
                 {/* Sidebar */}
                 <aside className="profile-sidebar">
-                    <div className="profile-card card">
+                    <div className="x-profile-card">
+                        {/* Cover Image */}
                         <div
-                            className={`avatar-large ${isOwnProfile ? 'avatar-editable' : ''}`}
+                            className={`x-profile-cover ${isOwnProfile ? 'cover-editable' : ''}`}
+                            style={{
+                                backgroundImage: (profileUser as any).cover_url
+                                    ? `url('${(profileUser as any).cover_url}')`
+                                    : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`
+                            }}
+                            title={isOwnProfile ? 'Bấm để thay đổi ảnh bìa' : ''}
+                            onClick={() => isOwnProfile && setShowCoverModal(true)}
+                        >
+                        </div>
+
+                        <div
+                            className={`x-avatar-large ${isOwnProfile ? 'avatar-editable' : ''}`}
                             onClick={() => isOwnProfile && setShowAvatarModal(true)}
                             title={isOwnProfile ? 'Bấm để thay đổi ảnh đại diện' : ''}
                         >
@@ -372,102 +403,100 @@ const ProfilePage: React.FC = () => {
                             ) : (
                                 profileUser.full_name?.charAt(0) || profileUser.username?.charAt(0) || 'U'
                             )}
-                            {isOwnProfile && (
-                                <div className="avatar-overlay">
-                                    <Camera size={24} weight="bold" />
+                        </div>
+
+                        <div className="x-profile-info">
+                            <div className="x-profile-name-row">
+                                <h1 className="x-profile-name">{profileUser.full_name || profileUser.username}</h1>
+                                {profileUser.roles && (
+                                    <div className="x-profile-roles">
+                                        {profileUser.roles
+                                            .filter((role: string) => role !== 'Normal user' && role !== 'User' && role !== 'user')
+                                            .map((role: string, idx: number) => {
+                                                let displayRole = role;
+                                                const roleLower = role.toLowerCase();
+
+                                                if (roleLower === 'tour provider' || roleLower === 'tour_provider') {
+                                                    displayRole = 'Nhà cung cấp Tour';
+                                                } else if (roleLower === 'event provider' || roleLower === 'event_provider') {
+                                                    displayRole = 'Nhà tổ chức sự kiện';
+                                                } else if (roleLower === 'admin') {
+                                                    displayRole = 'Quản trị viên';
+                                                } else {
+                                                    // Don't show tick for normal users
+                                                    return null;
+                                                }
+
+                                                return (
+                                                    <span key={idx} className="role-badge">
+                                                        <CheckCircle size={12} weight="fill" /> {displayRole}
+                                                    </span>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+                            </div>
+                            {profileUser.nickname && <p className="x-profile-nickname">@{profileUser.nickname}</p>}
+
+                            {profileUser.bio && <p className="x-profile-bio">{profileUser.bio}</p>}
+
+                            {/* Social Stats */}
+                            <div className="x-profile-stats">
+                                <div className="x-stat-item">
+                                    <span className="x-stat-value">{followingCount}</span>
+                                    <span className="x-stat-label">Đang theo dõi</span>
+                                </div>
+                                <div className="x-stat-item">
+                                    <span className="x-stat-value">{followersCount}</span>
+                                    <span className="x-stat-label">Người theo dõi</span>
+                                </div>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="profile-actions">
+                                {isOwnProfile ? (
+                                    <>
+                                        {(!isEventProvider || !isTourProvider) && !isAdmin && (
+                                            <Link to="/profile/upgrade" className="btn btn-outline btn-block">
+                                                <Sparkle size={18} />
+                                                Nâng cấp tài khoản
+                                            </Link>
+                                        )}
+                                    </>
+                                ) : (
+                                    <button
+                                        className={`btn btn-block ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
+                                        onClick={handleFollowToggle}
+                                        disabled={isFollowLoading}
+                                    >
+                                        {isFollowing ? (
+                                            <>
+                                                <UserMinus size={18} />
+                                                Hủy theo dõi
+                                            </>
+                                        ) : (
+                                            <>
+                                                <UserPlus size={18} />
+                                                Theo dõi
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Pending upgrade notice - only for own profile */}
+                            {isOwnProfile && currentUser?.pending_role_upgrade && (
+                                <div className="upgrade-notice">
+                                    <strong>Đang chờ duyệt:</strong> {currentUser.pending_role_upgrade}
+                                </div>
+                            )}
+
+                            {isOwnProfile && currentUser?.upgrade_rejection_reason && (
+                                <div className="rejection-notice">
+                                    <strong>Lý do từ chối:</strong> {currentUser.upgrade_rejection_reason}
                                 </div>
                             )}
                         </div>
-                        <h1 className="profile-name">{profileUser.full_name || profileUser.username}</h1>
-                        {profileUser.nickname && <p className="profile-nickname">@{profileUser.nickname}</p>}
-
-                        {profileUser.roles && (
-                            <div className="profile-roles">
-                                {profileUser.roles
-                                    .filter((role: string) => role !== 'Normal user' && role !== 'User' && role !== 'user')
-                                    .map((role: string, idx: number) => {
-                                        let displayRole = role;
-                                        const roleLower = role.toLowerCase();
-
-                                        if (roleLower === 'tour provider' || roleLower === 'tour_provider') {
-                                            displayRole = 'Nhà cung cấp Tour';
-                                        } else if (roleLower === 'event provider' || roleLower === 'event_provider') {
-                                            displayRole = 'Nhà tổ chức sự kiện';
-                                        } else if (roleLower === 'admin') {
-                                            displayRole = 'Quản trị viên';
-                                        }
-
-                                        return <span key={idx} className="role-badge">{displayRole}</span>;
-                                    })}
-                            </div>
-                        )}
-
-                        {profileUser.bio && <p className="profile-bio">{profileUser.bio}</p>}
-
-                        {/* Social Stats */}
-                        <div className="profile-stats">
-                            <div className="stat-item">
-                                <span className="stat-value">{followersCount}</span>
-                                <span className="stat-label">Người theo dõi</span>
-                            </div>
-                            <div className="stat-divider"></div>
-                            <div className="stat-item">
-                                <span className="stat-value">{followingCount}</span>
-                                <span className="stat-label">Đang theo dõi</span>
-                            </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="profile-actions">
-                            {isOwnProfile ? (
-                                <>
-                                    <button
-                                        className="btn btn-primary btn-block"
-                                        onClick={() => setShowEditModal(true)}
-                                    >
-                                        <PencilSimple size={18} />
-                                        Chỉnh sửa thông tin
-                                    </button>
-                                    {(!isEventProvider || !isTourProvider) && !isAdmin && (
-                                        <Link to="/profile/upgrade" className="btn btn-outline btn-block">
-                                            <Sparkle size={18} />
-                                            Nâng cấp tài khoản
-                                        </Link>
-                                    )}
-                                </>
-                            ) : (
-                                <button
-                                    className={`btn btn-block ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
-                                    onClick={handleFollowToggle}
-                                    disabled={isFollowLoading}
-                                >
-                                    {isFollowing ? (
-                                        <>
-                                            <UserMinus size={18} />
-                                            Hủy theo dõi
-                                        </>
-                                    ) : (
-                                        <>
-                                            <UserPlus size={18} />
-                                            Theo dõi
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Pending upgrade notice - only for own profile */}
-                        {isOwnProfile && currentUser?.pending_role_upgrade && (
-                            <div className="upgrade-notice">
-                                <strong>Đang chờ duyệt:</strong> {currentUser.pending_role_upgrade}
-                            </div>
-                        )}
-
-                        {isOwnProfile && currentUser?.upgrade_rejection_reason && (
-                            <div className="rejection-notice">
-                                <strong>Lý do từ chối:</strong> {currentUser.upgrade_rejection_reason}
-                            </div>
-                        )}
                     </div>
                 </aside>
 
@@ -505,34 +534,42 @@ const ProfilePage: React.FC = () => {
                                             <span className="info-value">{profileUser.email}</span>
                                         </div>
                                     </div>
-                                    <div className="info-item">
-                                        <Phone size={20} />
-                                        <div>
-                                            <span className="info-label">Số điện thoại</span>
-                                            <span className="info-value">{profileUser.phone || 'Chưa cập nhật'}</span>
+                                    {profileUser.phone && (
+                                        <div className="info-item">
+                                            <Phone size={20} />
+                                            <div>
+                                                <span className="info-label">Số điện thoại</span>
+                                                <span className="info-value">{profileUser.phone}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <MapPin size={20} />
-                                        <div>
-                                            <span className="info-label">Địa chỉ</span>
-                                            <span className="info-value">{profileUser.address || 'Chưa cập nhật'}</span>
+                                    )}
+                                    {profileUser.address && (
+                                        <div className="info-item">
+                                            <MapPin size={20} />
+                                            <div>
+                                                <span className="info-label">Địa chỉ</span>
+                                                <span className="info-value">{profileUser.address}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <Calendar size={20} />
-                                        <div>
-                                            <span className="info-label">Ngày sinh</span>
-                                            <span className="info-value">{profileUser.dob ? formatDate(profileUser.dob) : 'Chưa cập nhật'}</span>
+                                    )}
+                                    {profileUser.dob && (
+                                        <div className="info-item">
+                                            <Calendar size={20} />
+                                            <div>
+                                                <span className="info-label">Ngày sinh</span>
+                                                <span className="info-value">{formatDate(profileUser.dob)}</span>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="info-item">
-                                        <GenderIntersex size={20} />
-                                        <div>
-                                            <span className="info-label">Giới tính</span>
-                                            <span className="info-value">{profileUser.gender || 'Chưa cập nhật'}</span>
+                                    )}
+                                    {profileUser.gender && (
+                                        <div className="info-item">
+                                            <GenderIntersex size={20} />
+                                            <div>
+                                                <span className="info-label">Giới tính</span>
+                                                <span className="info-value">{profileUser.gender}</span>
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </>
                             )}
                         </div>
@@ -541,10 +578,7 @@ const ProfilePage: React.FC = () => {
                     {/* Hobbies */}
                     <section className="hobbies-section card">
                         <div className="section-header">
-                            <h2>
-                                <Tag size={20} />
-                                Sở thích
-                            </h2>
+                            <h2>Sở thích</h2>
                             {isOwnProfile && (
                                 <button
                                     className="btn btn-sm btn-outline"
@@ -566,15 +600,6 @@ const ProfilePage: React.FC = () => {
                                     return (
                                         <span key={idx} className="hobby-tag">
                                             {category?.icon || '🏷️'} {category?.name || hobby}
-                                            {isOwnProfile && (
-                                                <button
-                                                    className="remove-hobby"
-                                                    onClick={() => handleRemoveHobby(hobby)}
-                                                    title="Xóa"
-                                                >
-                                                    <X size={14} />
-                                                </button>
-                                            )}
                                         </span>
                                     );
                                 })}
@@ -950,6 +975,97 @@ const ProfilePage: React.FC = () => {
                                     disabled={isSavingAvatar}
                                 >
                                     {isSavingAvatar ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    {/* Cover Photo Edit Modal */}
+                    <Modal
+                        isOpen={showCoverModal}
+                        onClose={() => setShowCoverModal(false)}
+                        title="Thay đổi ảnh bìa"
+                    >
+                        <div className="avatar-edit-modal">
+                            <div className="cover-preview" style={{
+                                width: '100%',
+                                height: '200px',
+                                borderRadius: '12px',
+                                overflow: 'hidden',
+                                background: 'var(--bg-secondary)',
+                                border: '3px solid var(--border-color)',
+                                marginBottom: '1.5rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}>
+                                {coverUrl ? (
+                                    <img src={coverUrl} alt="Preview Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div className="avatar-preview-placeholder">
+                                        <Camera size={48} weight="light" />
+                                        <span>Chưa có ảnh</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <input
+                                type="file"
+                                ref={coverInputRef}
+                                onChange={(e) => handleFileChange(e, true)}
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-outline btn-block avatar-upload-btn"
+                                onClick={() => coverInputRef.current?.click()}
+                            >
+                                <UploadSimple size={18} />
+                                Tải ảnh bìa từ máy tính
+                            </button>
+
+                            <div className="avatar-divider">
+                                <span>hoặc</span>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="cover_url">
+                                    URL ảnh bìa
+                                </label>
+                                <input
+                                    type="url"
+                                    id="cover_url"
+                                    className="form-input"
+                                    placeholder="https://example.com/cover.jpg"
+                                    value={coverUrl.startsWith('data:') ? '' : coverUrl}
+                                    onChange={(e) => setCoverUrl(e.target.value)}
+                                />
+                                <p className="form-hint">
+                                    Nhập URL ảnh bìa từ internet
+                                </p>
+                            </div>
+
+                            {error && <div className="alert alert-error">{error}</div>}
+
+                            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => {
+                                        setShowCoverModal(false);
+                                        setCoverUrl((currentUser as any)?.cover_url || '');
+                                    }}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-primary"
+                                    onClick={handleSaveCover}
+                                    disabled={isSavingCover}
+                                >
+                                    {isSavingCover ? 'Đang lưu...' : 'Lưu thay đổi'}
                                 </button>
                             </div>
                         </div>

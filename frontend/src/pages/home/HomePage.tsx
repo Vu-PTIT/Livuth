@@ -28,7 +28,7 @@ const HomePage: React.FC = () => {
         const fetchData = async () => {
             try {
                 // Fetch all events
-                const eventsRes = await eventApi.getAll(8);
+                const eventsRes = await eventApi.getAll(1, 8);
                 setEvents(eventsRes.data.data || []);
 
                 // Fetch recommendations if logged in
@@ -247,9 +247,9 @@ const HomePage: React.FC = () => {
                     </div>
 
                     {isLoading ? (
-                        <div className="events-grid grid grid-4">
-                            {[1, 2, 3, 4].map((i) => (
-                                <EventCardSkeleton key={i} />
+                        <div className="events-list-container">
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                                <EventCardSkeleton key={i} variant={isMobile ? 'list' : 'card'} />
                             ))}
                         </div>
                     ) : events.length > 0 ? (

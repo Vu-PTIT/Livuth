@@ -15,7 +15,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 import './NotificationsPage.css';
 
 const NotificationsPage: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { user, isAuthenticated } = useAuth();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
@@ -108,18 +108,37 @@ const NotificationsPage: React.FC = () => {
         <div className="notifications-page">
             <div className="container">
                 <div className="notifications-header">
-                    <h1>Thông báo</h1>
-                    {unreadCount > 0 && (
-                        <button className="mark-all-btn" onClick={handleMarkAllAsRead}>
-                            <Checks size={18} />
-                            <span>Đã đọc tất cả</span>
-                        </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                        <h1 className="page-title">Thông báo</h1>
+                        {unreadCount > 0 && (
+                            <button className="mark-all-btn" onClick={handleMarkAllAsRead} style={{ whiteSpace: 'nowrap' }}>
+                                <Checks size={18} />
+                                <span className="mobile-hide">Đã đọc tất cả</span>
+                            </button>
+                        )}
+                    </div>
+                    {isAuthenticated && (
+                        <Link to="/profile" className="header-profile-icon" style={{ flexShrink: 0 }}>
+                            <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.8rem', borderRadius: '50%', overflow: 'hidden' }}>
+                                {user?.avatar_url ? (
+                                    <img src={user.avatar_url} alt={user.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <div style={{ width: '100%', height: '100%', backgroundColor: '#f97316', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                        {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                                    </div>
+                                )}
+                            </div>
+                        </Link>
                     )}
                 </div>
 
                 <div className="notifications-list">
                     {/* Loading/Fetch logic */}
-                    {isLoading ? null : notifications.length > 0 ? (
+                    {isLoading ? (
+                        <div className="notifications-loading">
+                            <LoadingSpinner />
+                        </div>
+                    ) : notifications.length > 0 ? (
                         notifications.map((notification) => (
                             <Link
                                 key={notification.id}

@@ -102,7 +102,7 @@ const MyEventsPage: React.FC = () => {
                         <tbody>
                             {events.map((event) => (
                                 <tr key={event.id}>
-                                    <td>
+                                    <td data-label="Tên sự kiện">
                                         <div className="event-name">
                                             <CalendarBlank size={18} className="event-icon" />
                                             <span>{event.name}</span>
@@ -111,14 +111,14 @@ const MyEventsPage: React.FC = () => {
                                             )}
                                         </div>
                                     </td>
-                                    <td>{event.location?.city || event.location?.province || '-'}</td>
-                                    <td>
+                                    <td data-label="Địa điểm">{event.location?.city || event.location?.province || '-'}</td>
+                                    <td data-label="Danh mục">
                                         {event.categories?.slice(0, 2).map((cat, idx) => (
                                             <span key={idx} className="category-tag-small">{cat}</span>
                                         ))}
                                     </td>
-                                    <td>{new Date(event.created_at * 1000).toLocaleDateString('vi-VN')}</td>
-                                    <td>
+                                    <td data-label="Ngày tạo">{new Date(event.created_at * 1000).toLocaleDateString('vi-VN')}</td>
+                                    <td data-label="Thao tác">
                                         <div className="table-actions">
                                             <button
                                                 className={`action-btn ${event.is_visible === false ? 'hidden-state' : 'visible-state'}`}

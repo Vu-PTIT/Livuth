@@ -62,6 +62,13 @@ class CheckInService:
         checkin.id = result.inserted_id
         
         # Populate and return
+        
+        # Increment participant count in event
+        await self.events_collection.update_one(
+            {"_id": ObjectId(event_id)},
+            {"$inc": {"participant_count": 1}}
+        )
+
         return await self._populate_checkin(checkin.model_dump(by_alias=True))
     
     async def get_user_checkins(

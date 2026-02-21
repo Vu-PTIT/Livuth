@@ -36,7 +36,9 @@ const LoginPage: React.FC = () => {
             await login(formData);
             navigate(from, { replace: true });
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.');
+            console.error('[Login Error]', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.';
+            setError(`Lỗi: ${errorMessage} (Status: ${err.response?.status})`);
         } finally {
             setIsLoading(false);
         }
@@ -50,7 +52,9 @@ const LoginPage: React.FC = () => {
                 navigate(from, { replace: true });
             }
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Đăng nhập Google thất bại');
+            console.error('[Google Login Error]', err);
+            const errorMessage = err.response?.data?.message || err.message || 'Đăng nhập Google thất bại';
+            setError(`Lỗi Google: ${errorMessage} (Status: ${err.response?.status})`);
         } finally {
             setIsLoading(false);
         }

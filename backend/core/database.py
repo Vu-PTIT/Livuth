@@ -16,15 +16,15 @@ class Database:
     async def connect_db(cls):
         """Connect to MongoDB"""
         cls.client = AsyncIOMotorClient(MONGO_URI)
-        print(f"✅ Connected to MongoDB Atlas!")
-        print(f"📊 Database: {DB_NAME}")
+        print(f"Connected to MongoDB Atlas!")
+        print(f"Database: {DB_NAME}")
     
     @classmethod
     async def close_db(cls):
         """Close MongoDB connection"""
         if cls.client:
             cls.client.close()
-            print("❌ MongoDB connection closed")
+            print("MongoDB connection closed")
     
     @classmethod
     def get_database(cls):

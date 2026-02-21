@@ -2,7 +2,8 @@
 AI Agent Service using Google Gemini
 Handles all interactions with the LLM.
 """
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from backend.core.config import settings
 
 class AIAgent:
@@ -20,22 +21,34 @@ class AIAgent:
     Hãy hỏi tôi bất cứ điều gì về du lịch Việt Nam nhé! Tôi sẽ trả lời ngắn gọn, chính xác và thân thiện."""
 
     def __init__(self):
-        self.model = None
+        self.client = None
         self._setup_gemini()
 
     def _setup_gemini(self):
-        """Configure and initialize Gemini model"""
+        """Configure and initialize Gemini client"""
         if settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel(
-                model_name=settings.GEMINI_MODEL,
-                generation_config={
-                    "temperature": settings.GENERATION_TEMPERATURE,
-                    "top_p": 0.95,
-                    "top_k": 40,
-                    "max_output_tokens": 4096,
-                }
-            )
+            self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+    def _format_history(self, history: list) -> list:
+        """Convert history from old format (list of strings in parts) to new format"""
+        formatted_history = []
+        for msg in history:
+            role = msg.get("role")
+            parts = msg.get("parts", [])
+            
+            # Convert list of string parts to list of dict parts
+            new_parts = []
+            for part in parts:
+                if isinstance(part, str):
+                    new_parts.append({"text": part})
+                else:
+                    new_parts.append(part)
+            
+            formatted_history.append({
+                "role": role,
+                "parts": new_parts
+            })
+        return formatted_history
 
     def get_response(self, user_message: str, history: list = None) -> str:
         """
@@ -48,19 +61,31 @@ class AIAgent:
         Returns:
             AI response text
         """
-        if not self.model:
+        if not self.client:
             return "Xin lỗi, trợ lý AI chưa được cấu hình. Vui lòng liên hệ quản trị viên."
 
         try:
-            # Start chat session
-            chat = self.model.start_chat(history=history or [])
+            # Prepare configuration
+            config = types.GenerateContentConfig(
+                temperature=settings.GENERATION_TEMPERATURE,
+                top_p=0.95,
+                top_k=40,
+                max_output_tokens=4096,
+                system_instruction=self.DEFAULT_SYSTEM_PROMPT
+            )
+
+            # Format history (the new SDK is stricter about parts structure)
+            formatted_history = self._format_history(history or [])
+
+            # Create chat session
+            chat = self.client.chats.create(
+                model=settings.GEMINI_MODEL,
+                config=config,
+                history=formatted_history
+            )
             
-            # If no history, inject system prompt with the first message
-            if not history:
-                prompt = f"{self.DEFAULT_SYSTEM_PROMPT}\n\nUser: {user_message}"
-                response = chat.send_message(prompt)
-            else:
-                response = chat.send_message(user_message)
+            # Send message
+            response = chat.send_message(user_message)
                 
             return response.text
             

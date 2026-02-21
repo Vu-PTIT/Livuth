@@ -28,4 +28,5 @@ class User(BareBaseModel):
     hobbies = Column(ARRAY(String), default=list)
     bio = Column(String, nullable=True)
     avatar_url = Column(String, nullable=True)
+    cover_url = Column(String, nullable=True)
     participated_events = Column(ARRAY(String), default=list)

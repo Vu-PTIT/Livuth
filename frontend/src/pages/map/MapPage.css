@@ -249,18 +249,23 @@
 }
 
 /* Category Filters Panel */
-.category-filters {
+/* Unified Filter Panel */
+.unified-filters-panel {
     position: absolute;
     top: 4.5rem;
     left: 1rem;
     z-index: 1000;
     background: var(--card-bg);
     border-radius: 16px;
-    padding: 1rem;
+    padding: 0;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
     animation: slideDown 0.2s ease;
-    width: 320px;
+    width: 340px;
     max-width: calc(100vw - 2rem);
+    max-height: calc(100vh - 140px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @keyframes slideDown {
@@ -275,31 +280,119 @@
     }
 }
 
-.category-filters-header {
+.filters-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.875rem;
-    padding-bottom: 0.75rem;
+    padding: 1rem;
     border-bottom: 1px solid var(--border-color);
-    font-size: 0.9rem;
+    background: var(--bg-secondary);
+}
+
+.filters-header h3 {
+    margin: 0;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
 }
 
-.clear-filters {
+.clear-all-filters {
     background: none;
     border: none;
     color: var(--primary);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     cursor: pointer;
+    font-weight: 500;
     padding: 0.25rem 0.5rem;
-    border-radius: 4px;
+    border-radius: 6px;
     transition: background-color 0.2s ease;
 }
 
-.clear-filters:hover {
+.clear-all-filters:hover {
     background: rgba(99, 102, 241, 0.1);
+}
+
+.filters-content {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.filter-section {
+    margin-bottom: 0.5rem;
+}
+
+.filter-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.filter-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 1rem 0;
+}
+
+/* Date Options */
+.date-options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.date-option-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    background: var(--bg-secondary);
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.date-option-chip:hover {
+    background: rgba(99, 102, 241, 0.05);
+    border-color: rgba(99, 102, 241, 0.2);
+}
+
+.date-option-chip.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.date-option-chip .option-icon {
+    font-size: 1.1rem;
+}
+
+.date-option-chip .option-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.close-filters-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--card-bg);
+    border: none;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-filters-btn:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 /* Old category-chips styles removed - now using CategoryChip component */
@@ -915,146 +1008,7 @@
     background: #1f2937;
 }
 
-/* Date Filter Styles */
-.date-filter-container {
-    position: relative;
-}
 
-.date-filter-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: var(--card-bg);
-    border: none;
-    border-radius: 12px;
-    padding: 0.75rem 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    cursor: pointer;
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
-    font-size: 0.85rem;
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.date-filter-button:hover {
-    color: var(--primary);
-    transform: translateY(-1px);
-}
-
-.date-filter-button.has-filter {
-    color: var(--primary);
-    border: 1.5px solid var(--primary);
-}
-
-.date-filter-button .date-filter-label {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.date-filter-button .caret-icon {
-    transition: transform 0.2s ease;
-    flex-shrink: 0;
-}
-
-.date-filter-button .caret-icon.open {
-    transform: rotate(180deg);
-}
-
-.date-filter-dropdown {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    background: var(--card-bg);
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-    overflow: hidden;
-    z-index: 1001;
-    min-width: 180px;
-    animation: slideDown 0.2s ease;
-}
-
-.date-filter-option {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
-    padding: 0.875rem 1rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: left;
-}
-
-.date-filter-option:hover {
-    background: rgba(99, 102, 241, 0.08);
-}
-
-.date-filter-option.active {
-    background: rgba(99, 102, 241, 0.12);
-}
-
-.date-filter-option .option-icon {
-    font-size: 1.1rem;
-    line-height: 1;
-}
-
-.date-filter-option .option-label {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--text-primary);
-}
-
-.date-filter-option.active .option-label {
-    color: var(--primary);
-    font-weight: 600;
-}
-
-/* Dark mode for date filter */
-[data-theme="dark"] .date-filter-button,
-.dark .date-filter-button {
-    background: #1f2937;
-    color: #9ca3af;
-}
-
-[data-theme="dark"] .date-filter-button:hover,
-.dark .date-filter-button:hover {
-    color: #818cf8;
-}
-
-[data-theme="dark"] .date-filter-button.has-filter,
-.dark .date-filter-button.has-filter {
-    color: #818cf8;
-    border-color: #818cf8;
-}
-
-[data-theme="dark"] .date-filter-dropdown,
-.dark .date-filter-dropdown {
-    background: #1f2937;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .date-filter-option:hover,
-.dark .date-filter-option:hover {
-    background: rgba(99, 102, 241, 0.15);
-}
-
-[data-theme="dark"] .date-filter-option.active,
-.dark .date-filter-option.active {
-    background: rgba(99, 102, 241, 0.2);
-}
-
-[data-theme="dark"] .date-filter-option .option-label,
-.dark .date-filter-option .option-label {
-    color: #e5e7eb;
-}
-
-[data-theme="dark"] .date-filter-option.active .option-label,
-.dark .date-filter-option.active .option-label {
-    color: #a5b4fc;
-}
 
 /* Mobile responsive for map page */
 @media (max-width: 768px) {
@@ -1078,6 +1032,11 @@
         gap: 0.5rem;
     }
 
+    .search-container {
+        min-width: 0;
+        /* Prevent flex overflow */
+    }
+
     .search-input-wrapper {
         border-radius: 24px;
         padding: 0 0.875rem;
@@ -1092,6 +1051,7 @@
     .search-container.collapsed {
         flex: 0;
         width: 48px;
+        min-width: auto;
     }
 
     .search-container.collapsed .search-input-wrapper {
@@ -1115,6 +1075,7 @@
         width: 48px;
         height: 48px;
         border-radius: 24px;
+        flex-shrink: 0;
     }
 
     /* Adjust event count position for mobile */
@@ -1133,29 +1094,12 @@
         font-size: 0.7rem;
     }
 
-    /* Make date filter more compact on mobile */
-    .date-filter-button {
-        padding: 0.7rem 0.75rem;
-    }
-
-    .date-filter-button .date-filter-label {
-        display: none;
-    }
-
-    .date-filter-button .caret-icon {
-        display: none;
-    }
-
-    .date-filter-dropdown {
-        right: 0;
-        min-width: 160px;
-    }
-
     /* Category filters panel full width on mobile */
-    .category-filters {
+    .unified-filters-panel {
         left: 0.75rem;
         right: 0.75rem;
         width: auto;
+        max-height: 60vh;
     }
 }
 

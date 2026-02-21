@@ -26,12 +26,16 @@ user_service = UserMongoService()
     status_code=status.HTTP_200_OK,
 )
 async def get_all(
-    limit: Optional[int] = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     token: str = Depends(JWTBearer())
 ) -> Any:
     """Get all events (requires login)"""
     try:
-        data, metadata = await event_service.get_all(limit=limit)
+        # Extract user_id from token
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        data, metadata = await event_service.get_all(page=page, page_size=page_size, user_id=user_id)
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
     except Exception as e:
         raise CustomException(exception=e)
@@ -61,7 +65,8 @@ async def get_recommendations(
             data, metadata = await event_service.get_recommended_events(
                 user_hobbies=user_hobbies,
                 limit=limit,
-                include_score=True
+                include_score=True,
+                user_id=user_id
             )
         
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
@@ -83,11 +88,15 @@ async def get_nearby(
 ) -> Any:
     """Get events within a specified radius from a location (requires login)"""
     try:
+        # Extract user_id from token
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
         data, metadata = await event_service.get_nearby_events(
             lat=lat,
             lng=lng,
             radius_km=radius_km,
-            limit=limit
+            limit=limit,
+            user_id=user_id
         )
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
     except Exception as e:
@@ -104,7 +113,8 @@ async def search_events(
     city: Optional[str] = Query(None, description="Filter by city"),
     province: Optional[str] = Query(None, description="Filter by province"),
     categories: Optional[str] = Query(None, description="Comma-separated list of categories"),
-    limit: int = Query(default=20, ge=1, le=100),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     token: str = Depends(JWTBearer())
 ) -> Any:
     """Search and filter events (requires login)"""
@@ -114,12 +124,18 @@ async def search_events(
         if categories:
             category_list = [c.strip() for c in categories.split(",")]
         
+        # Extract user_id from token
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        
         data, metadata = await event_service.search_events(
             query=q,
             city=city,
             province=province,
             categories=category_list,
-            limit=limit
+            page=page,
+            page_size=page_size,
+            user_id=user_id
         )
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
     except Exception as e:
@@ -137,7 +153,10 @@ async def get_by_category(
 ) -> Any:
     """Get all events in a specific category (requires login)"""
     try:
-        data, metadata = await event_service.get_by_category(category=category)
+        # Extract user_id from token
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        data, metadata = await event_service.get_by_category(category=category, user_id=user_id)
         return DataResponse(http_code=status.HTTP_200_OK, data=data, metadata=metadata)
     except Exception as e:
         raise CustomException(exception=e)
@@ -173,7 +192,10 @@ async def get_by_id(
 ) -> Any:
     """Get event by ID with optional tour providers (requires login)"""
     try:
-        event = await event_service.get_by_id(event_id=event_id, include_tours=include_tours)
+        # Extract user_id from token
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        event = await event_service.get_by_id(event_id=event_id, include_tours=include_tours, user_id=user_id)
         return DataResponse(http_code=status.HTTP_200_OK, data=event)
     except Exception as e:
         raise CustomException(exception=e)
@@ -269,6 +291,25 @@ async def toggle_visibility(
     """Toggle event visibility (Owner or Admin only)"""
     try:
         updated_event = await event_service.toggle_visibility(event_id=event_id, is_visible=is_visible)
+        return DataResponse(http_code=status.HTTP_200_OK, data=updated_event)
+    except Exception as e:
+        raise CustomException(exception=e)
+
+
+@router.post(
+    "/{event_id}/like",
+    response_model=DataResponse[EventBaseResponse],
+    status_code=status.HTTP_200_OK,
+)
+async def toggle_like(
+    event_id: str,
+    token: str = Depends(JWTBearer())
+) -> Any:
+    """Toggle like status for event (requires login)"""
+    try:
+        payload = decode_jwt(token)
+        user_id = payload.get("sub")
+        updated_event = await event_service.toggle_like(event_id=event_id, user_id=user_id)
         return DataResponse(http_code=status.HTTP_200_OK, data=updated_event)
     except Exception as e:
         raise CustomException(exception=e)

@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
+import { eventApi } from '../api/endpoints';
 import { MapPin, Calendar, Tag, Image as ImageIcon, Heart } from '@phosphor-icons/react';
 import type { Event } from '../types';
 import './EventCard.css';
@@ -12,6 +14,42 @@ interface EventCardProps {
 const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
     const [imageError, setImageError] = useState(false);
     const categoriesRef = useRef<HTMLDivElement>(null);
+    const { isAuthenticated } = useAuth();
+    const navigate = useNavigate();
+
+    const [isLiked, setIsLiked] = useState(event.is_liked || false);
+    const [likeCount, setLikeCount] = useState(event.like_count || 0);
+
+    // Sync state if prop changes
+    useEffect(() => {
+        setIsLiked(event.is_liked || false);
+        setLikeCount(event.like_count || 0);
+    }, [event.is_liked, event.like_count]);
+
+    const handleLike = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!isAuthenticated) {
+            navigate('/auth/login');
+            return;
+        }
+
+        const newIsLiked = !isLiked;
+        const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
+
+        setIsLiked(newIsLiked);
+        setLikeCount(newLikeCount);
+
+        try {
+            await eventApi.toggleLike(event.id);
+        } catch (error) {
+            // Revert on error
+            setIsLiked(!newIsLiked);
+            setLikeCount(likeCount);
+            console.error('Failed to toggle like:', error);
+        }
+    };
 
     useEffect(() => {
         const container = categoriesRef.current;
@@ -97,15 +135,13 @@ const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
     return (
         <div className={`event-card ${variant === 'list' ? 'event-card-list' : ''}`}>
             {/* Heart Icon - Top Right (Absolute on Card) */}
+            {/* Heart Icon - Top Right (Absolute on Card) */}
             <button
-                className="favorite-btn"
-                onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Handle like logic here
-                }}
+                className={`favorite-btn ${isLiked ? 'liked' : ''}`}
+                onClick={handleLike}
+                title={isLiked ? "Bỏ thích" : "Thích"}
             >
-                <Heart size={20} weight="regular" />
+                <Heart size={20} weight={isLiked ? "fill" : "regular"} color={isLiked ? "#ef4444" : "currentColor"} />
             </button>
             <Link to={`/events/${event.id}`} className="event-card-link-wrapper">
                 <div className={`event-card-image ${!hasValidImage ? 'no-image' : ''}`}>
@@ -135,10 +171,19 @@ const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
                         {renderBadge(variant === 'list' ? "event-badge-corner" : "event-badge")}
                     </div>
 
-                    {variant !== 'list' && (event.interested_count || 0) > 0 && (
-                        <span className="event-badge interested">
-                            🔥 {event.interested_count} quan tâm
-                        </span>
+                    {variant !== 'list' && (
+                        <div className="event-badges-container" style={{ position: 'absolute', bottom: 8, left: 8, display: 'flex', gap: 4 }}>
+                            {(event.interested_count || 0) > 0 && (
+                                <span className="event-badge interested">
+                                    🔥 {event.interested_count}
+                                </span>
+                            )}
+                            {likeCount > 0 && (
+                                <span className="event-badge interested" style={{ color: '#ef4444' }}>
+                                    ❤️ {likeCount}
+                                </span>
+                            )}
+                        </div>
                     )}
                 </div>
             </Link>
@@ -167,9 +212,15 @@ const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
                     </div>
 
                     {/* Row 4: Social Proof - List View Only here */}
-                    {variant === 'list' && (event.interested_count || 0) > 0 && (
+                    {/* Row 4: Social Proof - List View Only here */}
+                    {variant === 'list' && (
                         <div className="event-social-proof">
-                            🔥 {event.interested_count} quan tâm
+                            {(event.interested_count || 0) > 0 && <span>🔥 {event.interested_count} quan tâm</span>}
+                            {likeCount > 0 && (
+                                <span style={{ marginLeft: (event.interested_count || 0) > 0 ? 8 : 0 }}>
+                                    ❤️ {likeCount} yêu thích
+                                </span>
+                            )}
                         </div>
                     )}
 

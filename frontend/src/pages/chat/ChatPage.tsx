@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { Link } from 'react-router-dom';
 import { chatApi } from '../../api/endpoints';
 import type { ChatConversation, ChatMessage, ChatHistory } from '../../types';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -15,7 +16,7 @@ import {
 import './ChatPage.css';
 
 const ChatPage: React.FC = () => {
-    useAuth(); // Just for auth check
+    const { user, isAuthenticated } = useAuth();
     const [conversations, setConversations] = useState<ChatConversation[]>([]);
     const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -174,14 +175,6 @@ const ChatPage: React.FC = () => {
         });
     };
 
-    if (isLoadingConversations) {
-        return (
-            <div className="loading-container">
-                <LoadingSpinner text="Đang tải..." />
-            </div>
-        );
-    }
-
     return (
         <div className="chat-page container">
             <div className="chat-layout">
@@ -208,7 +201,11 @@ const ChatPage: React.FC = () => {
                     </div>
 
                     <div className="conversations-list">
-                        {conversations.length > 0 ? (
+                        {isLoadingConversations ? (
+                            <div className="loading-messages">
+                                <LoadingSpinner size="small" />
+                            </div>
+                        ) : conversations.length > 0 ? (
                             conversations.map((conv) => (
                                 <div
                                     key={conv.id}
@@ -250,16 +247,35 @@ const ChatPage: React.FC = () => {
                 <main className="chat-main">
                     {/* Mobile Header */}
                     <div className="chat-mobile-header">
-                        <button
-                            className="mobile-sidebar-toggle"
-                            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                        >
-                            <List size={24} />
-                        </button>
-                        <h1>Chat</h1>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                            <button
+                                className="mobile-sidebar-toggle"
+                                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                            >
+                                <List size={24} />
+                            </button>
+                            <h1 className="page-title" style={{ margin: 0 }}>Chat</h1>
+                        </div>
+                        {isAuthenticated && (
+                            <Link to="/profile" className="header-profile-icon" style={{ flexShrink: 0 }}>
+                                <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.8rem', borderRadius: '50%', overflow: 'hidden' }}>
+                                    {user?.avatar_url ? (
+                                        <img src={user.avatar_url} alt={user.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <div style={{ width: '100%', height: '100%', backgroundColor: '#f97316', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                                            {user?.full_name?.charAt(0) || user?.username?.charAt(0) || 'U'}
+                                        </div>
+                                    )}
+                                </div>
+                            </Link>
+                        )}
                     </div>
 
-                    {activeConversationId ? (
+                    {isLoadingConversations ? (
+                        <div className="loading-messages">
+                            <LoadingSpinner />
+                        </div>
+                    ) : activeConversationId ? (
                         <>
                             <div className="messages-container" ref={messagesContainerRef}>
                                 {isLoadingMessages ? (

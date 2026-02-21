@@ -4,6 +4,25 @@
 }
 
 /* Search Section */
+/* Events Header */
+.events-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+.events-header h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 32px;
+    padding-top: 10px;
+    /* Match avatar height for vertical centering */
+}
+
 .search-section {
     display: flex;
     gap: 1rem;
@@ -182,7 +201,7 @@
 }
 
 .results-section {
-    margin-top: 1rem;
+    margin-top: 8px;
 }
 
 .results-count {
@@ -214,6 +233,10 @@
 
 /* Responsive */
 @media (min-width: 769px) {
+    .events-header {
+        display: none;
+    }
+
     .events-list {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
@@ -296,16 +319,20 @@
 /* Mobile layout adjustments */
 @media (max-width: 768px) {
     .events-page {
-        padding-top: 1rem;
+        padding-top: 0;
         padding-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 
     .events-page.container {
-        padding: 0;
+        padding-left: 0;
+        padding-right: 0;
+        /* Ensure bottom padding is enough to clear the bottom nav */
+        padding-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 
     .search-section {
-        padding: 0 1rem;
+        padding: 0;
+        margin-bottom: 0;
     }
 
     .events-list {
@@ -315,19 +342,28 @@
     }
 
     /* Show page header on mobile */
-    .events-page .page-header {
-        display: block;
+    .events-page .events-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
         margin-bottom: 0;
-        padding: 1rem;
-        background: var(--bg-secondary);
-        /* Removed sticky positioning as requested */
-        border-bottom: 1px solid transparent;
-        /* Optional: add border if needed */
+        padding: 0 1rem;
+        height: 56px;
+        background: var(--bg-primary);
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .events-page .page-subtitle {
+        display: none;
+        /* Hide subtitle on mobile for clean header */
     }
 
     .page-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         margin: 0;
+        font-weight: 700;
+        color: var(--text-primary);
     }
 
     .page-subtitle {

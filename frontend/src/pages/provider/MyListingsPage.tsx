@@ -137,7 +137,7 @@ const MyListingsPage: React.FC = () => {
                         <tbody>
                             {filteredListings.map((listing) => (
                                 <tr key={listing.id}>
-                                    <td>
+                                    <td data-label="Dịch vụ">
                                         <div className="listing-name">
                                             <div className="listing-icon-wrapper">
                                                 <MapTrifold size={20} weight="bold" />
@@ -153,13 +153,13 @@ const MyListingsPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td data-label="Sự kiện">
                                         <div className="event-tag">
                                             {listing.event_name || 'Đang cập nhật...'}
                                         </div>
                                     </td>
-                                    <td className="price-cell">{listing.price_range}</td>
-                                    <td>
+                                    <td className="price-cell" data-label="Giá">{listing.price_range}</td>
+                                    <td data-label="Trạng thái">
                                         <div className="status-with-reason">
                                             <StatusBadge status={listing.status} size="small" />
                                             {listing.rejection_reason && (
@@ -169,8 +169,8 @@ const MyListingsPage: React.FC = () => {
                                             )}
                                         </div>
                                     </td>
-                                    <td className="view-count">{listing.view_count.toLocaleString()}</td>
-                                    <td>
+                                    <td className="view-count" data-label="Lượt xem">{listing.view_count.toLocaleString()}</td>
+                                    <td data-label="Thao tác">
                                         <div className="table-actions">
                                             <button
                                                 className={`action-btn ${listing.is_visible === false ? 'hidden-state' : 'visible-state'}`}

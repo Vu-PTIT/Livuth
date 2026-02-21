@@ -58,7 +58,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
             const searchEvents = async () => {
                 setIsSearchingEvents(true);
                 try {
-                    const response = await eventApi.search({ q: eventQuery, limit: 5 });
+                    const response = await eventApi.search({ q: eventQuery, pageSize: 5 });
                     if (response.data.data) {
                         setFoundEvents(response.data.data);
                     }

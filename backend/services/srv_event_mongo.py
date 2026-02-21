@@ -22,24 +22,25 @@ class EventMongoService:
         """Get events collection"""
         return db.get_collection(self.collection_name)
     
-    async def get_all(self, limit: Optional[int] = None, include_hidden: bool = False) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
-        """Get all events"""
+    async def get_all(self, page: int = 1, page_size: int = 20, include_hidden: bool = False, user_id: Optional[str] = None) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
+        """Get all events with pagination"""
         collection = self.get_collection()
         
         # Filter by visibility (only show visible events unless include_hidden)
         filter_dict = {} if include_hidden else {"$or": [{"is_visible": True}, {"is_visible": {"$exists": False}}]}
         
+        # Count total
+        total = await collection.count_documents(filter_dict)
+        
         # Sort by newest first
         cursor = collection.find(filter_dict).sort("created_at", -1)
         
-        if limit:
-            cursor = cursor.limit(limit)
+        # Pagination
+        skip = (page - 1) * page_size
+        cursor = cursor.skip(skip).limit(page_size)
         
         events = await cursor.to_list(length=None)
         
-        # Get participant counts for all events in one batch
-        event_ids = [str(event["_id"]) for event in events]
-        participant_counts = await self.get_participant_counts(event_ids) if event_ids else {}
         
         # Convert to response format
         event_responses = []
@@ -52,8 +53,15 @@ class EventMongoService:
             for field in ["categories", "tags", "media"]:
                 if event.get(field) is None:
                     event[field] = []
-            # Add participant count
-            event["participant_count"] = participant_counts.get(event["id"], 0)
+            # Add participant count (now directly from event document)
+            if "participant_count" not in event:
+                event["participant_count"] = 0
+            
+
+            # Check if user liked the event
+            event["is_liked"] = False
+            if user_id and event.get("likes"):
+                event["is_liked"] = ObjectId(user_id) in event["likes"]
             
             try:
                 event_responses.append(EventBaseResponse(**event))
@@ -62,13 +70,14 @@ class EventMongoService:
                 continue
         
         metadata = {
-            "total": len(events),
-            "page": 1,
-            "page_size": len(events)
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "has_more": total > (page * page_size)
         }
         return event_responses, metadata
     
-    async def get_by_id(self, event_id: str, include_tours: bool = False) -> Optional[EventBaseResponse]:
+    async def get_by_id(self, event_id: str, include_tours: bool = False, user_id: Optional[str] = None) -> Optional[EventBaseResponse]:
         """Get event by ID"""
         collection = self.get_collection()
         
@@ -83,6 +92,12 @@ class EventMongoService:
         event["id"] = str(event["_id"])
         if event.get("creator_id"):
             event["creator_id"] = str(event["creator_id"])
+        
+
+        # Check if user liked the event
+        event["is_liked"] = False
+        if user_id and event.get("likes"):
+            event["is_liked"] = ObjectId(user_id) in event["likes"]
         
         # Optionally populate tour providers
         if include_tours:
@@ -168,6 +183,60 @@ class EventMongoService:
         
         return True
     
+    async def toggle_like(self, event_id: str, user_id: str) -> EventBaseResponse:
+        """Toggle like status for an event"""
+        collection = self.get_collection()
+        
+        if not ObjectId.is_valid(event_id) or not ObjectId.is_valid(user_id):
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        event = await collection.find_one({"_id": ObjectId(event_id)})
+        if not event:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        user_oid = ObjectId(user_id)
+        likes = event.get("likes", [])
+        
+        if user_oid in likes:
+            # Unlike
+            update_op = {
+                "$pull": {"likes": user_oid},
+                "$inc": {"like_count": -1}
+            }
+            action = "unliked"
+        else:
+            # Like
+            update_op = {
+                "$addToSet": {"likes": user_oid},
+                "$inc": {"like_count": 1}
+            }
+            action = "liked"
+            
+        # Update event
+        result = await collection.find_one_and_update(
+            {"_id": ObjectId(event_id)},
+            update_op,
+            return_document=True
+        )
+        
+        if not result:
+            raise CustomException(exception=ExceptionType.NOT_FOUND)
+            
+        # Format response
+        result["id"] = str(result["_id"])
+        if result.get("creator_id"):
+            result["creator_id"] = str(result["creator_id"])
+            
+        # Set is_liked based on action
+        result["is_liked"] = (action == "liked")
+        
+        # Sanitize list fields if needed
+        for field in ["categories", "tags", "media"]:
+            if result.get(field) is None:
+                result[field] = []
+                
+        return EventBaseResponse(**result)
+    
     async def toggle_visibility(self, event_id: str, is_visible: bool) -> EventBaseResponse:
         """Toggle event visibility"""
         collection = self.get_collection()
@@ -219,7 +288,8 @@ class EventMongoService:
         self, 
         user_hobbies: List[str], 
         limit: int = 10,
-        include_score: bool = True
+        include_score: bool = True,
+        user_id: Optional[str] = None
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         Get recommended events based on user's hobbies
@@ -228,6 +298,7 @@ class EventMongoService:
             user_hobbies: List of user's hobby strings
             limit: Maximum number of events to return
             include_score: Whether to include relevance score in response
+            user_id: Optional user ID to check like status
         
         Returns:
             Tuple of (recommended events, metadata)
@@ -243,6 +314,8 @@ class EventMongoService:
         events_dict = []
         for event in events:
             event["id"] = str(event["_id"])
+            if event.get("creator_id"):
+                event["creator_id"] = str(event["creator_id"])
             events_dict.append(event)
         
         # Rank events by relevance
@@ -253,7 +326,13 @@ class EventMongoService:
         
         # Convert to response format
         event_responses = []
+        event_responses = []
         for event in recommended:
+            # Check if user liked the event
+            event["is_liked"] = False
+            if user_id and event.get("likes"):
+                event["is_liked"] = ObjectId(user_id) in event["likes"]
+                
             try:
                 event_responses.append(EventBaseResponse(**event))
             except Exception:
@@ -275,7 +354,8 @@ class EventMongoService:
         lat: float, 
         lng: float, 
         radius_km: float = 10.0,
-        limit: int = 20
+        limit: int = 20,
+        user_id: Optional[str] = None
     ) -> tuple[List[Dict[str, Any]], Dict[str, Any]]:
         """
         Get events within a specified radius from a location
@@ -321,7 +401,13 @@ class EventMongoService:
         
         # Convert to response format
         event_responses = []
+        event_responses = []
         for event in nearby_events:
+            # Check if user liked the event
+            event["is_liked"] = False
+            if user_id and event.get("likes"):
+                event["is_liked"] = ObjectId(user_id) in event["likes"]
+                
             try:
                 event_responses.append(EventBaseResponse(**event))
             except Exception:
@@ -344,17 +430,20 @@ class EventMongoService:
         city: Optional[str] = None,
         province: Optional[str] = None,
         categories: Optional[List[str]] = None,
-        limit: int = 20
+        page: int = 1,
+        page_size: int = 20,
+        user_id: Optional[str] = None
     ) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
         """
-        Search and filter events
+        Search and filter events with pagination
         
         Args:
             query: Text search query (searches in name, intro, history)
             city: Filter by city
             province: Filter by province
             categories: Filter by categories
-            limit: Maximum number of results
+            page: Page number
+            page_size: Items per page
         
         Returns:
             Tuple of (filtered events, metadata)
@@ -390,18 +479,31 @@ class EventMongoService:
         # Combine all conditions with $and
         final_filter = {"$and": filter_conditions} if len(filter_conditions) > 1 else filter_conditions[0]
         
+        # Count total
+        total = await collection.count_documents(final_filter)
+        
+        # Pagination
+        skip = (page - 1) * page_size
+        
         # Execute query with sort
-        cursor = collection.find(final_filter).sort("created_at", -1).limit(limit)
+        cursor = collection.find(final_filter).sort("created_at", -1).skip(skip).limit(page_size)
         events = await cursor.to_list(length=None)
         
         # Convert to response format
         event_responses = []
         for event in events:
             event["id"] = str(event["_id"])
+            if event.get("creator_id"):
+                event["creator_id"] = str(event["creator_id"])
             # Sanitize list fields
             for field in ["categories", "tags", "media"]:
                 if event.get(field) is None:
                     event[field] = []
+            
+            # Check if user liked the event
+            event["is_liked"] = False
+            if user_id and event.get("likes"):
+                event["is_liked"] = ObjectId(user_id) in event["likes"]
             
             try:
                 event_responses.append(EventBaseResponse(**event))
@@ -410,19 +512,21 @@ class EventMongoService:
                 continue
         
         metadata = {
-            "total": len(events),
+            "total": total,
+            "page": page,
+            "page_size": page_size,
             "query": query,
             "filters": {
                 "city": city,
                 "province": province,
                 "categories": categories
             },
-            "limit": limit
+            "has_more": total > (page * page_size)
         }
         
         return event_responses, metadata
     
-    async def get_by_category(self, category: str) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
+    async def get_by_category(self, category: str, user_id: Optional[str] = None) -> tuple[List[EventBaseResponse], Dict[str, Any]]:
         """Get all events in a specific category"""
         collection = self.get_collection()
         
@@ -440,6 +544,8 @@ class EventMongoService:
         event_responses = []
         for event in events:
             event["id"] = str(event["_id"])
+            if event.get("creator_id"):
+                event["creator_id"] = str(event["creator_id"])
             # Sanitize list fields
             for field in ["categories", "tags", "media"]:
                 if event.get(field) is None:

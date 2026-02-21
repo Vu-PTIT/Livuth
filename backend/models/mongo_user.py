@@ -64,6 +64,7 @@ class UserMongo(BaseModel):
     hobbies: List[str] = Field(default_factory=list)
     bio: Optional[str] = None
     avatar_url: Optional[str] = None  # Profile picture URL
+    cover_url: Optional[str] = None  # Profile cover photo URL
     participated_events: List[PyObjectId] = Field(default_factory=list)
     
     # Social

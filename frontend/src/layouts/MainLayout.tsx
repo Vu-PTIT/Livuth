@@ -19,6 +19,7 @@ import {
     Plus,
     MagnifyingGlass,
 } from '@phosphor-icons/react';
+import MobileCreateFAB from '../components/MobileCreateFAB';
 import './MainLayout.css';
 
 interface MainLayoutProps {
@@ -94,25 +95,20 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     {/* Desktop Navigation - Only show for authenticated users */}
                     {isAuthenticated && (
                         <nav className="nav-desktop">
-                            <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`}>
-                                <House size={20} />
-                                Trang chủ
+                            <Link to="/" className={`nav-link ${isActive('/') ? 'active' : ''}`} data-tooltip="Trang chủ">
+                                <House size={24} weight={isActive('/') ? 'fill' : 'regular'} />
                             </Link>
-                            <Link to="/map" className={`nav-link ${isActive('/map') ? 'active' : ''}`}>
-                                <MapTrifold size={20} />
-                                Bản đồ
+                            <Link to="/map" className={`nav-link ${isActive('/map') ? 'active' : ''}`} data-tooltip="Bản đồ">
+                                <MapTrifold size={24} weight={isActive('/map') ? 'fill' : 'regular'} />
                             </Link>
-                            <Link to="/events" className={`nav-link ${isActive('/events') ? 'active' : ''}`}>
-                                <CalendarBlank size={20} />
-                                Sự kiện
+                            <Link to="/events" className={`nav-link ${isActive('/events') ? 'active' : ''}`} data-tooltip="Sự kiện">
+                                <CalendarBlank size={24} weight={isActive('/events') ? 'fill' : 'regular'} />
                             </Link>
-                            <Link to="/create-post" className={`nav-link ${isActive('/create-post') ? 'active' : ''}`}>
-                                <UsersThree size={20} />
-                                Cộng đồng
+                            <Link to="/create-post" className={`nav-link ${isActive('/create-post') ? 'active' : ''}`} data-tooltip="Cộng đồng">
+                                <UsersThree size={24} weight={isActive('/create-post') ? 'fill' : 'regular'} />
                             </Link>
-                            <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`}>
-                                <ChatCircle size={20} />
-                                Trợ lý AI
+                            <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`} data-tooltip="Trợ lý AI">
+                                <ChatCircle size={24} weight={isActive('/chat') ? 'fill' : 'regular'} />
                             </Link>
 
                         </nav>
@@ -258,10 +254,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             )}
 
             {/* Main Content */}
-            <main className={`main-content ${['/', '/create-post', '/profile', '/login', '/register'].includes(location.pathname) ? 'no-padding-top' : ''}`}>{children}</main>
+            <main className={`main-content ${['/', '/create-post', '/profile', '/login', '/register', '/notifications'].includes(location.pathname) ||
+                ['/events', '/chat'].some(path => location.pathname.startsWith(path))
+                ? 'no-padding-top' : ''
+                }`}>{children}</main>
 
             {/* Footer - Hide on specific pages */}
-            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register'].some(path => location.pathname.startsWith(path)) && (
+            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register', '/notifications'].some(path => location.pathname.startsWith(path)) && (
                 <footer className="footer">
                     <div className="footer-container">
                         <div className="footer-info">
@@ -310,23 +309,26 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             {/* Bottom Navigation for Mobile */}
             {isAuthenticated && (
-                <nav className="bottom-nav">
-                    <Link to="/create-post" className={`bottom-nav-item ${isActive('/create-post') ? 'active' : ''}`} title="Cộng đồng">
-                        <UsersThree size={26} weight={isActive('/create-post') ? 'fill' : 'regular'} />
-                    </Link>
-                    <Link to="/events" className={`bottom-nav-item ${isActive('/events') ? 'active' : ''}`} title="Sự kiện">
-                        <CalendarBlank size={26} weight={isActive('/events') ? 'fill' : 'regular'} />
-                    </Link>
-                    <Link to="/map" className={`bottom-nav-item bottom-nav-center ${isActive('/map') ? 'active' : ''}`} title="Bản đồ">
-                        <MapTrifold size={26} weight="regular" />
-                    </Link>
-                    <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
-                        <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
-                    </Link>
-                    <Link to="/chat" className={`bottom-nav-item ${isActive('/chat') ? 'active' : ''}`} title="Trợ lý AI">
-                        <ChatCircle size={26} weight={isActive('/chat') ? 'fill' : 'regular'} />
-                    </Link>
-                </nav>
+                <>
+                    <nav className="bottom-nav">
+                        <Link to="/create-post" className={`bottom-nav-item ${isActive('/create-post') ? 'active' : ''}`} title="Cộng đồng">
+                            <UsersThree size={26} weight={isActive('/create-post') ? 'fill' : 'regular'} />
+                        </Link>
+                        <Link to="/events" className={`bottom-nav-item ${isActive('/events') ? 'active' : ''}`} title="Sự kiện">
+                            <CalendarBlank size={26} weight={isActive('/events') ? 'fill' : 'regular'} />
+                        </Link>
+                        <Link to="/map" className={`bottom-nav-item bottom-nav-center ${isActive('/map') ? 'active' : ''}`} title="Bản đồ">
+                            <MapTrifold size={26} weight="regular" />
+                        </Link>
+                        <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
+                            <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
+                        </Link>
+                        <Link to="/chat" className={`bottom-nav-item ${isActive('/chat') ? 'active' : ''}`} title="Trợ lý AI">
+                            <ChatCircle size={26} weight={isActive('/chat') ? 'fill' : 'regular'} />
+                        </Link>
+                    </nav>
+                    {location.pathname === '/map' && <MobileCreateFAB />}
+                </>
             )}
         </div>
     );

@@ -84,6 +84,8 @@ class EventBaseResponse(BaseModelResponse):
     review_count: int = 0
     participant_count: int = 0  # Number of users who participated
     interested_count: int = 0   # FOMO: Number of users interested/checking in
+    like_count: int = 0
+    is_liked: bool = False
     
     # Tour providers (populated when include_tours=True)
     tour_providers: Optional[List[Any]] = None

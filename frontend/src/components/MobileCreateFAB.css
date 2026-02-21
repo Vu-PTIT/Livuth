@@ -1,0 +1,127 @@
+/* Mobile Create FAB Styles */
+.mobile-create-fab-container {
+    position: fixed;
+    bottom: calc(56px + 16px + env(safe-area-inset-bottom));
+    /* Above bottom nav + margin */
+    right: 16px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    pointer-events: none;
+    /* Let clicks pass through container area */
+}
+
+/* Only enable pointer events on the interactive elements */
+.fab-trigger,
+.fab-item,
+.fab-backdrop {
+    pointer-events: auto;
+}
+
+/* Backdrop for when menu is open */
+.fab-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+    /* Below FAB but above everything else */
+}
+
+/* Main Trigger Button */
+.fab-trigger {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #f97316);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+    /* Highest priority */
+    transition: box-shadow 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.fab-trigger:active {
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.6);
+}
+
+/* Menu Container */
+.fab-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 16px;
+    /* Space between menu and trigger */
+    z-index: 1001;
+}
+
+/* Individual Menu Item */
+.fab-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Labels */
+.fab-label {
+    background: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+}
+
+/* Icon Wrappers */
+.fab-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.fab-icon-wrapper.event {
+    background: linear-gradient(135deg, #3b82f6, #06b6d4);
+    /* Blue-Cyan for Event */
+}
+
+.fab-icon-wrapper.tour {
+    background: linear-gradient(135deg, #10b981, #34d399);
+    /* Green-Emerald for Tour */
+}
+
+/* Dark Mode Support */
+[data-theme='dark'] .fab-label {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+}
+
+/* Mobile Only Visibility */
+@media (min-width: 769px) {
+    .mobile-create-fab-container {
+        display: none;
+    }
+}

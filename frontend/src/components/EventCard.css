@@ -244,15 +244,7 @@
     height: 12px;
 }
 
-.event-card:hover .event-card-tag {
-    background: rgba(249, 115, 22, 0.1);
-    border-color: rgba(249, 115, 22, 0.25);
-    color: var(--secondary-color);
-}
 
-.event-card:hover .event-card-tag svg {
-    opacity: 1;
-}
 
 /* List View Variant */
 .event-card-list {
@@ -338,10 +330,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.favorite-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: var(--secondary-color);
-}
+
 
 .event-content-link {
     text-decoration: none;

@@ -105,8 +105,8 @@ export const userApi = {
 
 // ============ EVENT API ============
 export const eventApi = {
-    getAll: (limit?: number) =>
-        apiClient.get<ApiResponse<Event[]>>('/events/all', { params: { limit } }),
+    getAll: (page: number = 1, pageSize: number = 20) =>
+        apiClient.get<ApiResponse<Event[]>>('/events/all', { params: { page, page_size: pageSize } }),
 
     getById: (eventId: string, includeTours: boolean = true) =>
         apiClient.get<ApiResponse<Event>>(`/events/${eventId}`, { params: { include_tours: includeTours } }),
@@ -116,9 +116,15 @@ export const eventApi = {
         city?: string;
         province?: string;
         categories?: string;
-        limit?: number;
+        page?: number;
+        pageSize?: number;
     }) =>
-        apiClient.get<ApiResponse<Event[]>>('/events/search', { params }),
+        apiClient.get<ApiResponse<Event[]>>('/events/search', {
+            params: {
+                ...params,
+                page_size: params.pageSize, // Map pageSize to page_size for backend
+            }
+        }),
 
     getByCategory: (category: string) =>
         apiClient.get<ApiResponse<Event[]>>(`/events/category/${encodeURIComponent(category)}`),
@@ -142,6 +148,9 @@ export const eventApi = {
 
     toggleVisibility: (eventId: string, isVisible: boolean) =>
         apiClient.patch<ApiResponse<Event>>(`/events/${eventId}/visibility?is_visible=${isVisible}`),
+
+    toggleLike: (eventId: string) =>
+        apiClient.post<ApiResponse<Event>>(`/events/${eventId}/like`),
 
     getMyEvents: () =>
         apiClient.get<ApiResponse<Event[]>>('/events/my/events'),
