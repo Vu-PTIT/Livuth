@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import './Toast.css';
 import { CheckCircle, XCircle, Warning, Info, X } from '@phosphor-icons/react';
 
@@ -83,8 +83,10 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         }
     };
 
+    const contextValue = useMemo(() => ({ showToast, success, error, warning, info }), [showToast, success, error, warning, info]);
+
     return (
-        <ToastContext.Provider value={{ showToast, success, error, warning, info }}>
+        <ToastContext.Provider value={contextValue}>
             {children}
 
             {/* Toast Container */}

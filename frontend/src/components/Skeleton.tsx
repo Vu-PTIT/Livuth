@@ -31,7 +31,7 @@ const Skeleton: React.FC<SkeletonProps> = ({
 
 // Pre-built skeleton components for common use cases
 export const EventCardSkeleton: React.FC<{ variant?: 'card' | 'list' }> = ({ variant = 'card' }) => (
-    <div className={`event-card-skeleton ${variant}`}>
+    <div className={`event-card-skeleton ${variant === 'list' ? 'list' : ''}`}>
         <Skeleton variant="rectangular" height={variant === 'list' ? 100 : 180} className="skeleton-image" />
         <div className="skeleton-content">
             <Skeleton variant="text" height={24} width={variant === 'list' ? "90%" : "80%"} />

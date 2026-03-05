@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { eventApi, reviewApi } from '../../api/endpoints';
+import { eventApi, reviewApi, roadmapApi } from '../../api/endpoints';
 import type { Event, TourProviderListing, Review, ReviewStats } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -19,6 +19,9 @@ import {
     PaperPlaneRight,
     PencilSimple,
     MapTrifold,
+    Path,
+    ThumbsUp,
+    CaretRight,
 } from '@phosphor-icons/react';
 import './EventDetailPage.css';
 
@@ -28,7 +31,7 @@ const EventDetailPage: React.FC = () => {
     const [event, setEvent] = useState<Event | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
-    const [activeTab, setActiveTab] = useState<'intro' | 'history' | 'activities'>('intro');
+    const [activeTab, setActiveTab] = useState<'info' | 'roadmaps'>('info');
 
     // Review states
     const [reviews, setReviews] = useState<Review[]>([]);
@@ -40,6 +43,62 @@ const EventDetailPage: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [reviewError, setReviewError] = useState('');
     const [isEditingReview, setIsEditingReview] = useState(false);
+
+    // Drag-to-scroll state
+    const roadmapListRef = useRef<HTMLDivElement>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [startX, setStartX] = useState(0);
+    const [scrollLeft, setScrollLeft] = useState(0);
+    const [dragStarted, setDragStarted] = useState(false);
+
+    const handleMouseDown = (e: React.MouseEvent) => {
+        if (!roadmapListRef.current) return;
+        setIsDragging(true);
+        setDragStarted(false); // Reset click prevention flag
+        setStartX(e.pageX - roadmapListRef.current.offsetLeft);
+        setScrollLeft(roadmapListRef.current.scrollLeft);
+    };
+
+    const handleMouseLeave = () => {
+        setIsDragging(false);
+    };
+
+    const handleMouseUp = () => {
+        setIsDragging(false);
+    };
+
+    const handleMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging || !roadmapListRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - roadmapListRef.current.offsetLeft;
+        const walk = (x - startX) * 2; // Scroll-fast
+
+        // If moved more than 5px, we consider it a drag so we can prevent link clicks
+        if (Math.abs(x - startX) > 5) {
+            setDragStarted(true);
+        }
+        roadmapListRef.current.scrollLeft = scrollLeft - walk;
+    };
+
+    // Fetch roadmaps
+    const [roadmaps, setRoadmaps] = useState<any[]>([]);
+    const [isLoadingRoadmaps, setIsLoadingRoadmaps] = useState(true);
+
+    useEffect(() => {
+        const fetchRoadmaps = async () => {
+            if (!id) return;
+            try {
+                const response = await roadmapApi.getEventRoadmaps(id);
+                setRoadmaps(response.data.data?.roadmaps || []);
+            } catch (err) {
+                console.error('Failed to fetch roadmaps:', err);
+            } finally {
+                setIsLoadingRoadmaps(false);
+            }
+        };
+        fetchRoadmaps();
+    }, [id]);
+
 
     useEffect(() => {
         const fetchEvent = async () => {
@@ -274,59 +333,141 @@ const EventDetailPage: React.FC = () => {
                     {/* Tabs */}
                     <div className="content-tabs">
                         <button
-                            className={`tab ${activeTab === 'intro' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('intro')}
+                            className={`tab ${activeTab === 'info' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('info')}
                         >
                             Giới thiệu
                         </button>
                         <button
-                            className={`tab ${activeTab === 'history' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('history')}
+                            className={`tab ${activeTab === 'roadmaps' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('roadmaps')}
                         >
-                            Lịch sử
-                        </button>
-                        <button
-                            className={`tab ${activeTab === 'activities' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('activities')}
-                        >
-                            Hoạt động
+                            Lộ trình tham khảo
                         </button>
                     </div>
 
                     {/* Tab Content */}
-                    <div className="tab-content card">
-                        {activeTab === 'intro' && (
+                    {activeTab === 'info' && (
+                        <div className="tab-content card">
                             <div className="content-section">
-                                {event.content?.intro ? (
-                                    <p>{event.content.intro}</p>
-                                ) : (
-                                    <p className="text-secondary">Chưa có thông tin giới thiệu</p>
+                                {event.content?.intro && (
+                                    <div style={{ marginBottom: event.content?.history || (event.content?.activities && event.content.activities.length > 0) ? '2rem' : 0 }}>
+                                        <div className="section-title-wrapper" style={{ marginBottom: '1rem' }}>
+                                            <h3 className="section-title">Giới thiệu chung</h3>
+                                        </div>
+                                        <p>{event.content.intro}</p>
+                                    </div>
+                                )}
+                                {event.content?.history && (
+                                    <div style={{ marginBottom: event.content?.activities && event.content.activities.length > 0 ? '2rem' : 0 }}>
+                                        <div className="section-title-wrapper" style={{ marginBottom: '1rem' }}>
+                                            <h3 className="section-title">
+                                                <Clock size={22} weight="duotone" className="primary-icon" />
+                                                Lịch sử
+                                            </h3>
+                                        </div>
+                                        <p>{event.content.history}</p>
+                                    </div>
+                                )}
+                                {event.content?.activities && event.content.activities.length > 0 && (
+                                    <div>
+                                        <div className="section-title-wrapper" style={{ marginBottom: '1rem' }}>
+                                            <h3 className="section-title">
+                                                <CheckCircle size={22} weight="duotone" className="primary-icon" />
+                                                Hoạt động
+                                            </h3>
+                                        </div>
+                                        <ul className="activities-list">
+                                            {event.content.activities.map((activity, idx) => (
+                                                <li key={idx}>{activity}</li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {!event.content?.intro && !event.content?.history && (!event.content?.activities || event.content.activities.length === 0) && (
+                                    <p className="text-secondary">Chưa có thông tin sự kiện</p>
                                 )}
                             </div>
-                        )}
-                        {activeTab === 'history' && (
-                            <div className="content-section">
-                                {event.content?.history ? (
-                                    <p>{event.content.history}</p>
+                        </div>
+                    )}
+
+                    {/* Community Roadmaps Section */}
+                    {activeTab === 'roadmaps' && (
+                        <div className="community-roadmaps-section card" style={{ marginTop: 0 }}>
+                            <div className="section-header-flex">
+                                <div className="section-title-wrapper">
+                                    <h3 className="section-title">
+                                        <Path size={22} weight="duotone" className="primary-icon" />
+                                        Lộ trình tham khảo
+                                    </h3>
+                                    <p className="text-secondary section-subtitle">Cộng đồng chia sẻ lịch trình chuyến đi của họ.</p>
+                                </div>
+                                <Link to={`/events/${id}/roadmaps`} className="btn btn-outline btn-sm view-all-btn">
+                                    Xem tất cả <CaretRight size={16} />
+                                </Link>
+                            </div>
+
+                            <div
+                                className={`roadmap-horizontal-list ${isDragging ? 'dragging' : ''}`}
+                                ref={roadmapListRef}
+                                onMouseDown={handleMouseDown}
+                                onMouseLeave={handleMouseLeave}
+                                onMouseUp={handleMouseUp}
+                                onMouseMove={handleMouseMove}
+                            >
+                                {isLoadingRoadmaps ? (
+                                    <div style={{ padding: '2rem', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                                        <LoadingSpinner size="small" />
+                                    </div>
+                                ) : roadmaps.length === 0 ? (
+                                    <p className="text-secondary" style={{ padding: '2rem 1rem', width: '100%', textAlign: 'center' }}>
+                                        Chưa có lộ trình nào cho sự kiện này. Hãy là người đầu tiên chia sẻ!
+                                    </p>
                                 ) : (
-                                    <p className="text-secondary">Chưa có thông tin lịch sử</p>
+                                    roadmaps.map(roadmap => (
+                                        <Link
+                                            to={`/events/${id}/roadmaps/${roadmap.id}`}
+                                            key={roadmap.id}
+                                            className="roadmap-card"
+                                            onClick={(e) => {
+                                                if (dragStarted) e.preventDefault();
+                                            }}
+                                            draggable={false}
+                                        >
+                                            <div className="roadmap-card-header">
+                                                <h4 className="roadmap-title" title={roadmap.title}>{roadmap.title}</h4>
+                                                <div className="roadmap-author">
+                                                    <img src={roadmap.user_avatar || 'https://i.pravatar.cc/150'} alt={roadmap.user_name || 'Người dùng'} />
+                                                    <span>{roadmap.user_name || 'Người dùng ẩn danh'}</span>
+                                                </div>
+                                            </div>
+                                            <div className="roadmap-card-body">
+                                                <div className="roadmap-meta">
+                                                    <span className="meta-badge"><Clock size={14} /> {roadmap.duration}</span>
+                                                    <span className="meta-badge like-badge"><ThumbsUp size={14} /> {roadmap.like_count || 0}</span>
+                                                </div>
+                                                <div className="roadmap-tags">
+                                                    {(roadmap.tags || []).map((tag: string, idx: number) => (
+                                                        <span key={idx} className="roadmap-tag">{tag}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    ))
                                 )}
                             </div>
-                        )}
-                        {activeTab === 'activities' && (
-                            <div className="content-section">
-                                {event.content?.activities && event.content.activities.length > 0 ? (
-                                    <ul className="activities-list">
-                                        {event.content.activities.map((activity, idx) => (
-                                            <li key={idx}>{activity}</li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <p className="text-secondary">Chưa có thông tin hoạt động</p>
-                                )}
+
+                            <div className="create-roadmap-cta">
+                                <div className="cta-content">
+                                    <strong>✍️ Bạn đã có trải nghiệm tuyệt vời?</strong>
+                                    <span>Hãy chia sẻ lịch trình của bạn để truyền cảm hứng cho những người đi sau nhé!</span>
+                                </div>
+                                <Link to={`/events/${id}/roadmaps/create`} className="btn btn-primary btn-sm cta-btn">
+                                    <PencilSimple size={16} /> Tạo lộ trình
+                                </Link>
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     {/* Location */}
                     {event.location?.address && (

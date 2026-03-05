@@ -19,7 +19,8 @@
     color: var(--text-primary);
     margin: 0;
     line-height: 32px;
-    padding-top: 10px;
+    padding-top: 10px
+    ;
     /* Match avatar height for vertical centering */
 }
 

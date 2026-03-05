@@ -254,7 +254,7 @@
     position: absolute;
     top: 4.5rem;
     left: 1rem;
-    z-index: 1000;
+    z-index: 1010;
     background: var(--card-bg);
     border-radius: 16px;
     padding: 0;
@@ -262,7 +262,7 @@
     animation: slideDown 0.2s ease;
     width: 340px;
     max-width: calc(100vw - 2rem);
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - 160px);
     display: flex;
     flex-direction: column;
     overflow: hidden;

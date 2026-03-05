@@ -15,6 +15,9 @@ import RegisterPage from './pages/auth/RegisterPage';
 import OnboardingPage from './pages/onboarding/OnboardingPage';
 import EventsPage from './pages/events/EventsPage';
 import EventDetailPage from './pages/events/EventDetailPage';
+import EventRoadmapsPage from './pages/events/EventRoadmapsPage';
+import CreateRoadmapPage from './pages/events/CreateRoadmapPage';
+import RoadmapDetailPage from './pages/events/RoadmapDetailPage';
 import TourProviderDetailPage from './pages/tour-providers/TourProviderDetailPage';
 import MapPage from './pages/map/MapPage';
 import ProfilePage from './pages/profile/ProfilePage';
@@ -98,6 +101,9 @@ function AppContent() {
         {/* Main Content Routes */}
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailPage />} />
+        <Route path="/events/:id/roadmaps" element={<EventRoadmapsPage />} />
+        <Route path="/events/:id/roadmaps/create" element={<ProtectedRoute><CreateRoadmapPage /></ProtectedRoute>} />
+        <Route path="/events/:id/roadmaps/:roadmapId" element={<RoadmapDetailPage />} />
         <Route path="/tour-providers/:id" element={<TourProviderDetailPage />} />
         <Route path="/map" element={<MapPage />} />
 

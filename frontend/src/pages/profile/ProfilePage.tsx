@@ -13,6 +13,7 @@ import { useOwnedNFTs } from '../../hooks/useOwnedNFTs';
 import { ConnectButton } from '@mysten/dapp-kit';
 import Modal from '../../components/Modal';
 import { CATEGORIES } from '../../constants/categories';
+import useIsMobile from '../../hooks/useIsMobile';
 import {
     User as UserIcon,
     Envelope,
@@ -32,6 +33,7 @@ import {
     Wallet,
     UserPlus,
     UserMinus,
+    SignOut,
 } from '@phosphor-icons/react';
 import './ProfilePage.css';
 
@@ -40,8 +42,9 @@ const GENDER_OPTIONS = ['Nam', 'Nữ', 'Khác'];
 
 const ProfilePage: React.FC = () => {
     const { userId } = useParams<{ userId: string }>();
-    const { user: currentUser, refreshUser, isEventProvider, isTourProvider, isAdmin } = useAuth();
+    const { user: currentUser, refreshUser, isEventProvider, isTourProvider, isAdmin, logout } = useAuth();
     const toast = useToast();
+    const isMobile = useIsMobile(1024);
 
     // Determine if viewing own profile
     const isOwnProfile = !userId || userId === currentUser?.id;
@@ -78,6 +81,9 @@ const ProfilePage: React.FC = () => {
     const [showCoverModal, setShowCoverModal] = useState(false);
     const [coverUrl, setCoverUrl] = useState('');
     const [isSavingCover, setIsSavingCover] = useState(false);
+
+    // Logout Modal state
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
 
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'events' | 'posts' | 'nfts'>('posts');
@@ -374,8 +380,8 @@ const ProfilePage: React.FC = () => {
         return new Date(timestamp * 1000).toLocaleDateString('vi-VN');
     };
 
-    return (
-        <div className="profile-page container">
+    const renderMobileLayout = () => (
+        <div className="profile-page container mobile-profile">
             <div className="profile-layout">
                 {/* Sidebar */}
                 <aside className="profile-sidebar">
@@ -455,14 +461,22 @@ const ProfilePage: React.FC = () => {
                             {/* Actions */}
                             <div className="profile-actions">
                                 {isOwnProfile ? (
-                                    <>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
                                         {(!isEventProvider || !isTourProvider) && !isAdmin && (
                                             <Link to="/profile/upgrade" className="btn btn-outline btn-block">
                                                 <Sparkle size={18} />
                                                 Nâng cấp tài khoản
                                             </Link>
                                         )}
-                                    </>
+                                        <button
+                                            className="btn btn-secondary btn-block"
+                                            onClick={() => setShowLogoutModal(true)}
+                                            style={{ color: 'var(--error-color)', borderColor: 'var(--error-color)' }}
+                                        >
+                                            <SignOut size={18} />
+                                            Đăng xuất
+                                        </button>
+                                    </div>
                                 ) : (
                                     <button
                                         className={`btn btn-block ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
@@ -731,8 +745,294 @@ const ProfilePage: React.FC = () => {
                     </section>
                 </main>
             </div>
+        </div>
+    );
 
-            {/* Modals - only render for own profile */}
+    const renderDesktopLayout = () => (
+        <div className="profile-page web-profile">
+            {/* Full-width Profile Header */}
+            <div className="profile-header-container">
+                <div
+                    className={`profile-cover-photo ${isOwnProfile ? 'cover-editable' : ''}`}
+                    style={{
+                        backgroundImage: (profileUser as any).cover_url
+                            ? `url('${(profileUser as any).cover_url}')`
+                            : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`
+                    }}
+                    title={isOwnProfile ? 'Bấm để thay đổi ảnh bìa' : ''}
+                    onClick={() => isOwnProfile && setShowCoverModal(true)}
+                >
+                </div>
+
+                <div className="profile-header-content container">
+                    <div className="profile-header-main">
+                        <div
+                            className={`profile-avatar-wrapper ${isOwnProfile ? 'avatar-editable' : ''}`}
+                            onClick={() => isOwnProfile && setShowAvatarModal(true)}
+                            title={isOwnProfile ? 'Bấm để thay đổi ảnh đại diện' : ''}
+                        >
+                            {profileUser.avatar_url ? (
+                                <img src={profileUser.avatar_url} alt={profileUser.username} className="avatar-image" />
+                            ) : (
+                                <div className="avatar-placeholder">
+                                    {profileUser.full_name?.charAt(0) || profileUser.username?.charAt(0) || 'U'}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="profile-name-section">
+                            <div className="profile-name-row">
+                                <h1 className="profile-full-name">{profileUser.full_name || profileUser.username}</h1>
+                                {profileUser.roles && (
+                                    <div className="profile-role-badges">
+                                        {profileUser.roles
+                                            .filter((role: string) => role !== 'Normal user' && role !== 'User' && role !== 'user')
+                                            .map((role: string, idx: number) => {
+                                                let displayRole = role;
+                                                const roleLower = role.toLowerCase();
+                                                if (roleLower === 'tour provider' || roleLower === 'tour_provider') displayRole = 'Nhà cung cấp Tour';
+                                                else if (roleLower === 'event provider' || roleLower === 'event_provider') displayRole = 'Nhà tổ chức sự kiện';
+                                                else if (roleLower === 'admin') displayRole = 'Quản trị viên';
+                                                else return null;
+
+                                                return (
+                                                    <span key={idx} className="role-badge">
+                                                        <CheckCircle size={14} weight="fill" /> {displayRole}
+                                                    </span>
+                                                );
+                                            })}
+                                    </div>
+                                )}
+                            </div>
+                            {profileUser.nickname && <p className="profile-nickname">@{profileUser.nickname}</p>}
+
+                            <div className="profile-stats-summary">
+                                <span><strong>{followingCount}</strong> Đang theo dõi</span>
+                                <span><strong>{followersCount}</strong> Người theo dõi</span>
+                            </div>
+                        </div>
+
+                        <div className="profile-header-actions">
+                            {isOwnProfile ? (
+                                <>
+                                    <button className="btn btn-primary" onClick={() => setShowEditModal(true)}>
+                                        <PencilSimple size={18} />
+                                        Chỉnh sửa trang cá nhân
+                                    </button>
+                                    {(!isEventProvider || !isTourProvider) && !isAdmin && (
+                                        <Link to="/profile/upgrade" className="btn btn-outline" style={{ height: 'fit-content' }}>
+                                            <Sparkle size={18} />
+                                            Nâng cấp
+                                        </Link>
+                                    )}
+                                    <button
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowLogoutModal(true)}
+                                        style={{ height: 'fit-content', color: 'var(--error-color)', borderColor: 'var(--error-color)' }}
+                                    >
+                                        <SignOut size={18} />
+                                        Đăng xuất
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className={`btn ${isFollowing ? 'btn-outline' : 'btn-primary'}`}
+                                    onClick={handleFollowToggle}
+                                    disabled={isFollowLoading}
+                                >
+                                    {isFollowing ? (
+                                        <>
+                                            <UserMinus size={18} />
+                                            Hủy theo dõi
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus size={18} />
+                                            Theo dõi
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Profile Grid Layout */}
+            <div className="profile-body-container container">
+                <div className="profile-grid">
+                    {/* Left Column: Intro & Info */}
+                    <aside className="profile-left-col">
+                        <section className="profile-card profile-intro">
+                            <h3>Giới thiệu</h3>
+                            {profileUser.bio ? (
+                                <p className="profile-bio-text">{profileUser.bio}</p>
+                            ) : (
+                                isOwnProfile && <p className="no-data-text">Thêm tiểu sử để mọi người hiểu bạn hơn.</p>
+                            )}
+
+                            <div className="profile-info-list">
+                                <div className="info-item">
+                                    <UserIcon size={20} />
+                                    <span>{profileUser.full_name || 'Họ và tên chưa cập nhật'}</span>
+                                </div>
+                                {isOwnProfile && (
+                                    <>
+                                        <div className="info-item">
+                                            <Envelope size={20} />
+                                            <span>{profileUser.email}</span>
+                                        </div>
+                                        {profileUser.phone && (
+                                            <div className="info-item">
+                                                <Phone size={20} />
+                                                <span>{profileUser.phone}</span>
+                                            </div>
+                                        )}
+                                        {profileUser.address && (
+                                            <div className="info-item">
+                                                <MapPin size={20} />
+                                                <span>{profileUser.address}</span>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </section>
+
+                        <section className="profile-card profile-hobbies-card">
+                            <div className="section-header">
+                                <h3>Sở thích</h3>
+                                {isOwnProfile && (
+                                    <button className="btn-icon-shadow" onClick={() => {
+                                        setSelectedHobbies(profileUser.hobbies || []);
+                                        setShowHobbyModal(true);
+                                    }}>
+                                        <PencilSimple size={16} />
+                                    </button>
+                                )}
+                            </div>
+                            {profileUser.hobbies && profileUser.hobbies.length > 0 ? (
+                                <div className="profile-hobbies-tags">
+                                    {profileUser.hobbies.map((hobby: string, idx: number) => {
+                                        const category = HOBBY_CATEGORIES.find(c => c.id === hobby || c.name === hobby);
+                                        return (
+                                            <span key={idx} className="hobby-pill">
+                                                {category?.icon} {category?.name || hobby}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <p className="no-data-text">Chưa chọn sở thích.</p>
+                            )}
+                        </section>
+                    </aside>
+
+                    {/* Right Column: Timeline & Tabs */}
+                    <main className="profile-right-col">
+                        <div className="profile-card profile-tabs-card">
+                            <div className="profile-tabs-nav">
+                                <button
+                                    className={`tab-nav-btn ${activeTab === 'posts' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('posts')}
+                                >
+                                    Bài viết
+                                </button>
+                                <button
+                                    className={`tab-nav-btn ${activeTab === 'events' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('events')}
+                                >
+                                    Sự kiện
+                                </button>
+                                <button
+                                    className={`tab-nav-btn ${activeTab === 'nfts' ? 'active' : ''}`}
+                                    onClick={() => setActiveTab('nfts')}
+                                >
+                                    NFTs {nfts.length > 0 && <span className="nft-badge">{nfts.length}</span>}
+                                </button>
+                            </div>
+
+                            <div className="profile-tab-content">
+                                {activeTab === 'posts' && (
+                                    <div className="tab-posts">
+                                        {isOwnProfile && (
+                                            <div className="profile-post-composer">
+                                                <CreatePostForm
+                                                    onPostCreated={(newPost) => setUserPosts([newPost, ...userPosts])}
+                                                />
+                                            </div>
+                                        )}
+                                        {isLoadingPosts ? (
+                                            <LoadingSpinner size="small" />
+                                        ) : userPosts.length > 0 ? (
+                                            <div className="posts-list">
+                                                {userPosts.map((post) => (
+                                                    <PostCard key={post.id} post={post} />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="empty-tab-state">
+                                                <Notebook size={48} weight="light" />
+                                                <p>Chưa có bài viết nào.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeTab === 'events' && (
+                                    <div className="tab-events">
+                                        {isLoadingEvents ? (
+                                            <LoadingSpinner size="small" />
+                                        ) : participatedEvents.length > 0 ? (
+                                            <div className="events-grid">
+                                                {participatedEvents.map((event) => (
+                                                    <EventCard key={event.id} event={event} />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="empty-tab-state">
+                                                <CalendarCheck size={48} weight="light" />
+                                                <p>Chưa tham gia sự kiện nào.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeTab === 'nfts' && (
+                                    <div className="tab-nfts">
+                                        {isOwnProfile && !isWalletConnected ? (
+                                            <div className="wallet-connect-prompt">
+                                                <Wallet size={48} weight="light" />
+                                                <p>Kết nối ví Sui để xem NFT Check-in của bạn</p>
+                                                <ConnectButton />
+                                            </div>
+                                        ) : isLoadingNFTs ? (
+                                            <LoadingSpinner size="small" />
+                                        ) : nfts.length > 0 ? (
+                                            <div className="nfts-grid">
+                                                {nfts.map((nft) => (
+                                                    <NFTCard key={nft.id} nft={nft} />
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="empty-tab-state">
+                                                <Wallet size={48} weight="light" />
+                                                <p>Chưa có NFT nào.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="profile-page-root">
+            {isMobile ? renderMobileLayout() : renderDesktopLayout()}
             {isOwnProfile && (
                 <>
                     {/* Edit Profile Modal */}
@@ -1066,6 +1366,37 @@ const ProfilePage: React.FC = () => {
                                     disabled={isSavingCover}
                                 >
                                     {isSavingCover ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                </button>
+                            </div>
+                        </div>
+                    </Modal>
+
+                    {/* Logout Confirmation Modal */}
+                    <Modal
+                        isOpen={showLogoutModal}
+                        onClose={() => setShowLogoutModal(false)}
+                        size="small"
+                    >
+                        <div className="logout-modal-content" style={{ padding: '1rem' }}>
+                            <h2 className="logout-title" style={{ marginTop: 0 }}>Bạn có chắc muốn đăng xuất không?</h2>
+                            <p className="logout-message" style={{ margin: '1rem 0' }}>
+                                Đăng xuất khỏi tài khoản {currentUser?.email} trên Ganvo?
+                            </p>
+                            <div className="form-actions" style={{ justifyContent: 'flex-end', marginTop: '1.5rem', gap: '1rem' }}>
+                                <button
+                                    className="btn btn-secondary"
+                                    onClick={() => setShowLogoutModal(false)}
+                                >
+                                    Hủy
+                                </button>
+                                <button
+                                    className="btn btn-primary"
+                                    onClick={() => {
+                                        logout();
+                                        setShowLogoutModal(false);
+                                    }}
+                                >
+                                    Đăng xuất
                                 </button>
                             </div>
                         </div>

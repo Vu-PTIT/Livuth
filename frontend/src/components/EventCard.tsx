@@ -4,6 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { eventApi } from '../api/endpoints';
 import { MapPin, Calendar, Tag, Image as ImageIcon, Heart } from '@phosphor-icons/react';
 import type { Event } from '../types';
+import { formatToVietnameseDate } from '../utils/date';
 import './EventCard.css';
 
 interface EventCardProps {
@@ -77,36 +78,16 @@ const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
         return () => window.removeEventListener('resize', checkOverflow);
     }, [event.categories]);
 
-    // Format date to Vietnamese format: "25 thg 4, 2026"
+    // Format date to Vietnamese format: "ngày X tháng Y"
     const formatDate = (timestamp?: string) => {
         if (!timestamp) return 'Đang cập nhật';
 
         // Return textual times as-is
-        if (timestamp.includes('Hàng ngày') || timestamp.includes('thg')) {
+        if (timestamp.includes('Hàng ngày')) {
             return timestamp;
         }
 
-        let date: Date;
-
-        // Check for DD/MM/YYYY format (common in VN APIs)
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(timestamp)) {
-            const [day, month, year] = timestamp.split('/').map(Number);
-            date = new Date(year, month - 1, day);
-        } else {
-            date = new Date(timestamp);
-        }
-
-        if (isNaN(date.getTime())) return timestamp;
-
-        // Check if it's this year
-        const thisYear = new Date().getFullYear();
-        const isThisYear = date.getFullYear() === thisYear;
-
-        const day = date.getDate();
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-
-        return `${day} thg ${month}${!isThisYear ? `, ${year}` : ''}`;
+        return formatToVietnameseDate(timestamp);
     };
 
     const getImageUrl = () => {
@@ -202,12 +183,11 @@ const EventCard: React.FC<EventCardProps> = ({ event, variant = 'card' }) => {
                     <div className="event-meta-row">
                         <div className="event-meta-item">
                             <Calendar size={14} weight="fill" className="meta-icon" />
-                            <span>{formatDate(event.time?.next_occurrence || event.time?.lunar)}</span>
+                            <span className="meta-text">{formatDate(event.time?.next_occurrence || event.time?.lunar)}</span>
                         </div>
-                        <span className="meta-divider">•</span>
                         <div className="event-meta-item">
                             <MapPin size={14} weight="fill" className="meta-icon" />
-                            <span className="location-text">{event.location?.city || event.location?.province || 'Việt Nam'}</span>
+                            <span className="meta-text">{event.location?.city || event.location?.province || 'Việt Nam'}</span>
                         </div>
                     </div>
 

@@ -348,3 +348,24 @@ export const uploadApi = {
         });
     },
 };
+
+// ============ ROADMAP API ============
+export const roadmapApi = {
+    getEventRoadmaps: (eventId: string) =>
+        apiClient.get<ApiResponse<{ roadmaps: any[] }>>(`/roadmaps/event/${eventId}`),
+
+    getById: (roadmapId: string) =>
+        apiClient.get<ApiResponse<any>>(`/roadmaps/${roadmapId}`),
+
+    create: (eventId: string, data: { title: string; duration: string; tags: string[]; content: string }) =>
+        apiClient.post<ApiResponse<any>>(`/roadmaps/event/${eventId}`, data),
+
+    update: (roadmapId: string, data: Partial<{ title: string; duration: string; tags: string[]; content: string }>) =>
+        apiClient.put<ApiResponse<any>>(`/roadmaps/${roadmapId}`, data),
+
+    delete: (roadmapId: string) =>
+        apiClient.delete(`/roadmaps/${roadmapId}`),
+
+    toggleLike: (roadmapId: string) =>
+        apiClient.post<ApiResponse<{ is_liked: boolean; like_count: number }>>(`/roadmaps/${roadmapId}/like`),
+};

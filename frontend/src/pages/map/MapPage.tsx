@@ -6,13 +6,16 @@ import L from 'leaflet';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { eventApi, userApi } from '../../api/endpoints';
 import type { Event } from '../../types';
-import { CATEGORIES } from '../../constants/categories';
+import { CATEGORIES, getCategoryIcon } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
 import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
+import { parseVietnameseDate, formatToVietnameseDate } from '../../utils/date';
 import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
 import './MapPage.css';
 import { AuthContext } from '../../contexts/AuthContext';
+import { Geolocation } from '@capacitor/geolocation';
+import Modal from '../../components/Modal';
 
 // Fix for default marker icon in Leaflet with Vite
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -72,43 +75,6 @@ const formatCount = (count: number): string => {
     return count > 0 ? `${count}` : '';
 };
 
-// Parse Vietnamese date string to Date object
-const parseVietnameseDate = (dateStr: string): Date | null => {
-    if (!dateStr) return null;
-
-    // Handle formats like "ngày 15 tháng 1" or "15/1/2026" or "15-01-2026"
-
-    // Format: "ngày X tháng Y"
-    const vnMatch = dateStr.match(/ngày\s*(\d+)\s*tháng\s*(\d+)/i);
-    if (vnMatch) {
-        const day = parseInt(vnMatch[1]);
-        const month = parseInt(vnMatch[2]) - 1; // months are 0-indexed
-        const year = new Date().getFullYear();
-        return new Date(year, month, day);
-    }
-
-    // Format: "DD/MM" or "DD/MM/YYYY"
-    const slashMatch = dateStr.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
-    if (slashMatch) {
-        const day = parseInt(slashMatch[1]);
-        const month = parseInt(slashMatch[2]) - 1;
-        let year = slashMatch[3] ? parseInt(slashMatch[3]) : new Date().getFullYear();
-        if (year < 100) year += 2000;
-        return new Date(year, month, day);
-    }
-
-    // Format: "DD-MM-YYYY"
-    const dashMatch = dateStr.match(/(\d{1,2})-(\d{1,2})-(\d{2,4})/);
-    if (dashMatch) {
-        const day = parseInt(dashMatch[1]);
-        const month = parseInt(dashMatch[2]) - 1;
-        let year = parseInt(dashMatch[3]);
-        if (year < 100) year += 2000;
-        return new Date(year, month, day);
-    }
-
-    return null;
-};
 
 // Check if event is in the past
 const isEventPast = (event: Event): boolean => {
@@ -128,7 +94,9 @@ const isEventPast = (event: Event): boolean => {
 const createEventIcon = (event: Event) => {
     // Use participant_count from backend, fallback to review_count if not available
     const count = event.participant_count || event.review_count || 0;
-    const size = getMarkerSize(count);
+    const baseSize = getMarkerSize(count);
+    // Increase size slightly to fit images better
+    const size = Math.max(40, baseSize);
     let { tier, color, hasPulse } = getMarkerTier(count);
 
     // Override style for past events
@@ -140,9 +108,24 @@ const createEventIcon = (event: Event) => {
 
     const badge = formatCount(count);
 
+    // Check if event has an image
+    const imageUrl = event.media && event.media.length > 0 ? event.media[0].url : null;
+    const categoryName = event.categories && event.categories.length > 0 ? event.categories[0] : '';
+    const categoryIcon = categoryName ? getCategoryIcon(categoryName) : '📍';
+    const hasImage = !!imageUrl;
+
+    const fallbackHtml = `<span style="font-size: ${Math.max(16, size * 0.45)}px; line-height: 1;">${categoryIcon}</span>`;
+    const escapedFallback = fallbackHtml.replace(/"/g, '&quot;');
+
+    const iconContent = hasImage
+        ? `<img src="${imageUrl}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.outerHTML='${escapedFallback}';" />`
+        : fallbackHtml;
+
     const html = `
         <div class="event-marker event-marker--${tier}" style="width: ${size}px; height: ${size}px;">
-            <div class="event-marker-dot" style="background: ${color};"></div>
+            <div class="event-marker-dot" style="background: ${hasImage ? 'white' : color}; border-color: ${hasImage ? color : 'white'}; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                ${iconContent}
+            </div>
             ${hasPulse ? `<div class="event-marker-pulse" style="background: ${color};"></div>` : ''}
             ${badge ? `<span class="event-marker-badge" style="color: ${color};">${badge}</span>` : ''}
         </div>
@@ -256,6 +239,46 @@ interface SearchResult {
     lon: string;
 }
 
+// Component for Event Popup Image with fallback
+const PopupImage = ({ event }: { event: Event }) => {
+    const [imgError, setImgError] = useState(false);
+
+    if (!event.media || event.media.length === 0) return null;
+
+    if (imgError) {
+        const categoryName = event.categories && event.categories.length > 0 ? event.categories[0] : '';
+        const categoryIcon = categoryName ? getCategoryIcon(categoryName) : '📍';
+        return (
+            <div className="popup-image-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
+                <span style={{ fontSize: '48px' }}>{categoryIcon}</span>
+                <div className="popup-image-overlay" />
+                {categoryName && (
+                    <span className="popup-category-badge">
+                        {categoryName}
+                    </span>
+                )}
+            </div>
+        );
+    }
+
+    return (
+        <div className="popup-image-wrapper">
+            <img
+                src={event.media[0].url}
+                alt={event.name}
+                className="popup-image"
+                onError={() => setImgError(true)}
+            />
+            <div className="popup-image-overlay" />
+            {event.categories && event.categories.length > 0 && (
+                <span className="popup-category-badge">
+                    {event.categories[0]}
+                </span>
+            )}
+        </div>
+    );
+};
+
 const MapPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -278,7 +301,8 @@ const MapPage = () => {
     const initialFetchDone = useRef(false);
     const [checkingInEventId, setCheckingInEventId] = useState<string | null>(null);
     const [checkedInEvents, setCheckedInEvents] = useState<string[]>([]);
-    const [dateFilter, setDateFilter] = useState<'all' | 'upcoming' | 'today' | 'week' | 'month' | 'year' | 'past'>('all');
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all');
+    const [showLocationPrompt, setShowLocationPrompt] = useState(false);
 
     // Fetch events based on viewport using getNearby API
     const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
@@ -299,6 +323,55 @@ const MapPage = () => {
     // Handle viewport change from map
     const handleViewportChange = useCallback((center: L.LatLng, radius: number) => {
         fetchNearbyEvents(center.lat, center.lng, radius);
+    }, [fetchNearbyEvents]);
+
+    const requestLocation = useCallback(async (isInitial = false, showPrompt = true) => {
+        setIsLocating(true);
+        try {
+            // Check current permissions
+            let permStatus = await Geolocation.checkPermissions();
+
+            // If prompt is needed, request permissions - BUT only if showPrompt is true
+            // If it's the initial load, we don't want to aggressively prompt if they haven't granted it yet.
+            if ((permStatus.location === 'prompt' || permStatus.location === 'prompt-with-rationale') && showPrompt) {
+                permStatus = await Geolocation.requestPermissions();
+            }
+
+            // If permission is denied or still prompt (meaning we didn't ask)
+            if (permStatus.location === 'denied' || permStatus.location === 'prompt' || permStatus.location === 'prompt-with-rationale') {
+                if (showPrompt) {
+                    setShowLocationPrompt(true);
+                }
+                if (isInitial) {
+                    fetchNearbyEvents(16.0, 106.0, 300); // Fallback to Vietnam
+                }
+                setIsLocating(false);
+                return false;
+            }
+
+            // Get current position
+            const coordinates = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+            const userPos: [number, number] = [coordinates.coords.latitude, coordinates.coords.longitude];
+
+            setUserLocation(userPos);
+            setCenter(userPos);
+            setZoom(isInitial ? 10 : 12);
+            setIsLocating(false);
+
+            // Fetch nearby events
+            fetchNearbyEvents(userPos[0], userPos[1], isInitial ? 50 : 30);
+            return true;
+        } catch (error) {
+            console.error('Error getting location:', error);
+            if (showPrompt) {
+                setShowLocationPrompt(true);
+            }
+            setIsLocating(false);
+            if (isInitial) {
+                fetchNearbyEvents(16.0, 106.0, 300); // Fallback to Vietnam
+            }
+            return false;
+        }
     }, [fetchNearbyEvents]);
 
     // Initial fetch - get events near default center or user location
@@ -327,28 +400,8 @@ const MapPage = () => {
             }
 
             try {
-                // First try to get user location
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        (position) => {
-                            const userPos: [number, number] = [position.coords.latitude, position.coords.longitude];
-                            setUserLocation(userPos);
-                            setCenter(userPos);
-                            setZoom(10);
-                            // Fetch events near user with 50km radius
-                            fetchNearbyEvents(userPos[0], userPos[1], 50);
-                            initialFetchDone.current = true;
-                        },
-                        () => {
-                            // Fallback to Vietnam center with large radius
-                            fetchNearbyEvents(16.0, 106.0, 300);
-                            initialFetchDone.current = true;
-                        }
-                    );
-                } else {
-                    fetchNearbyEvents(16.0, 106.0, 300);
-                    initialFetchDone.current = true;
-                }
+                await requestLocation(true, false);
+                initialFetchDone.current = true;
             } catch (error) {
                 console.error('Error in initial fetch:', error);
                 setLoading(false);
@@ -356,7 +409,7 @@ const MapPage = () => {
         };
 
         initialFetch();
-    }, [fetchNearbyEvents, searchParams]);
+    }, [fetchNearbyEvents, searchParams, requestLocation]);
 
     // Use shared categories from constants
     const allCategories = CATEGORIES;
@@ -364,12 +417,10 @@ const MapPage = () => {
     // Date filter options
     const dateFilterOptions = [
         { value: 'all' as const, label: 'Tất cả', icon: '📅' },
-        { value: 'upcoming' as const, label: 'Sắp diễn ra', icon: '🚀' },
-        { value: 'today' as const, label: 'Hôm nay', icon: '☀️' },
-        { value: 'week' as const, label: '7 ngày tới', icon: '📆' },
-        { value: 'month' as const, label: '30 ngày tới', icon: '🗓️' },
-        { value: 'year' as const, label: 'Trong năm', icon: '🎯' },
-        { value: 'past' as const, label: 'Đã qua', icon: '⏳' },
+        { value: 'today' as const, label: 'Trong ngày', icon: '☀️' },
+        { value: 'week' as const, label: 'Tuần', icon: '📆' },
+        { value: 'month' as const, label: 'Tháng', icon: '🗓️' },
+        { value: 'year' as const, label: 'Năm', icon: '🎯' },
     ];
 
 
@@ -391,14 +442,6 @@ const MapPage = () => {
         endOfToday.setHours(23, 59, 59, 999);
 
         switch (dateFilter) {
-            case 'past':
-                // Events that have already occurred
-                return eventDate < today;
-
-            case 'upcoming':
-                // All upcoming events (from today onwards)
-                return eventDate >= today;
-
             case 'today':
                 return eventDate >= today && eventDate <= endOfToday;
 
@@ -517,29 +560,8 @@ const MapPage = () => {
     };
 
     // Get current location
-    const getCurrentLocation = () => {
-        if (!navigator.geolocation) {
-            toast.error('Trình duyệt của bạn không hỗ trợ định vị');
-            return;
-        }
-
-        setIsLocating(true);
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const userPos: [number, number] = [position.coords.latitude, position.coords.longitude];
-                setUserLocation(userPos);
-                setCenter(userPos);
-                setZoom(12);
-                setIsLocating(false);
-                // Fetch events near user location
-                fetchNearbyEvents(userPos[0], userPos[1], 30);
-            },
-            (error) => {
-                console.error('Error getting location:', error);
-                toast.error('Không thể lấy vị trí của bạn. Vui lòng kiểm tra quyền truy cập vị trí.');
-                setIsLocating(false);
-            }
-        );
+    const getCurrentLocation = async () => {
+        await requestLocation(false);
     };
 
     // Navigate to event detail
@@ -784,21 +806,7 @@ const MapPage = () => {
                             >
                                 <Popup>
                                     <div className="event-popup">
-                                        {event.media && event.media.length > 0 && (
-                                            <div className="popup-image-wrapper">
-                                                <img
-                                                    src={event.media[0].url}
-                                                    alt={event.name}
-                                                    className="popup-image"
-                                                />
-                                                <div className="popup-image-overlay" />
-                                                {event.categories && event.categories.length > 0 && (
-                                                    <span className="popup-category-badge">
-                                                        {event.categories[0]}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
+                                        <PopupImage event={event} />
                                         <h3 className="popup-title">{event.name}</h3>
                                         {event.location?.address && (
                                             <p className="popup-address">
@@ -809,7 +817,7 @@ const MapPage = () => {
                                         {event.time?.next_occurrence && (
                                             <p className="popup-time">
                                                 <Calendar size={14} />
-                                                {event.time.next_occurrence}
+                                                {formatToVietnameseDate(event.time.next_occurrence)}
                                             </p>
                                         )}
                                         <button
@@ -856,6 +864,76 @@ const MapPage = () => {
                     <Marker position={userLocation} icon={createUserLocationIcon(user?.avatar_url)} />
                 )}
             </MapContainer>
+
+            {/* Location Permission Prompt Modal */}
+            <Modal
+                isOpen={showLocationPrompt}
+                onClose={() => setShowLocationPrompt(false)}
+                title="Yêu cầu truy cập vị trí"
+                size="small"
+            >
+                <div style={{ padding: '0 20px 20px', textAlign: 'center' }}>
+                    <div style={{
+                        width: '60px',
+                        height: '60px',
+                        backgroundColor: '#fee2e2',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        margin: '0 auto 16px'
+                    }}>
+                        <MapPin size={32} color="#ef4444" weight="fill" />
+                    </div>
+                    <h3 style={{ marginBottom: '12px', fontSize: '18px', fontWeight: '600' }}>
+                        Ứng dụng cần sử dụng vị trí của bạn
+                    </h3>
+                    <p style={{ color: '#6b7280', fontSize: '14px', lineHeight: '1.5', marginBottom: '24px' }}>
+                        Để tìm kiếm sự kiện gần bạn và cung cấp trải nghiệm tốt nhất, vui lòng cho phép quyền truy cập vị trí trong cài đặt trình duyệt hoặc thiết bị của bạn.
+                    </p>
+                    <div style={{ display: 'flex', gap: '12px', flexDirection: 'column' }}>
+                        <button
+                            style={{
+                                padding: '12px 16px',
+                                backgroundColor: '#ef4444',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                width: '100%',
+                                transition: 'background 0.2s'
+                            }}
+                            onClick={() => {
+                                setShowLocationPrompt(false);
+                                requestLocation(false);
+                            }}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#dc2626')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#ef4444')}
+                        >
+                            Thử lại
+                        </button>
+                        <button
+                            style={{
+                                padding: '12px 16px',
+                                backgroundColor: '#f3f4f6',
+                                color: '#4b5563',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                width: '100%',
+                                transition: 'background 0.2s'
+                            }}
+                            onClick={() => setShowLocationPrompt(false)}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#e5e7eb')}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#f3f4f6')}
+                        >
+                            Đóng
+                        </button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 };

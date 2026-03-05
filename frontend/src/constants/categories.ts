@@ -28,7 +28,7 @@ export const CATEGORY_NAMES = CATEGORIES.map(c => c.name);
 
 // Get icon by category name
 export const getCategoryIcon = (name: string): string => {
-    return CATEGORIES.find(c => c.name === name)?.icon || '🏷️';
+    return CATEGORIES.find(c => c.name.toLowerCase() === name.toLowerCase())?.icon || '🏷️';
 };
 
 // Get category by id

@@ -60,9 +60,10 @@
 /* EventCard Skeleton */
 .event-card-skeleton {
     background: var(--card-bg);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
     box-shadow: var(--shadow-sm);
+    padding: 0;
 }
 
 .event-card-skeleton .skeleton-image {

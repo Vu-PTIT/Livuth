@@ -3,6 +3,7 @@ import { Image, MapPin, X, PaperPlaneTilt, Ticket } from '@phosphor-icons/react'
 import { useAuth } from '../hooks/useAuth';
 import { postApi, eventApi, uploadApi } from '../api/endpoints';
 import type { Post, PostCreateRequest, MediaItem, Event } from '../types';
+import { formatToVietnameseDate } from '../utils/date';
 import './CreatePostForm.css';
 
 interface CreatePostFormProps {
@@ -337,7 +338,7 @@ const CreatePostForm: React.FC<CreatePostFormProps> = ({ onPostCreated }) => {
                                                     )}
                                                     <div className="checkin-item-info">
                                                         <div className="checkin-item-name">{event.name}</div>
-                                                        <div className="checkin-item-date">{event.time?.next_occurrence || event.time?.lunar}</div>
+                                                        <div className="checkin-item-date">{formatToVietnameseDate(event.time?.next_occurrence || event.time?.lunar || '')}</div>
                                                     </div>
                                                 </div>
                                             ))

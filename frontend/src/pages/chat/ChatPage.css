@@ -1,6 +1,7 @@
 /* Chat Page Styles */
 .chat-page {
-    height: calc(100vh - 64px - 4rem);
+    /* calc(100vh - headerHeight - paddingBottom - paddingTop) */
+    height: calc(100vh - 64px - 2rem - 1.5rem);
     padding-bottom: 0;
 }
 
@@ -8,6 +9,7 @@
     display: grid;
     grid-template-columns: 300px 1fr;
     height: 100%;
+    margin-top: 1.5rem;
     background: var(--card-bg);
     border-radius: 16px;
     overflow: hidden;
