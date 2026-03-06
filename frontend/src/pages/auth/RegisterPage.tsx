@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Eye, EyeSlash, UserPlus } from '@phosphor-icons/react';
+import { Eye, EyeSlash, UserPlus, CaretLeft } from '@phosphor-icons/react';
 import './Auth.css';
 
 const RegisterPage: React.FC = () => {
@@ -124,6 +124,14 @@ const RegisterPage: React.FC = () => {
         <div className="auth-page">
             <div className="auth-container">
                 <div className="auth-header">
+                    <button
+                        type="button"
+                        className="auth-back-btn"
+                        onClick={() => navigate('/login')}
+                        title="Quay lại đăng nhập"
+                    >
+                        <CaretLeft size={24} weight="bold" />
+                    </button>
                     <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
                     <h1>Tạo tài khoản</h1>
                     <p>Tham gia cộng đồng Ganvo</p>

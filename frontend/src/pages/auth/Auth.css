@@ -1,28 +1,54 @@
-t
-
 /* Auth Pages Styles - Mobile First */
 .auth-page {
     min-height: 100vh;
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 1rem;
-    padding-top: 2rem;
+    padding: 0;
 }
 
 .auth-container {
     width: 100%;
     max-width: 100%;
-    /* Mobile: Flat design (no border/shadow/bg) */
-    background: transparent;
-    border: none;
+    min-height: 100vh;
+    background: var(--card-bg);
+    border-radius: 0;
     box-shadow: none;
-    padding: 0.5rem 0;
+    border: none;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 .auth-header {
     text-align: center;
     margin-bottom: 1.5rem;
+    position: relative;
+    padding-top: 0.5rem;
+}
+
+.auth-back-btn {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-secondary);
+    border: none;
+    color: var(--text-primary);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+.auth-back-btn:hover {
+    background: var(--border-color);
 }
 
 .auth-header .logo-img {
@@ -46,6 +72,29 @@ t
     color: var(--text-secondary);
     margin: 0;
     font-size: 0.9rem;
+}
+
+/* Hide header text on mobile to save vertical space for Register Step 1/2 */
+@media (max-width: 479px) {
+
+    .auth-header h1,
+    .auth-header p {
+        display: none;
+    }
+
+    .auth-header {
+        margin-bottom: 1rem;
+        padding-top: 1rem;
+        min-height: 48px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .auth-back-btn {
+        top: 1rem;
+        transform: none;
+    }
 }
 
 /* Steps - compact for mobile */
@@ -104,11 +153,11 @@ t
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
+    gap: 0.5rem;
 }
 
 .form-group {
-    margin-bottom: 0.875rem;
+    margin-bottom: 1.25rem;
 }
 
 .form-group label {
@@ -186,7 +235,7 @@ t
     font-size: 1rem;
     font-weight: 600;
     border-radius: 10px;
-    margin-top: 0.25rem;
+    margin-top: 0.75rem;
 }
 
 /* Inputs - prevent iOS zoom */
@@ -200,8 +249,9 @@ t
 /* Footer */
 .auth-footer {
     text-align: center;
-    margin-top: 1.5rem;
+    margin-top: auto;
     padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
     border-top: 1px solid var(--border-color);
 }
 
@@ -318,9 +368,12 @@ t
     }
 
     .auth-container {
-        max-width: 420px;
-        padding: 2rem;
-        /* Kept flat on tablet/large mobile to ensure "one block" look */
+        max-width: 460px;
+        min-height: auto;
+        padding: 2rem 2.5rem;
+        box-shadow: var(--shadow-md);
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
     }
 
     .auth-header h1 {
@@ -359,21 +412,15 @@ t
     .auth-page {
         padding: 1.35rem 1rem 1rem 1rem;
         /* Slightly reduced top padding (1.35rem) for precise visual centering */
-        height: calc(100vh - 64px);
-        overflow: hidden;
+        min-height: calc(100vh - 64px);
         display: flex;
         align-items: center;
         justify-content: center;
     }
 
     .auth-container {
-        max-width: 440px;
-        padding: 2rem;
-        /* Restore card look on desktop only */
-        background: var(--card-bg);
-        border-radius: 16px;
-        box-shadow: var(--shadow-md);
-        border: 1px solid var(--border-color);
+        max-width: 480px;
+        padding: 2.5rem 3.5rem;
     }
 
     .auth-header {
@@ -386,6 +433,8 @@ t
 
     .auth-header h1 {
         font-size: 1.5rem;
+        display: block;
+        /* Ensure it's shown on desktop */
     }
 
     .auth-steps {
@@ -408,5 +457,18 @@ t
 
     .social-login-separator {
         margin: 1rem 0;
+    }
+}
+
+/* ==================== MOBILE FIXES (up to 767px) ==================== */
+@media (max-width: 767px) {
+
+    .auth-header h1,
+    .auth-header p {
+        display: none;
+    }
+
+    .auth-header {
+        margin-bottom: 0.5rem;
     }
 }

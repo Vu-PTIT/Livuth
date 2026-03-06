@@ -2,6 +2,7 @@ import React, { useState, useEffect, type ReactNode } from 'react';
 import type { User, TokenResponse, LoginRequest, RegisterRequest } from '../types';
 import { authApi } from '../api/endpoints';
 import { AuthContext, type AuthContextType } from '../contexts/AuthContext';
+import { requestAppPermissions } from '../utils/permissions';
 
 interface AuthProviderProps {
     children: ReactNode;
@@ -53,22 +54,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const login = async (data: LoginRequest) => {
         const response = await authApi.login(data);
         const tokenData = response.data.data as TokenResponse;
-        handleLoginSuccess(tokenData);
+        await handleLoginSuccess(tokenData);
     };
 
     const loginGoogle = async (data: import('../types').GoogleLoginRequest) => {
         const response = await authApi.loginGoogle(data);
         const tokenData = response.data.data as TokenResponse;
-        handleLoginSuccess(tokenData);
+        await handleLoginSuccess(tokenData);
     };
 
     const loginFacebook = async (data: import('../types').FacebookLoginRequest) => {
         const response = await authApi.loginFacebook(data);
         const tokenData = response.data.data as TokenResponse;
-        handleLoginSuccess(tokenData);
+        await handleLoginSuccess(tokenData);
     };
 
-    const handleLoginSuccess = (tokenData: TokenResponse) => {
+    const handleLoginSuccess = async (tokenData: TokenResponse) => {
         localStorage.setItem('access_token', tokenData.access_token);
         if (tokenData.refresh_token) {
             localStorage.setItem('refresh_token', tokenData.refresh_token);
@@ -82,6 +83,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
             refreshUser();
         }
+
+        // Request permissions (Location & Notifications) for Mobile & Web post-login
+        // We await this so the browser considers it part of the user interaction (login click)
+        await requestAppPermissions();
     };
 
     const register = async (data: RegisterRequest) => {

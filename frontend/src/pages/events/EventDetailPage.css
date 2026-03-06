@@ -405,8 +405,9 @@
         gap: 1.5rem;
     }
 
-    .event-content .container {
-        padding: 0 1rem;
+    .event-content.container {
+        padding-left: 0;
+        padding-right: 0;
     }
 
     /* Sticky tabs on scroll */
@@ -415,7 +416,7 @@
         top: 0;
         z-index: 50;
         background: var(--bg-primary);
-        margin: 0 -1rem;
+        margin: 0;
         padding: 0.5rem 1rem;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
