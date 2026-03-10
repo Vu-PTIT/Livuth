@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { eventApi } from '../../api/endpoints';
+import { useEvents, useRecommendedEvents } from '../../hooks/useDataCaching';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { EventCardSkeleton } from '../../components/Skeleton';
@@ -16,46 +16,17 @@ const HomePage: React.FC = () => {
     const { user, isAuthenticated } = useAuth();
     const navigate = useNavigate();
     const isMobile = useIsMobile();
-    const [events, setEvents] = useState<Event[]>([]);
-    const [recommendedEvents, setRecommendedEvents] = useState<Event[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data: eventsData, isLoading: isEventsLoading } = useEvents(1, 8);
+    const { data: recommendedData } = useRecommendedEvents(user?.id || '', 4);
+
+    const events = eventsData || [];
+    const recommendedEvents = recommendedData || [];
+    const isLoading = isEventsLoading;
+
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory] = useState('');
     const [showFilters, setShowFilters] = useState(false);
     const [city, setCity] = useState('');
-
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch all events
-                const eventsRes = await eventApi.getAll(1, 8);
-                setEvents(eventsRes.data.data || []);
-
-                // Fetch recommendations if logged in
-                if (isAuthenticated && user?.id) {
-                    try {
-                        const recRes = await eventApi.getRecommendations(user.id, 4);
-                        if (recRes.data.data && recRes.data.data.length > 0) {
-                            setRecommendedEvents(recRes.data.data);
-                        } else {
-                            // Fallback to latest events if no recommendations
-                            setRecommendedEvents((eventsRes.data.data || []).slice(0, 4));
-                        }
-                    } catch (err) {
-                        console.log('No recommendations available');
-                        // Fallback on error
-                        setRecommendedEvents((eventsRes.data.data || []).slice(0, 4));
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to fetch events:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [isAuthenticated, user]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -226,7 +197,7 @@ const HomePage: React.FC = () => {
                             </Link>
                         </div>
                         <div className="events-scroll-container">
-                            {recommendedEvents.map((event) => (
+                            {recommendedEvents.map((event: Event) => (
                                 <div key={event.id} className="event-scroll-item">
                                     <EventCard event={event} variant={isMobile ? "list" : "card"} />
                                 </div>
@@ -254,7 +225,7 @@ const HomePage: React.FC = () => {
                         </div>
                     ) : events.length > 0 ? (
                         <div className="events-list-container">
-                            {events.map((event) => (
+                            {events.map((event: Event) => (
                                 <EventCard key={event.id} event={event} variant={isMobile ? "list" : "card"} />
                             ))}
                         </div>

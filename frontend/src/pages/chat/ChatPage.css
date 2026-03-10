@@ -136,7 +136,9 @@
     overflow-y: auto;
     padding: 1.5rem;
     min-height: 0;
-    /* Important for flex children to shrink */
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.03), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.03), transparent 30%);
 }
 
 .messages-list {
@@ -190,22 +192,29 @@
     padding: 0.875rem 1.125rem;
     border-radius: 16px;
     line-height: 1.5;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 .message.user .message-bubble {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.9), rgba(234, 88, 12, 0.9));
     color: white;
     border-bottom-right-radius: 4px;
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.2);
 }
 
 .message.assistant .message-bubble {
-    background: var(--bg-secondary);
+    background: rgba(255, 255, 255, 0.6);
     color: var(--text-primary);
     border-bottom-left-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
 /* Dark mode - ensure assistant message text is visible */
 [data-theme="dark"] .message.assistant .message-bubble {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #f9fafb;
 }
 
@@ -213,9 +222,31 @@
     color: #f9fafb;
 }
 
+.message-bubble {
+    word-break: break-word;
+}
+
 .message-bubble p {
-    margin: 0;
+    margin: 0 0 0.5rem 0;
     white-space: pre-wrap;
+}
+
+.message-bubble p:last-child {
+    margin-bottom: 0;
+}
+
+.message-bubble strong {
+    font-weight: 600;
+}
+
+.message-bubble ul,
+.message-bubble ol {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+}
+
+.message-bubble li {
+    margin-bottom: 0.25rem;
 }
 
 .message-time {
@@ -300,12 +331,58 @@
     height: 100%;
 }
 
+/* Suggested Questions */
+.suggested-questions-container {
+    padding: 1rem 1.25rem 0.5rem;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--card-bg) 20%);
+    position: relative;
+    z-index: 10;
+}
+
+[data-theme="dark"] .suggested-questions-container {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, var(--card-bg) 20%);
+}
+
+.suggested-questions {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-top: 0.2rem;
+    padding-bottom: 0.5rem;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.suggested-questions::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.suggestion-chip {
+    padding: 0.4rem 0.875rem;
+    border-radius: 20px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    opacity: 0.85;
+}
+
+.suggestion-chip:hover {
+    background: rgba(249, 115, 22, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    opacity: 1;
+}
+
 /* Message Input */
 .message-input {
     display: flex;
     gap: 0.75rem;
-    padding: 1.25rem;
-    border-top: 1px solid var(--border-color);
+    padding: 0 1.25rem 1.25rem;
     background: var(--card-bg);
 }
 
@@ -384,17 +461,23 @@
 /* Responsive */
 @media (max-width: 768px) {
     .chat-page {
-        height: calc(100dvh - 56px);
-        /* Full viewport minus bottom nav */
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: calc(56px + env(safe-area-inset-bottom));
+        /* Bottom nav height */
+        height: auto;
         padding: 0;
+        margin: 0;
+        z-index: 40;
+        /* Above main layout, below bottom nav */
         overflow: hidden;
         background: var(--bg-primary);
-        /* Match header background */
     }
 
     .chat-page.container {
         padding: 0;
-        /* height: 100%; - Removed to allow .chat-page height to apply */
     }
 
     .chat-layout {
@@ -402,6 +485,8 @@
         position: relative;
         border-radius: 0;
         height: 100%;
+        margin-top: 0;
+        /* Remove 1.5rem margin from desktop */
         background: var(--bg-primary);
         /* Match header background on mobile */
         box-shadow: none;
@@ -415,9 +500,11 @@
         gap: 0.5rem;
         padding: 0 1rem;
         height: 56px;
+        /* Added height explicitly */
         background: var(--bg-primary);
         border-bottom: 1px solid var(--border-color);
         flex-shrink: 0;
+        z-index: 50;
     }
 
     .chat-mobile-header h1 {
@@ -513,5 +600,12 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        position: relative;
+        /* padding-top: 56px; */
+        /* Offset for absolute header - removed */
+        flex: 1;
+        /* Allow chat-main to grow and take available space */
+        overflow: hidden;
+        /* Manage its own overflow */
     }
 }

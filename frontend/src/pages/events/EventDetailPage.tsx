@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { eventApi, reviewApi, roadmapApi } from '../../api/endpoints';
-import type { Event, TourProviderListing, Review, ReviewStats } from '../../types';
+import { reviewApi, roadmapApi } from '../../api/endpoints';
+import { useEventDetail } from '../../hooks/useDataCaching';
+import type { TourProviderListing, Review, ReviewStats } from '../../types';
 import { useAuth } from '../../hooks/useAuth';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import CheckInButton from '../../components/sui/CheckInButton';
@@ -28,8 +29,6 @@ import './EventDetailPage.css';
 const EventDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
-    const [event, setEvent] = useState<Event | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState<'info' | 'roadmaps'>('info');
 
@@ -100,22 +99,13 @@ const EventDetailPage: React.FC = () => {
     }, [id]);
 
 
+    const { data: event, isLoading, error: queryError } = useEventDetail(id);
+
     useEffect(() => {
-        const fetchEvent = async () => {
-            if (!id) return;
-
-            try {
-                const response = await eventApi.getById(id, true);
-                setEvent(response.data.data || null);
-            } catch (err) {
-                setError('Không tìm thấy sự kiện');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchEvent();
-    }, [id]);
+        if (queryError) {
+            setError('Không tìm thấy sự kiện');
+        }
+    }, [queryError]);
 
     // Fetch reviews
     useEffect(() => {
@@ -315,8 +305,8 @@ const EventDetailPage: React.FC = () => {
                         )}
                     </div>
                     {event.categories && event.categories.length > 0 && (
-                        <div className="event-categories">
-                            {event.categories.map((cat, idx) => (
+                        <div className="event-categories desktop-only-tags">
+                            {event.categories.map((cat: string, idx: number) => (
                                 <span key={idx} className="category-tag">
                                     <Tag size={14} />
                                     {capitalizeFirst(cat)}
@@ -349,6 +339,17 @@ const EventDetailPage: React.FC = () => {
                     {/* Tab Content */}
                     {activeTab === 'info' && (
                         <div className="tab-content card">
+                            {/* Mobile-only tags relocated here */}
+                            {event.categories && event.categories.length > 0 && (
+                                <div className="event-categories mobile-only-tags" style={{ justifyContent: 'flex-start', marginBottom: '0.25rem', marginTop: 0 }}>
+                                    {event.categories.map((cat: string, idx: number) => (
+                                        <span key={idx} className="category-tag" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-color)' }}>
+                                            <Tag size={14} />
+                                            {capitalizeFirst(cat)}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
                             <div className="content-section">
                                 {event.content?.intro && (
                                     <div style={{ marginBottom: event.content?.history || (event.content?.activities && event.content.activities.length > 0) ? '2rem' : 0 }}>
@@ -378,7 +379,7 @@ const EventDetailPage: React.FC = () => {
                                             </h3>
                                         </div>
                                         <ul className="activities-list">
-                                            {event.content.activities.map((activity, idx) => (
+                                            {event.content.activities.map((activity: string, idx: number) => (
                                                 <li key={idx}>{activity}</li>
                                             ))}
                                         </ul>
@@ -529,7 +530,7 @@ const EventDetailPage: React.FC = () => {
                         <div className="gallery-section">
                             <h3>Hình ảnh</h3>
                             <div className="gallery-grid">
-                                {event.media.map((item, idx) => (
+                                {event.media.map((item: any, idx: number) => (
                                     <div key={idx} className="gallery-item">
                                         <img src={item.url} alt={item.caption || `Ảnh ${idx + 1}`} />
                                     </div>
@@ -594,8 +595,8 @@ const EventDetailPage: React.FC = () => {
                                         maxLength={1000}
                                     />
                                 </div>
-                                {reviewError && <p className="error-text">{reviewError}</p>}
-                                <div className="form-actions" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                                {reviewError && <p className="error-text" style={{ marginBottom: '0.25rem' }}>{reviewError}</p>}
+                                <div className="form-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', padding: 0 }}>
                                     {isEditingReview && (
                                         <button
                                             type="button"

@@ -13,6 +13,8 @@ import {
     User,
     List,
 } from '@phosphor-icons/react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import './ChatPage.css';
 
 const ChatPage: React.FC = () => {
@@ -175,6 +177,13 @@ const ChatPage: React.FC = () => {
         });
     };
 
+    const suggestedQuestions = [
+        "Lễ hội Chùa Hương diễn ra khi nào?",
+        "Lễ hội Đền Hùng có gì đặc sắc?",
+        "Có sự kiện gì ở Hà Nội sắp diễn ra?",
+        "Kinh nghiệm đi hội Lim"
+    ];
+
     return (
         <div className="chat-page container">
             <div className="chat-layout">
@@ -297,8 +306,10 @@ const ChatPage: React.FC = () => {
                                                     )}
                                                 </div>
                                                 <div className="message-content">
-                                                    <div className="message-bubble">
-                                                        <p>{message.content}</p>
+                                                    <div className="message-bubble markdown-body">
+                                                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                            {message.content}
+                                                        </ReactMarkdown>
                                                     </div>
                                                     <span className="message-time">
                                                         {formatTime(message.created_at)}
@@ -331,6 +342,21 @@ const ChatPage: React.FC = () => {
                                         <p>Tôi là trợ lý AI của Ganvo. Hãy hỏi tôi bất cứ điều gì về lễ hội và văn hóa Việt Nam!</p>
                                     </div>
                                 )}
+                            </div>
+
+                            <div className="suggested-questions-container">
+                                <div className="suggested-questions">
+                                    {suggestedQuestions.map((q, idx) => (
+                                        <button
+                                            key={idx}
+                                            className="suggestion-chip"
+                                            onClick={() => setNewMessage(q)}
+                                            disabled={isSending}
+                                        >
+                                            {q}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <form className="message-input" onSubmit={handleSendMessage}>

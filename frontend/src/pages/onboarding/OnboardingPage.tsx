@@ -5,6 +5,8 @@ import { userApi } from '../../api/endpoints';
 import { useToast } from '../../components/Toast';
 import { CATEGORIES } from '../../constants/categories';
 import { Sparkle, Check, Camera, UploadSimple, Image } from '@phosphor-icons/react';
+import { Capacitor } from '@capacitor/core';
+import { requestAppPermissions } from '../../utils/permissions';
 import './Onboarding.css';
 
 // Use shared CATEGORIES as hobbies
@@ -121,7 +123,12 @@ const OnboardingPage: React.FC = () => {
             });
 
             await refreshUser();
-            navigate('/');
+            // Request permissions after successful onboarding (non-blocking)
+            if (Capacitor.isNativePlatform()) {
+                setTimeout(() => requestAppPermissions(), 500);
+            }
+            const isNative = Capacitor.isNativePlatform();
+            navigate(isNative ? '/map' : '/');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Có lỗi xảy ra. Vui lòng thử lại.');
         } finally {

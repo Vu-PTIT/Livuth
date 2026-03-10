@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { eventApi } from '../../api/endpoints';
+import { useSearchEvents } from '../../hooks/useDataCaching';
 import type { Event } from '../../types';
 import EventCard from '../../components/EventCard';
 import { useAuth } from '../../hooks/useAuth';
@@ -20,7 +20,6 @@ const EventsPage: React.FC = () => {
     const itemsPerPage = isMobile ? 10 : 12;
 
     const [events, setEvents] = useState<Event[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalEvents, setTotalEvents] = useState(0);
@@ -32,49 +31,20 @@ const EventsPage: React.FC = () => {
     );
     const [city, setCity] = useState(searchParams.get('city') || '');
 
+    const { data: searchResult, isLoading } = useSearchEvents({
+        q: query,
+        city: city,
+        categories: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
+        page: currentPage,
+        pageSize: itemsPerPage
+    });
+
     useEffect(() => {
-        const fetchEvents = async () => {
-            setIsLoading(true);
-            try {
-                // Use search endpoint for everything (it handles filters + pagination)
-                const response = await eventApi.search({
-                    q: query,
-                    city: city,
-                    categories: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
-                    page: currentPage,
-                    pageSize: itemsPerPage
-                });
-
-                if (response.data.data) {
-                    setEvents(response.data.data);
-                    // Use metadata to set total events for pagination
-                    if (response.data.metadata && typeof response.data.metadata.total === 'number') {
-                        setTotalEvents(response.data.metadata.total);
-                    } else {
-                        setTotalEvents(response.data.data.length);
-                    }
-                } else {
-                    setEvents([]);
-                    setTotalEvents(0);
-                }
-
-            } catch (error) {
-                console.error('Failed to fetch events:', error);
-                setEvents([]);
-                setTotalEvents(0);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        // Debounce fetching if query changes, but fetch immediately for page/category changes if possible.
-        // For simplicity, we just fetch. In a real app, you might want to debounce the text search.
-        const timeoutId = setTimeout(() => {
-            fetchEvents();
-        }, 300);
-
-        return () => clearTimeout(timeoutId);
-    }, [query, selectedCategories, city, currentPage, itemsPerPage]);
+        if (searchResult) {
+            setEvents(searchResult.data);
+            setTotalEvents(searchResult.total);
+        }
+    }, [searchResult]);
 
     // Reset page to 1 when filters change
     useEffect(() => {

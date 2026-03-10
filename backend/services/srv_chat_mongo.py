@@ -16,6 +16,7 @@ from backend.schemas.sche_chat import (
 )
 from backend.utils.exception_handler import CustomException, ExceptionType
 from backend.services.ai_agent import AIAgent
+from backend.services.srv_knowledge import KnowledgeBaseService
 
 
 class ChatService:
@@ -25,6 +26,7 @@ class ChatService:
         self.conversation_collection = "chat_conversations"
         self.message_collection = "chat_messages"
         self.ai_agent = AIAgent()
+        self.knowledge_service = KnowledgeBaseService()
     
     def get_conversation_collection(self):
         """Get conversations collection"""
@@ -161,6 +163,10 @@ class ChatService:
             cursor = msg_collection.find({"conversation_id": ObjectId(conversation_id)}).sort("created_at", 1)
             history = await cursor.to_list(length=None)
             
+            # Retrieve relevant events as context
+            relevant_events = await self.knowledge_service.search_events(message_data.content)
+            context = self.knowledge_service.format_events_context(relevant_events)
+            
             # Build chat history for Gemini
             chat_history = []
             for msg in history[:-1]:  # Exclude the just-added user message
@@ -176,7 +182,7 @@ class ChatService:
                     })
             
             # Get AI response using AIAgent
-            ai_content = self.ai_agent.get_response(message_data.content, chat_history)
+            ai_content = self.ai_agent.get_response(message_data.content, chat_history, context=context)
             
             # Store AI response
             now = datetime.now().timestamp()

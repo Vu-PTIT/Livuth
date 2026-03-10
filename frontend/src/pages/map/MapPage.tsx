@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'react';
+import { usePresenceWebSocket } from '../../hooks/usePresenceWebSocket';
 import { useToast } from '../../components/Toast';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
@@ -495,6 +496,24 @@ const MapPage = () => {
             .sort((a, b) => (b.participant_count || b.review_count || 0) - (a.participant_count || a.review_count || 0));
     }, [events, selectedCategories, dateFilter]);
 
+    // Build presence event list (id + coordinates) for the WebSocket hook
+    const presenceEvents = useMemo(() =>
+        eventsWithLocation.map(e => ({
+            id: e.id,
+            lat: e.location!.coordinates!.coordinates[1],
+            lng: e.location!.coordinates!.coordinates[0],
+        })),
+        [eventsWithLocation]
+    );
+
+    // Realtime nearby users via WebSocket
+    const { nearbyCounts, isConnected: wsConnected } = usePresenceWebSocket({
+        userLocation,
+        events: presenceEvents,
+        radiusM: 500,
+        enabled: !!user,
+    });
+
     // Toggle category selection
     const toggleCategory = (category: string) => {
         setSelectedCategories(prev =>
@@ -767,6 +786,10 @@ const MapPage = () => {
             <div className="event-count">
                 <MapPin size={16} />
                 <span>{eventsWithLocation.length} sự kiện trên bản đồ</span>
+                {user && (
+                    <span className={`ws-status-dot ${wsConnected ? 'ws-status-dot--connected' : 'ws-status-dot--disconnected'}`}
+                        title={wsConnected ? 'Realtime đang hoạt động' : 'Đang kết nối realtime...'} />
+                )}
             </div>
 
             {/* Legend */}
@@ -808,6 +831,19 @@ const MapPage = () => {
                                     <div className="event-popup">
                                         <PopupImage event={event} />
                                         <h3 className="popup-title">{event.name}</h3>
+                                        {/* Realtime nearby users badge */}
+                                        {(() => {
+                                            // Count from server (excludes current user) + 1 if user is in range
+                                            const serverCount = nearbyCounts[event.id] ?? 0;
+                                            const selfNearby = userLocation && isInCheckInRange(event) ? 1 : 0;
+                                            const totalNearby = serverCount + selfNearby;
+                                            return totalNearby > 0 ? (
+                                                <div className="popup-nearby-badge">
+                                                    <span className="nearby-pulse-dot" />
+                                                    {totalNearby} người đang ở gần
+                                                </div>
+                                            ) : null;
+                                        })()}
                                         {event.location?.address && (
                                             <p className="popup-address">
                                                 <MapPin size={14} weight="fill" />

@@ -50,13 +50,14 @@ class AIAgent:
             })
         return formatted_history
 
-    def get_response(self, user_message: str, history: list = None) -> str:
+    def get_response(self, user_message: str, history: list = None, context: str = None) -> str:
         """
         Get response from AI based on user message and chat history.
         
         Args:
             user_message: The current message from user
             history: List of previous messages in Gemini format
+            context: Optional knowledge context retrieved from database
             
         Returns:
             AI response text
@@ -65,13 +66,18 @@ class AIAgent:
             return "Xin lỗi, trợ lý AI chưa được cấu hình. Vui lòng liên hệ quản trị viên."
 
         try:
+            # Prepare system prompt with context if available
+            system_instruction = self.DEFAULT_SYSTEM_PROMPT
+            if context:
+                system_instruction += f"\n\n{context}\n\nLƯU Ý QUAN TRỌNG: Hãy sử dụng thông tin THỰC TẾ từ hệ thống cung cấp ở trên để trả lời câu hỏi nếu liên quan (như tên sự kiện, thời gian, địa điểm, nội dung). Chỉ dùng kiến thức ngoài khi thông tin hệ thống không đủ."
+
             # Prepare configuration
             config = types.GenerateContentConfig(
                 temperature=settings.GENERATION_TEMPERATURE,
                 top_p=0.95,
                 top_k=40,
                 max_output_tokens=4096,
-                system_instruction=self.DEFAULT_SYSTEM_PROMPT
+                system_instruction=system_instruction
             )
 
             # Format history (the new SDK is stricter about parts structure)

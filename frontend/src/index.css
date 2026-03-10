@@ -265,9 +265,14 @@ a:hover {
   font-size: 1rem;
 }
 
-/* Form Elements */
 .form-group {
   margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 0.75rem;
+  }
 }
 
 .form-label {
@@ -341,6 +346,12 @@ a:hover {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 2rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0;
+  }
 }
 
 .container-sm {

@@ -4,6 +4,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { GoogleLogin } from '@react-oauth/google';
 // import FacebookLogin from 'react-facebook-login';
 import { Eye, EyeSlash, SignIn } from '@phosphor-icons/react';
+import { Capacitor } from '@capacitor/core';
+import { requestAppPermissions } from '../../utils/permissions';
 import './Auth.css';
 
 const LoginPage: React.FC = () => {
@@ -19,7 +21,8 @@ const LoginPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    const from = (location.state as any)?.from?.pathname || '/';
+    const isNative = Capacitor.isNativePlatform();
+    const from = (location.state as any)?.from?.pathname || (isNative ? '/map' : '/');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -34,6 +37,10 @@ const LoginPage: React.FC = () => {
 
         try {
             await login(formData);
+            // Request permissions after successful login (non-blocking)
+            if (Capacitor.isNativePlatform()) {
+                setTimeout(() => requestAppPermissions(), 500);
+            }
             navigate(from, { replace: true });
         } catch (err: any) {
             console.error('[Login Error]', err);
@@ -49,6 +56,10 @@ const LoginPage: React.FC = () => {
         try {
             if (credentialResponse.credential) {
                 await loginGoogle({ id_token: credentialResponse.credential });
+                // Request permissions after successful Google login (non-blocking)
+                if (Capacitor.isNativePlatform()) {
+                    setTimeout(() => requestAppPermissions(), 500);
+                }
                 navigate(from, { replace: true });
             }
         } catch (err: any) {

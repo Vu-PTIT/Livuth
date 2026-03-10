@@ -36,7 +36,7 @@ const EventRoadmapsPage: React.FC = () => {
 
     return (
         <div className="container app-content" style={{ maxWidth: '1000px', margin: '0 auto', paddingTop: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
                     <Link to={`/events/${id}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                         <ArrowLeft size={16} /> Quay lại sự kiện

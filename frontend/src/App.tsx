@@ -7,6 +7,8 @@ import { ToastProvider } from './components/Toast';
 import MainLayout from './layouts/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import { Capacitor } from '@capacitor/core';
+
 // Pages
 import LandingPage from './pages/landing/LandingPage';
 import HomePage from './pages/home/HomePage';
@@ -64,14 +66,20 @@ function AppContent() {
 
   // If not authenticated, show only landing page, login, and register
   if (!isAuthenticated) {
+    const isNative = Capacitor.isNativePlatform();
+
     return (
       <MainLayout>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          {isNative ? (
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          ) : (
+            <Route path="/" element={<LandingPage />} />
+          )}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          {/* Redirect all other routes to landing page */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Redirect all other routes to landing page or login */}
+          <Route path="*" element={<Navigate to={isNative ? "/login" : "/"} replace />} />
         </Routes>
       </MainLayout>
     );
@@ -92,7 +100,12 @@ function AppContent() {
     <MainLayout>
       <Routes>
         {/* Authenticated Home */}
-        <Route path="/" element={<HomePage />} />
+        {Capacitor.isNativePlatform() ? (
+          <Route path="/" element={<Navigate to="/map" replace />} />
+        ) : (
+          <Route path="/" element={<HomePage />} />
+        )}
+        <Route path="/home" element={<HomePage />} />
 
         {/* Auth pages redirect to home when logged in */}
         <Route path="/login" element={<Navigate to="/" replace />} />

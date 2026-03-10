@@ -15,6 +15,7 @@ from backend.api.api_post_mongo import router as post_router
 from backend.api.api_notification_mongo import router as notification_router
 from backend.api.api_checkin_mongo import router as checkin_router
 from backend.api.api_roadmap_mongo import router as roadmap_router
+from backend.api.api_presence import router as presence_router
 from backend.utils.exception_handler import (
     CustomException,
     fastapi_error_handler,
@@ -93,6 +94,7 @@ app.include_router(notification_router, prefix=settings.API_PREFIX, tags=["Notif
 app.include_router(checkin_router, prefix=settings.API_PREFIX, tags=["Check-in"])
 app.include_router(roadmap_router, prefix=settings.API_PREFIX, tags=["Roadmaps"])
 app.include_router(upload_router, prefix=settings.API_PREFIX, tags=["Uploads"])
+app.include_router(presence_router, prefix=settings.API_PREFIX, tags=["Presence"])
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")

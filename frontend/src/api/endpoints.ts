@@ -255,8 +255,17 @@ export const reviewApi = {
 // ============ POST API (Social Media) ============
 export const postApi = {
     // Posts CRUD
-    getFeed: (page: number = 1, pageSize: number = 10) =>
-        apiClient.get<ApiResponse<PostListResponse>>('/posts', { params: { page, page_size: pageSize } }),
+    getFeed: (params: { page?: number; pageSize?: number; q?: string; city?: string; province?: string; event_id?: string } = {}) =>
+        apiClient.get<ApiResponse<PostListResponse>>('/posts', {
+            params: {
+                page: params.page || 1,
+                page_size: params.pageSize || 10,
+                q: params.q,
+                city: params.city,
+                province: params.province,
+                event_id: params.event_id
+            }
+        }),
 
     getUserPosts: (userId: string, page: number = 1, pageSize: number = 10) =>
         apiClient.get<ApiResponse<PostListResponse>>(`/posts/user/${userId}`, { params: { page, page_size: pageSize } }),

@@ -148,3 +148,29 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+
+/**
+ * Build a WebSocket URL from the REST API base URL.
+ * Automatically converts http -> ws and https -> wss.
+ * On native Capacitor, falls back to the configured backend host.
+ *
+ * @param path  e.g. "/ws/presence"
+ * @returns full WebSocket URL e.g. "wss://livuth.onrender.com/api/ws/presence"
+ */
+export function getWebSocketUrl(path: string): string {
+    // API_BASE_URL may be "/api" (relative) in dev (Vite proxy),
+    // or an absolute URL like "https://livuth.onrender.com/api" in production/native.
+    const base = API_BASE_URL;
+
+    let wsBase: string;
+    if (base.startsWith('http')) {
+        // Convert http(s) → ws(s)
+        wsBase = base.replace(/^http/, 'ws');
+    } else {
+        // Relative path – build from window.location
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        wsBase = `${protocol}//${window.location.host}${base}`;
+    }
+
+    return `${wsBase}${path}`;
+}
