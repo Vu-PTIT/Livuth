@@ -247,12 +247,16 @@ async def google_login(login_data: GoogleLoginRequest) -> Any:
         
         return DataResponse(http_code=status.HTTP_200_OK, data=token_response)
 
-    except ValueError:
+    except ValueError as e:
         # Invalid token
+        print(f"Google token validation error: {e}")
         raise CustomException(exception=ExceptionType.UNAUTHORIZED)
     except Exception as e:
+        import traceback
         print(f"Google login error: {e}")
+        traceback.print_exc()
         raise CustomException(exception=ExceptionType.INTERNAL_SERVER_ERROR)
+
 
 
 @router.post(

@@ -43,16 +43,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Setup CORS - Allow all origins for development
+# Setup CORS
 try:
     if settings.BACKEND_CORS_ORIGINS:
         origins = json.loads(settings.BACKEND_CORS_ORIGINS)
     else:
-        origins = ["*"]
+        origins = []
 except:
-    origins = ["*"]
+    origins = []
 
-# Always add common development origins
+# Always add common development and production origins
 dev_origins = [
     "http://localhost:3000",
     "http://localhost:5173",
@@ -63,10 +63,16 @@ dev_origins = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
     "http://127.0.0.1:8080",
+    "https://ganvo.id.vn",  # Production domain
+    "https://www.ganvo.id.vn",
 ]
 for origin in dev_origins:
     if origin not in origins:
         origins.append(origin)
+
+# Filter out '*' if credentials are allowed
+if "*" in origins:
+    origins.remove("*")
 
 app.add_middleware(
     CORSMiddleware,
@@ -75,6 +81,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Include routers
 from fastapi.staticfiles import StaticFiles

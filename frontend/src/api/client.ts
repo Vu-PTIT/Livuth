@@ -5,9 +5,15 @@ import { Capacitor, CapacitorHttp, type HttpResponse } from '@capacitor/core';
 // Use environment variable or default to production backend
 // On Android Emulator, localhost is 10.0.2.2
 const isAndroidEmulator = import.meta.env.DEV && Capacitor.getPlatform() === 'android';
-const API_BASE_URL = import.meta.env.VITE_API_URL ||
+const VITE_API_URL = import.meta.env.VITE_API_URL;
+if (!VITE_API_URL && !import.meta.env.DEV) {
+    console.warn('[API] VITE_API_URL is missing in production! Falling back to livuth.onrender.com');
+}
+
+const API_BASE_URL = VITE_API_URL ||
     (isAndroidEmulator ? 'http://10.0.2.2:8000/api' :
         (import.meta.env.DEV ? '/api' : 'https://livuth.onrender.com/api'));
+
 
 // Custom adapter for Capacitor to bypass CORS on native
 const capacitorAdapter = async (config: AxiosRequestConfig): Promise<AxiosResponse> => {
