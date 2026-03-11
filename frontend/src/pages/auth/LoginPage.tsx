@@ -89,110 +89,88 @@ const LoginPage: React.FC = () => {
 
     return (
         <div className="auth-page">
-            <div className="auth-container">
-                <div className="auth-header">
-                    <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
-                    <h1>Đăng nhập</h1>
-                    <p>Chào mừng bạn quay trở lại Ganvo</p>
-                </div>
-
-                {error && <div className="alert alert-error">{error}</div>}
-
-                <form onSubmit={handleSubmit} className="auth-form">
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="username">
-                            Tên đăng nhập
-                        </label>
-                        <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            className="form-input"
-                            placeholder="Nhập tên đăng nhập"
-                            value={formData.username}
-                            onChange={handleChange}
-                            required
-                            autoComplete="username"
-                        />
+            <div className="auth-illustration">
+                <h2>Chào mừng quay trở lại</h2>
+                <p>Tiếp tục hành trình khám phá văn hóa Việt Nam cùng Ganvo. Đăng nhập để kết nối với cộng đồng của bạn.</p>
+            </div>
+            <div className="auth-container-wrapper">
+                <div className="auth-container">
+                    <div className="auth-header">
+                        <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
+                        <h1>Đăng nhập</h1>
+                        <p>Chào mừng bạn quay trở lại</p>
                     </div>
 
-                    <div className="form-group">
-                        <label className="form-label" htmlFor="password">
-                            Mật khẩu
-                        </label>
-                        <div className="password-input-wrapper">
+                    {error && <div className="alert alert-error">{error}</div>}
+
+                    <form onSubmit={handleSubmit} className="auth-form">
+                        <div className="form-group">
+                            <label htmlFor="username">Tên đăng nhập</label>
                             <input
-                                type={showPassword ? 'text' : 'password'}
-                                id="password"
-                                name="password"
+                                type="text"
+                                id="username"
+                                name="username"
                                 className="form-input"
-                                placeholder="Nhập mật khẩu"
-                                value={formData.password}
+                                placeholder="Nhập tên đăng nhập"
+                                value={formData.username}
                                 onChange={handleChange}
                                 required
-                                autoComplete="current-password"
+                                autoComplete="username"
                             />
-                            <button
-                                type="button"
-                                className="password-toggle"
-                                onClick={() => setShowPassword(!showPassword)}
-                            >
-                                {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
-                            </button>
                         </div>
+
+                        <div className="form-group">
+                            <label htmlFor="password">Mật khẩu</label>
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    id="password"
+                                    name="password"
+                                    className="form-input"
+                                    placeholder="Nhập mật khẩu"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    required
+                                    autoComplete="current-password"
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="btn btn-primary btn-block"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? 'Đang đăng nhập...' : <><SignIn size={20} /> Đăng nhập</>}
+                        </button>
+                    </form>
+
+                    <div className="social-login-separator">
+                        <span>Hoặc tiếp tục với</span>
                     </div>
 
-                    <button
-                        type="submit"
-                        className="btn btn-primary btn-block"
-                        disabled={isLoading}
-                    >
-                        {isLoading ? (
-                            'Đang đăng nhập...'
-                        ) : (
-                            <>
-                                <SignIn size={20} />
-                                Đăng nhập
-                            </>
-                        )}
-                    </button>
-                </form>
-
-                <div className="social-login-separator">
-                    <span>Hoặc đăng nhập với</span>
-                </div>
-
-                <div className="social-login-buttons">
                     <div className="google-login-wrapper">
                         <GoogleLogin
                             onSuccess={handleGoogleSuccess}
                             onError={() => setError('Đăng nhập Google thất bại')}
-                            useOneTap
                         />
                     </div>
 
-                    { /* import.meta.env.VITE_FACEBOOK_APP_ID && (
-                        <div className="facebook-login-wrapper">
-                            <FacebookLogin
-                                appId={import.meta.env.VITE_FACEBOOK_APP_ID}
-                                autoLoad={false}
-                                fields="name,email,picture"
-                                callback={handleFacebookResponse}
-                                cssClass="btn btn-facebook"
-                                icon="fa-facebook"
-                                textButton=" Facebook"
-                            />
-                        </div>
-                    ) */ }
-                </div>
-
-                <div className="auth-footer">
-                    <p>
-                        Chưa có tài khoản?{' '}
-                        <Link to="/register" className="auth-link">
-                            Đăng ký ngay
-                        </Link>
-                    </p>
+                    <div className="auth-footer">
+                        <p>
+                            Chưa có tài khoản?{' '}
+                            <Link to="/register" className="auth-link">
+                                Đăng ký ngay
+                            </Link>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

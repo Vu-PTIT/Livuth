@@ -24,7 +24,6 @@ import TourProviderDetailPage from './pages/tour-providers/TourProviderDetailPag
 import MapPage from './pages/map/MapPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import RoleUpgradePage from './pages/profile/RoleUpgradePage';
-import ChatPage from './pages/chat/ChatPage';
 import MyEventsPage from './pages/provider/MyEventsPage';
 import EventFormPage from './pages/provider/EventFormPage';
 import MyListingsPage from './pages/provider/MyListingsPage';
@@ -124,7 +123,6 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/profile/:userId" element={<ProfilePage />} />
         <Route path="/profile/upgrade" element={<RoleUpgradePage />} />
-        <Route path="/chat" element={<ChatPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
 
         {/* Posts Routes */}

@@ -1,8 +1,8 @@
 /**
- * NFT Card Component - Displays a single Check-in NFT
+ * NFT Card Component - Photo-first check-in NFT card
  */
-import React from 'react';
-import { MapPin, Calendar, ArrowSquareOut } from '@phosphor-icons/react';
+import React, { useState } from 'react';
+import { MapPin, Calendar, ArrowSquareOut, Image } from '@phosphor-icons/react';
 import type { CheckInNFT } from '../hooks/useOwnedNFTs';
 import { SUI_NETWORK } from '../constants/sui';
 import './NFTCard.css';
@@ -12,60 +12,82 @@ interface NFTCardProps {
 }
 
 const NFTCard: React.FC<NFTCardProps> = ({ nft }) => {
+    const [imgError, setImgError] = useState(false);
+
     const formatDate = (timestamp: number) => {
         if (!timestamp) return 'Không rõ';
         return new Date(timestamp).toLocaleDateString('vi-VN', {
-            year: 'numeric',
-            month: 'short',
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+            month: 'short',
+            year: 'numeric',
         });
     };
 
     const explorerUrl = `https://suiscan.xyz/${SUI_NETWORK}/object/${nft.objectId}`;
+    const hasImage = !!nft.eventImageUrl && !imgError;
+
+    // Initials for placeholder
+    const initials = (nft.eventName || 'NFT')
+        .split(' ')
+        .slice(0, 2)
+        .map((w) => w[0]?.toUpperCase() || '')
+        .join('');
 
     return (
-        <div className="nft-card card">
-            <div className="nft-card-image">
-                {nft.eventImageUrl ? (
+        <div className="nft-card">
+            {/* Image / Placeholder */}
+            <div className="nft-card-visual">
+                {hasImage ? (
                     <img
                         src={nft.eventImageUrl}
                         alt={nft.eventName}
-                        onError={(e) => {
-                            (e.target as HTMLImageElement).src = '/images/default-event.jpg';
-                        }}
+                        className="nft-card-img"
+                        onError={() => setImgError(true)}
                     />
                 ) : (
-                    <div className="nft-card-placeholder">
-                        <span>🎫</span>
+                    <div className="nft-card-no-img">
+                        <span className="nft-no-img-initials">{initials}</span>
+                        <div className="nft-no-img-icon">
+                            <Image size={20} weight="thin" />
+                            <span>Chưa có ảnh</span>
+                        </div>
                     </div>
                 )}
-                <div className="nft-badge">NFT</div>
+
+                {/* Overlay gradient */}
+                <div className="nft-card-overlay" />
+
+                {/* NFT badge */}
+                <span className="nft-badge-pill">NFT</span>
             </div>
 
-            <div className="nft-card-content">
-                <h3 className="nft-card-title">{nft.eventName || 'Check-in NFT'}</h3>
+            {/* Info */}
+            <div className="nft-card-body">
+                <h3 className="nft-card-name">{nft.eventName || 'Check-in NFT'}</h3>
 
-                <div className="nft-card-info">
-                    <div className="nft-info-item">
-                        <MapPin size={14} weight="fill" />
-                        <span>{nft.eventLocation || 'Không rõ địa điểm'}</span>
-                    </div>
-                    <div className="nft-info-item">
-                        <Calendar size={14} weight="fill" />
-                        <span>{formatDate(nft.checkedInAt)}</span>
-                    </div>
+                <div className="nft-card-meta">
+                    {nft.eventLocation && (
+                        <div className="nft-meta-row">
+                            <MapPin size={13} weight="fill" />
+                            <span>{nft.eventLocation}</span>
+                        </div>
+                    )}
+                    {nft.checkedInAt > 0 && (
+                        <div className="nft-meta-row">
+                            <Calendar size={13} weight="fill" />
+                            <span>{formatDate(nft.checkedInAt)}</span>
+                        </div>
+                    )}
                 </div>
 
                 <a
                     href={explorerUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="nft-card-link"
+                    className="nft-explorer-link"
                 >
                     Xem trên Sui Explorer
-                    <ArrowSquareOut size={14} />
+                    <ArrowSquareOut size={13} />
                 </a>
             </div>
         </div>

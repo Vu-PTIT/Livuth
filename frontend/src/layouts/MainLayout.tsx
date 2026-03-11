@@ -4,10 +4,10 @@ import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../contexts/ThemeContext';
 import Modal from '../components/Modal';
 import NotificationDropdown from '../components/NotificationDropdown';
+import FloatingChatWidget from '../components/chat/FloatingChatWidget';
 import {
     House,
     CalendarBlank,
-    ChatCircle,
     User,
     SignOut,
     GearSix,
@@ -48,6 +48,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     // Hide header on landing, login, register pages for cleaner mobile experience
     const hideHeader = ['/', '/login', '/register'].includes(location.pathname) && !isAuthenticated;
+
+    // Check if we are on an auth page to prevent scrolling
     const isAuthPage = ['/login', '/register'].includes(location.pathname);
 
     // Check if we are on the home page
@@ -58,7 +60,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     const mobileHeaderHidden = !isSocialPage && isAuthenticated; // Only applies to authenticated users inside app
 
     return (
-        <div className={`main-layout ${isAuthPage ? 'no-scroll' : ''} ${hideHeader ? 'hide-header-mobile' : ''} ${mobileHeaderHidden ? 'mobile-header-hidden' : ''} ${isHome ? 'home-layout' : ''}`} data-page={location.pathname.substring(1) || 'home'}>
+        <div className={`main-layout ${hideHeader ? 'hide-header-mobile' : ''} ${mobileHeaderHidden ? 'mobile-header-hidden' : ''} ${isHome ? 'home-layout' : ''} ${isAuthPage ? 'no-scroll-layout' : ''}`} data-page={location.pathname.substring(1) || 'home'}>
             {/* Header - Hidden on landing/auth pages for unauthenticated users (mobile only via CSS) */}
             <header className={`header ${isHome ? 'home-header' : ''}`}>
                 <div className="header-container">
@@ -106,9 +108,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             </Link>
                             <Link to="/create-post" className={`nav-link ${isActive('/create-post') ? 'active' : ''}`} data-tooltip="Cộng đồng">
                                 <UsersThree size={24} weight={isActive('/create-post') ? 'fill' : 'regular'} />
-                            </Link>
-                            <Link to="/chat" className={`nav-link ${isActive('/chat') ? 'active' : ''}`} data-tooltip="Trợ lý AI">
-                                <ChatCircle size={24} weight={isActive('/chat') ? 'fill' : 'regular'} />
                             </Link>
 
                         </nav>
@@ -215,9 +214,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             <Link to="/map" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <MapTrifold size={20} /> Bản đồ
                             </Link>
-                            <Link to="/chat" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
-                                <ChatCircle size={20} /> Trợ lý AI
-                            </Link>
                             <Link to="/create-post" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <UsersThree size={20} /> Cộng đồng
                             </Link>
@@ -255,12 +251,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             {/* Main Content */}
             <main className={`main-content ${['/', '/create-post', '/profile', '/login', '/register', '/notifications'].includes(location.pathname) ||
-                ['/events', '/chat'].some(path => location.pathname.startsWith(path))
+                ['/events'].some(path => location.pathname.startsWith(path))
                 ? 'no-padding-top' : ''
                 }`}>{children}</main>
 
             {/* Footer - Hide on specific pages */}
-            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register', '/notifications'].some(path => location.pathname.startsWith(path)) && (
+            {!['/map', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register', '/notifications'].some(path => location.pathname.startsWith(path)) && (
                 <footer className="footer">
                     <div className="footer-container">
                         <div className="footer-info">
@@ -323,13 +319,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
                             <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
                         </Link>
-                        <Link to="/chat" className={`bottom-nav-item ${isActive('/chat') ? 'active' : ''}`} title="Trợ lý AI">
-                            <ChatCircle size={26} weight={isActive('/chat') ? 'fill' : 'regular'} />
-                        </Link>
                     </nav>
                     {location.pathname === '/map' && <MobileCreateFAB />}
                 </>
             )}
+
+            {/* Floating Chat Widget */}
+            <FloatingChatWidget />
         </div>
     );
 };

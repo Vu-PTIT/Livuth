@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useContext, useCallback } from 'react';
 import { usePresenceWebSocket } from '../../hooks/usePresenceWebSocket';
 import { useToast } from '../../components/Toast';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } from 'react-leaflet';
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -10,6 +10,7 @@ import type { Event } from '../../types';
 import { CATEGORIES, getCategoryIcon } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
 import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
+const NEARBY_RADIUS_METERS = 500;
 import { parseVietnameseDate, formatToVietnameseDate } from '../../utils/date';
 import { MagnifyingGlass, Crosshair, MapPin, X, FunnelSimple, Calendar, ArrowRight, CheckCircle, CalendarBlank } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
@@ -167,7 +168,6 @@ function ClosePopupOnZoom() {
 
     useEffect(() => {
         const handleZoomStart = () => {
-            // Close popup when user starts zooming
             map.closePopup();
         };
 
@@ -178,6 +178,16 @@ function ClosePopupOnZoom() {
         };
     }, [map]);
 
+    return null;
+}
+
+// Component to clear selected event when clicking on the map background
+function MapClickClearHandler({ onClear }: { onClear: () => void }) {
+    useMapEvents({
+        click: () => {
+            onClear();
+        },
+    });
     return null;
 }
 
@@ -251,7 +261,7 @@ const PopupImage = ({ event }: { event: Event }) => {
         const categoryIcon = categoryName ? getCategoryIcon(categoryName) : '📍';
         return (
             <div className="popup-image-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6' }}>
-                <span style={{ fontSize: '48px' }}>{categoryIcon}</span>
+                <span style={{ fontSize: '36px' }}>{categoryIcon}</span>
                 <div className="popup-image-overlay" />
                 {categoryName && (
                     <span className="popup-category-badge">
@@ -304,6 +314,7 @@ const MapPage = () => {
     const [checkedInEvents, setCheckedInEvents] = useState<string[]>([]);
     const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all');
     const [showLocationPrompt, setShowLocationPrompt] = useState(false);
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
     // Fetch events based on viewport using getNearby API
     const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
@@ -510,7 +521,7 @@ const MapPage = () => {
     const { nearbyCounts, isConnected: wsConnected } = usePresenceWebSocket({
         userLocation,
         events: presenceEvents,
-        radiusM: 500,
+        radiusM: NEARBY_RADIUS_METERS,
         enabled: !!user,
     });
 
@@ -811,6 +822,7 @@ const MapPage = () => {
                 />
                 <MapUpdater center={center} zoom={zoom} />
                 <ClosePopupOnZoom />
+                <MapClickClearHandler onClear={() => setSelectedEventId(null)} />
                 <MapEventHandler onViewportChange={handleViewportChange} />
 
                 <MarkerClusterGroup
@@ -826,6 +838,9 @@ const MapPage = () => {
                                 key={event.id}
                                 position={[lat, lng]}
                                 icon={createEventIcon(event)}
+                                eventHandlers={{
+                                    click: () => setSelectedEventId(event.id),
+                                }}
                             >
                                 <Popup>
                                     <div className="event-popup">
@@ -835,7 +850,8 @@ const MapPage = () => {
                                         {(() => {
                                             // Count from server (excludes current user) + 1 if user is in range
                                             const serverCount = nearbyCounts[event.id] ?? 0;
-                                            const selfNearby = userLocation && isInCheckInRange(event) ? 1 : 0;
+                                            const dist = getDistanceToEvent(event);
+                                            const selfNearby = userLocation && dist !== null && dist <= NEARBY_RADIUS_METERS ? 1 : 0;
                                             const totalNearby = serverCount + selfNearby;
                                             return totalNearby > 0 ? (
                                                 <div className="popup-nearby-badge">
@@ -894,6 +910,28 @@ const MapPage = () => {
                         );
                     })}
                 </MarkerClusterGroup>
+
+                {/* Radius circles for selected event - must be outside MarkerClusterGroup */}
+                {selectedEventId && (() => {
+                    const selectedEvent = eventsWithLocation.find(e => e.id === selectedEventId);
+                    if (!selectedEvent?.location?.coordinates?.coordinates) return null;
+                    const [eLng, eLat] = selectedEvent.location.coordinates.coordinates;
+                    return (
+                        <>
+                            {/* Check-in radius - green solid */}
+                            <Circle
+                                center={[eLat, eLng]}
+                                radius={CHECKIN_RADIUS_METERS}
+                                pathOptions={{
+                                    color: '#22c55e',
+                                    fillColor: '#22c55e',
+                                    fillOpacity: 0.12,
+                                    weight: 2,
+                                }}
+                            />
+                        </>
+                    );
+                })()}
 
                 {/* User Location Marker */}
                 {userLocation && (

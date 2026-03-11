@@ -7,9 +7,17 @@
     background: var(--bg-secondary);
 }
 
-.main-layout.no-scroll {
+.main-layout.no-scroll,
+.main-layout.no-scroll-layout {
     height: 100vh;
-    overflow: hidden;
+    overflow: hidden !important;
+}
+
+.main-layout.no-scroll-layout .main-content {
+    height: 100vh;
+    overflow: hidden !important;
+    margin-top: 0 !important;
+    padding: 0 !important;
 }
 
 /* Header */
