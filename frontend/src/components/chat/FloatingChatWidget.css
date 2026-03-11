@@ -442,10 +442,7 @@
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .floating-chat-container {
-        /* Keep it above bottom nav if present, bottom nav is 56px height */
-        bottom: calc(70px + env(safe-area-inset-bottom));
-        right: 1rem;
-        z-index: 100;
+        display: none;
     }
 
     .floating-chat-toggle {

@@ -8,6 +8,7 @@ import FloatingChatWidget from '../components/chat/FloatingChatWidget';
 import {
     House,
     CalendarBlank,
+    ChatCircle,
     User,
     SignOut,
     GearSix,
@@ -214,6 +215,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                             <Link to="/map" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <MapTrifold size={20} /> Bản đồ
                             </Link>
+                            <Link to="/chat" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
+                                <ChatCircle size={20} /> Trợ lý AI
+                            </Link>
                             <Link to="/create-post" className="nav-link" onClick={() => setIsMobileMenuOpen(false)}>
                                 <UsersThree size={20} /> Cộng đồng
                             </Link>
@@ -251,12 +255,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
             {/* Main Content */}
             <main className={`main-content ${['/', '/create-post', '/profile', '/login', '/register', '/notifications'].includes(location.pathname) ||
-                ['/events'].some(path => location.pathname.startsWith(path))
+                ['/events', '/chat'].some(path => location.pathname.startsWith(path))
                 ? 'no-padding-top' : ''
                 }`}>{children}</main>
 
             {/* Footer - Hide on specific pages */}
-            {!['/map', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register', '/notifications'].some(path => location.pathname.startsWith(path)) && (
+            {!['/map', '/chat', '/events', '/profile', '/my-events', '/my-listings', '/admin', '/create-post', '/login', '/register', '/notifications'].some(path => location.pathname.startsWith(path)) && (
                 <footer className="footer">
                     <div className="footer-container">
                         <div className="footer-info">
@@ -318,6 +322,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                         </Link>
                         <Link to="/notifications" className={`bottom-nav-item ${isActive('/notifications') ? 'active' : ''}`} title="Thông báo">
                             <Bell size={26} weight={isActive('/notifications') ? 'fill' : 'regular'} />
+                        </Link>
+                        <Link to="/chat" className={`bottom-nav-item ${isActive('/chat') ? 'active' : ''}`} title="Trợ lý AI">
+                            <ChatCircle size={26} weight={isActive('/chat') ? 'fill' : 'regular'} />
                         </Link>
                     </nav>
                     {location.pathname === '/map' && <MobileCreateFAB />}
