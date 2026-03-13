@@ -35,12 +35,17 @@ const EventRoadmapsPage: React.FC = () => {
     }, [id]);
 
     return (
-        <div className="container app-content" style={{ maxWidth: '1000px', margin: '0 auto', paddingTop: '2rem' }}>
+        <div className="app-content" style={{ paddingTop: '1.5rem', position: 'relative' }}>
+            {/* Back button aligned to far left logo area */}
+            <div style={{ padding: '0 2rem', marginBottom: '1rem' }}>
+                <Link to={`/events/${id}`} className="back-btn-pill">
+                    <ArrowLeft size={16} /> Quay lại sự kiện
+                </Link>
+            </div>
+
+            <div className="container" style={{ maxWidth: '1000px', margin: '0 auto' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                    <Link to={`/events/${id}`} className="btn btn-outline btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <ArrowLeft size={16} /> Quay lại sự kiện
-                    </Link>
                     <h2 style={{ margin: 0 }}>Lộ trình tham khảo</h2>
                     <p className="text-secondary" style={{ marginTop: '0.25rem' }}>Các lịch trình từ cộng đồng cho {eventTitle}</p>
                 </div>
@@ -91,6 +96,7 @@ const EventRoadmapsPage: React.FC = () => {
                 </div>
             )}
         </div>
+    </div>
     );
 };
 

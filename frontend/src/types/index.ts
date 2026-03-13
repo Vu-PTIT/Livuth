@@ -138,6 +138,45 @@ export interface EventCreateRequest {
     tags?: string[];
 }
 
+// Roadmap Types
+export interface RoadmapLocation {
+    name: string;
+    address?: string;
+    lat?: number;
+    lng?: number;
+}
+
+export interface Waypoint {
+    id: string;
+    location: RoadmapLocation;
+    time?: string;
+    description?: string;
+    activity_type?: string;
+}
+
+export interface RoadmapDay {
+    day: number;
+    title?: string;
+    waypoints: Waypoint[];
+}
+
+export interface Roadmap {
+    id: string;
+    event_id: string;
+    user_id: string;
+    title: string;
+    duration: string;
+    tags: string[];
+    content?: string;
+    days: RoadmapDay[];
+    user_name?: string;
+    user_avatar?: string;
+    like_count: number;
+    likes: string[];
+    created_at: number;
+    updated_at: number;
+}
+
 // Tour Provider Types
 export interface TourProviderListing {
     id: string;
@@ -209,6 +248,28 @@ export interface ChatMessage {
 
 export interface ChatHistory extends ChatConversation {
     messages: ChatMessage[];
+}
+
+// Vibe Snap Types
+export interface VibeSnapUser {
+    id: string;
+    username: string;
+    avatar_url?: string;
+    full_name?: string;
+}
+
+export interface VibeSnap {
+    id: string;
+    user: VibeSnapUser;
+    media_url: string;
+    type: 'video' | 'image';
+    event_id?: string;
+    location: {
+        lat: number;
+        lng: number;
+    };
+    created_at: number;
+    expires_at: number;
 }
 
 // API Response Types

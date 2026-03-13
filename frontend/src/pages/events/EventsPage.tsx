@@ -7,7 +7,8 @@ import { useAuth } from '../../hooks/useAuth';
 import { EventCardSkeleton } from '../../components/Skeleton';
 import { CATEGORIES } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
-import { MagnifyingGlass, FunnelSimple, X, CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { MagnifyingGlass, FunnelSimple, X, CaretLeft, CaretRight, MapPin, CalendarBlank } from '@phosphor-icons/react';
+import { parseVietnameseDate } from '../../utils/date';
 import useIsMobile from '../../hooks/useIsMobile';
 import './EventsPage.css';
 
@@ -30,6 +31,7 @@ const EventsPage: React.FC = () => {
         searchParams.get('categories')?.split(',').filter(Boolean) || []
     );
     const [city, setCity] = useState(searchParams.get('city') || '');
+    const [dateFilter, setDateFilter] = useState<'all' | 'today' | 'week' | 'month' | 'year'>('all');
 
     const { data: searchResult, isLoading } = useSearchEvents({
         q: query,
@@ -51,11 +53,66 @@ const EventsPage: React.FC = () => {
         setCurrentPage(1);
     }, [query, selectedCategories, city]);
 
+    // Check if event date matches the filter (copied from MapPage)
+    const matchesDateFilter = (event: Event): boolean => {
+        if (dateFilter === 'all') return true;
+
+        const nextOccurrence = event.time?.next_occurrence;
+        if (!nextOccurrence) return false;
+
+        const eventDate = parseVietnameseDate(nextOccurrence);
+        if (!eventDate) return false;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const endOfToday = new Date(today);
+        endOfToday.setHours(23, 59, 59, 999);
+
+        switch (dateFilter) {
+            case 'today':
+                return eventDate >= today && eventDate <= endOfToday;
+
+            case 'week': {
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(today.getDate() + 7);
+                endOfWeek.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfWeek;
+            }
+
+            case 'month': {
+                const endOfMonth = new Date(today);
+                endOfMonth.setDate(today.getDate() + 30);
+                endOfMonth.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfMonth;
+            }
+
+            case 'year': {
+                const endOfYear = new Date(today);
+                endOfYear.setFullYear(today.getFullYear() + 1);
+                endOfYear.setHours(23, 59, 59, 999);
+                return eventDate >= today && eventDate <= endOfYear;
+            }
+
+            default:
+                return true;
+        }
+    };
+
+    // Date filter options (matched with MapPage)
+    const dateFilterOptions = [
+        { value: 'all' as const, label: 'Tất cả', icon: '📅' },
+        { value: 'today' as const, label: 'Trong ngày', icon: '☀️' },
+        { value: 'week' as const, label: 'Tuần', icon: '📆' },
+        { value: 'month' as const, label: 'Tháng', icon: '🗓️' },
+        { value: 'year' as const, label: 'Năm', icon: '🎯' },
+    ];
+
     // Pagination calculations
     const totalPages = Math.ceil(totalEvents / itemsPerPage);
 
-    // No more client-side slicing
-    const currentEvents = events;
+    // Filter events client-side for date
+    const currentEvents = events.filter(matchesDateFilter);
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
@@ -87,11 +144,12 @@ const EventsPage: React.FC = () => {
         setQuery('');
         setSelectedCategories([]);
         setCity('');
+        setDateFilter('all');
         setSearchParams({});
         setCurrentPage(1);
     };
 
-    const hasFilters = query || selectedCategories.length > 0 || city;
+    const hasFilters = query || selectedCategories.length > 0 || city || dateFilter !== 'all';
 
     // Generate page numbers to display
     const getPageNumbers = () => {
@@ -147,74 +205,105 @@ const EventsPage: React.FC = () => {
             {/* Search Bar */}
             {/* Search Bar - Consolidated Row */}
             <div className="search-section">
-                <form className="search-bar" onSubmit={handleSearch}>
-                    <MagnifyingGlass size={20} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm sự kiện, địa điểm..."
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-
-                    {/* Filter Icon Button inside Search Bar */}
-                    <button
-                        type="button"
-                        className={`filter-icon-btn ${showFilters || hasFilters ? 'active' : ''}`}
-                        onClick={() => setShowFilters(!showFilters)}
-                        title="Bộ lọc"
-                    >
-                        <FunnelSimple size={20} weight={hasFilters ? "fill" : "regular"} />
-                        {hasFilters && <span className="filter-dot"></span>}
-                    </button>
-                </form>
-            </div>
-
-            {/* Filters */}
-            {showFilters && (
-                <div className="filters-panel card">
-                    <div className="filters-header">
-                        <div className="filters-title-row" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <h3>Bộ lọc</h3>
-                            {/* Moved Results Count Here */}
-                            <span className="results-count-text" style={{ fontSize: '0.85rem', color: '#9ca3af', fontWeight: 400 }}>
-                                Tìm thấy <strong style={{ color: '#f97316' }}>{totalEvents}</strong> kết quả
-                            </span>
-                        </div>
-                        {hasFilters && (
-                            <button className="btn btn-sm btn-outline" onClick={clearFilters}>
-                                <X size={16} />
-                                Xóa bộ lọc
-                            </button>
-                        )}
-                    </div>
-
-                    <div className="filter-group">
-                        <label className="filter-label">Danh mục</label>
-                        <div className="category-chips-flex">
-                            {CATEGORIES.map((cat) => (
-                                <CategoryChip
-                                    key={cat.id}
-                                    name={cat.name}
-                                    icon={cat.icon}
-                                    isActive={selectedCategories.includes(cat.name)}
-                                    onClick={() => toggleCategory(cat.name)}
-                                    variant="rounded"
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="filter-group">
-                        <label className="filter-label" htmlFor="city">Thành phố</label>
+                <form className="search-bar dual-search-bar" onSubmit={handleSearch}>
+                    <div className="search-input-group">
+                        <MagnifyingGlass size={20} className="search-icon" />
                         <input
                             type="text"
-                            id="city"
-                            className="form-input"
-                            placeholder="vd: Hà Nội, TP.HCM..."
+                            placeholder="Tìm kiếm sự kiện..."
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="search-divider"></div>
+                    <div className="search-input-group location-group">
+                        <MapPin size={20} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Thành phố, vị trí..."
                             value={city}
                             onChange={(e) => setCity(e.target.value)}
                         />
                     </div>
+
+                </form>
+
+                {/* Filter Icon Button OUTSIDE Search Bar */}
+                <button
+                    type="button"
+                    className={`btn filter-toggle-btn ${showFilters || hasFilters ? 'active' : ''}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                    title="Bộ lọc"
+                >
+                    <FunnelSimple size={20} weight={hasFilters ? "fill" : "regular"} />
+                    {hasFilters && <span className="filter-dot"></span>}
+                </button>
+            </div>
+
+            {/* Unified Filter Panel (Map Style) */}
+            {showFilters && (
+                <div className="unified-filters-panel">
+                    <div className="filters-header">
+                        <h3>Bộ lọc tìm kiếm</h3>
+                        {hasFilters && (
+                            <button type="button" className="clear-all-filters" onClick={clearFilters}>
+                                Xóa tất cả
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="filters-content">
+                        {/* Date Filter Section */}
+                        <div className="filter-section">
+                            <div className="filter-section-title">
+                                <CalendarBlank size={18} />
+                                <span>Thời gian</span>
+                            </div>
+                            <div className="date-options-grid">
+                                {dateFilterOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        className={`date-option-chip ${dateFilter === option.value ? 'active' : ''}`}
+                                        onClick={() => setDateFilter(option.value)}
+                                    >
+                                        <span className="option-icon">{option.icon}</span>
+                                        <span className="option-label">{option.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="filter-divider"></div>
+
+                        {/* Category Filter Section */}
+                        <div className="filter-section">
+                            <div className="filter-section-title">
+                                <FunnelSimple size={18} />
+                                <span>Danh mục</span>
+                            </div>
+                            <div className="category-chips-grid">
+                                {CATEGORIES.map((cat) => (
+                                    <CategoryChip
+                                        key={cat.id}
+                                        name={cat.name}
+                                        icon={cat.icon}
+                                        isActive={selectedCategories.includes(cat.name)}
+                                        onClick={() => toggleCategory(cat.name)}
+                                        variant="rounded"
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button 
+                        type="button" 
+                        className="close-filters-btn"
+                        onClick={() => setShowFilters(false)}
+                    >
+                        Đóng
+                    </button>
                 </div>
             )}
 
@@ -225,6 +314,12 @@ const EventsPage: React.FC = () => {
                         <span className="filter-tag">
                             Từ khóa: {query}
                             <button onClick={() => setQuery('')}><X size={14} /></button>
+                        </span>
+                    )}
+                    {dateFilter !== 'all' && (
+                        <span className="filter-tag">
+                            {dateFilterOptions.find(o => o.value === dateFilter)?.label}
+                            <button onClick={() => setDateFilter('all')}><X size={14} /></button>
                         </span>
                     )}
                     {selectedCategories.map((cat) => (
@@ -244,6 +339,16 @@ const EventsPage: React.FC = () => {
 
             {/* Results */}
             <div className="results-section">
+                <div className="results-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <span className="results-count-text" style={{ fontSize: '0.95rem', color: '#6b7280', fontWeight: 500 }}>
+                        Tìm thấy <strong style={{ color: '#111827' }}>{totalEvents}</strong> kết quả
+                    </span>
+                    {hasFilters && !showFilters && (
+                        <button className="btn btn-sm clear-all-btn-text" onClick={clearFilters} style={{ background: 'none', border: 'none', color: '#f97316', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+                            Xóa bộ lọc
+                        </button>
+                    )}
+                </div>
                 {isLoading ? (
                     <div className="events-list">
                         {[1, 2, 3, 4, 5, 6].map((i) => (

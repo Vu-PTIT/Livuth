@@ -1,0 +1,164 @@
+.story-viewer-overlay {
+    position: absolute; /* Changed from fixed so it stays within the MapPage boundaries */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.story-viewer-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 480px; /* Limit width to resemble mobile */
+    margin: 0 auto;
+    background: #111;
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .story-viewer-container {
+        height: 100%;
+        max-height: 850px;
+        width: auto;
+        aspect-ratio: 9 / 16;
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+}
+
+.story-progress-container {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+    z-index: 20;
+}
+
+.story-progress-bar-bg {
+    flex: 1;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.story-progress-bar-fill {
+    height: 100%;
+    background: white;
+    border-radius: 2px;
+}
+
+.story-header {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 20;
+    padding-top: 10px;
+}
+
+.story-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.story-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.story-text-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.story-username {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.story-meta {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.story-dot {
+    opacity: 0.5;
+}
+
+.story-close-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+}
+
+.story-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.story-media-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(25px) brightness(0.6);
+    transform: scale(1.1);
+    z-index: 1;
+}
+
+.story-media {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Don't crop, letterbox if needed */
+    user-select: none;
+    z-index: 2;
+}
+
+.story-paused-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: rgba(255, 255, 255, 0.6);
+    pointer-events: none; /* Let clicks pass through to container */
+    z-index: 15;
+}

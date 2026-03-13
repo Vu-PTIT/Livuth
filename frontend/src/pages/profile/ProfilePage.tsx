@@ -392,7 +392,10 @@ const ProfilePage: React.FC = () => {
                             style={{
                                 backgroundImage: (profileUser as any).cover_url
                                     ? `url('${(profileUser as any).cover_url}')`
-                                    : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`
+                                    : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`,
+                                backgroundPosition: 'center',
+                                backgroundSize: 'cover',
+                                backgroundRepeat: 'no-repeat'
                             }}
                             title={isOwnProfile ? 'Bấm để thay đổi ảnh bìa' : ''}
                             onClick={() => isOwnProfile && setShowCoverModal(true)}
@@ -757,7 +760,10 @@ const ProfilePage: React.FC = () => {
                     style={{
                         backgroundImage: (profileUser as any).cover_url
                             ? `url('${(profileUser as any).cover_url}')`
-                            : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`
+                            : `linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80')`,
+                        backgroundPosition: 'center center',
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
                     }}
                     title={isOwnProfile ? 'Bấm để thay đổi ảnh bìa' : ''}
                     onClick={() => isOwnProfile && setShowCoverModal(true)}
@@ -1234,9 +1240,7 @@ const ProfilePage: React.FC = () => {
                                 Tải ảnh từ máy tính
                             </button>
 
-                            <div className="avatar-divider">
-                                <span>hoặc</span>
-                            </div>
+                            
 
                             <div className="form-group">
                                 <label className="form-label" htmlFor="avatar_url">
@@ -1287,20 +1291,27 @@ const ProfilePage: React.FC = () => {
                         title="Thay đổi ảnh bìa"
                     >
                         <div className="avatar-edit-modal">
-                            <div className="cover-preview" style={{
-                                width: '100%',
-                                height: '200px',
-                                borderRadius: '12px',
-                                overflow: 'hidden',
-                                background: 'var(--bg-secondary)',
-                                border: '3px solid var(--border-color)',
-                                marginBottom: '1.5rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center'
-                            }}>
+                            <div
+                                className="cover-preview"
+                                style={{
+                                    width: '100%',
+                                    height: '200px',
+                                    borderRadius: '12px',
+                                    overflow: 'hidden',
+                                    background: 'var(--bg-secondary)',
+                                    border: '3px solid var(--border-color)',
+                                    marginBottom: '1.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                            >
                                 {coverUrl ? (
-                                    <img src={coverUrl} alt="Preview Cover" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img
+                                        src={coverUrl}
+                                        alt="Preview Cover"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center center' }}
+                                    />
                                 ) : (
                                     <div className="avatar-preview-placeholder">
                                         <Camera size={48} weight="light" />
@@ -1325,9 +1336,7 @@ const ProfilePage: React.FC = () => {
                                 Tải ảnh bìa từ máy tính
                             </button>
 
-                            <div className="avatar-divider">
-                                <span>hoặc</span>
-                            </div>
+                           
 
                             <div className="form-group">
                                 <label className="form-label" htmlFor="cover_url">

@@ -1,0 +1,72 @@
+.camera-capture-container {
+    position: absolute;
+    bottom: 100px;
+    right: 2rem;
+    z-index: 400; /* Above map elements but below overlays */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Mobile adjustments to avoid overlapping with MobileCreateFAB */
+@media (max-width: 768px) {
+    .camera-capture-container {
+        right: 16px;
+        /* MobileCreateFAB is at bottom: 56px + 16px. Its height is 56px. Total = 128px + safe area.
+           So camera needs to be above that safely. */
+        bottom: calc(56px + 16px + 56px + 16px + env(safe-area-inset-bottom));
+    }
+}
+
+.camera-fab {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #f09433 0%, #dc2743 50%, #bc1888 100%);
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+    padding: 0;
+}
+
+.camera-fab:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.camera-fab:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.camera-icon-wrapper {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.camera-fab.uploading {
+    background: #333;
+    cursor: wait;
+}
+
+.camera-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

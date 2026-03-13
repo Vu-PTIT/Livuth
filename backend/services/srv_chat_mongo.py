@@ -16,7 +16,8 @@ from backend.schemas.sche_chat import (
 )
 from backend.utils.exception_handler import CustomException, ExceptionType
 from backend.services.ai_agent import AIAgent
-from backend.services.srv_knowledge import KnowledgeBaseService
+from backend.services.srv_rag_mongo import RAGService
+from backend.services.srv_presence import presence_service
 
 
 class ChatService:
@@ -26,7 +27,8 @@ class ChatService:
         self.conversation_collection = "chat_conversations"
         self.message_collection = "chat_messages"
         self.ai_agent = AIAgent()
-        self.knowledge_service = KnowledgeBaseService()
+        self.rag_service = RAGService()
+
     
     def get_conversation_collection(self):
         """Get conversations collection"""
@@ -163,9 +165,16 @@ class ChatService:
             cursor = msg_collection.find({"conversation_id": ObjectId(conversation_id)}).sort("created_at", 1)
             history = await cursor.to_list(length=None)
             
-            # Retrieve relevant events as context
-            relevant_events = await self.knowledge_service.search_events(message_data.content)
-            context = self.knowledge_service.format_events_context(relevant_events)
+            # Retrieve relevant context via RAG (intent routing handled internally)
+            # Automatically use the user's real-time location if they are on the map
+            user_presence = presence_service._store.get(user_id)
+            user_lat = user_presence.lat if user_presence else None
+            user_lng = user_presence.lng if user_presence else None
+            context = await self.rag_service.retrieve_context(
+                message_data.content,
+                user_lat=user_lat,
+                user_lng=user_lng,
+            )
             
             # Build chat history for Gemini
             chat_history = []

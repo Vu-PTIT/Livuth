@@ -5,8 +5,8 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMap, useMapEvents } 
 import MarkerClusterGroup from 'react-leaflet-cluster';
 import L from 'leaflet';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { eventApi, userApi } from '../../api/endpoints';
-import type { Event } from '../../types';
+import { eventApi, userApi, vibeSnapApi } from '../../api/endpoints';
+import type { Event, User } from '../../types';
 import { CATEGORIES, getCategoryIcon } from '../../constants/categories';
 import CategoryChip from '../../components/CategoryChip';
 import { calculateDistance, formatDistance, CHECKIN_RADIUS_METERS } from '../../utils/distance';
@@ -18,6 +18,10 @@ import './MapPage.css';
 import { AuthContext } from '../../contexts/AuthContext';
 import { Geolocation } from '@capacitor/geolocation';
 import Modal from '../../components/Modal';
+import type { VibeSnap } from '../../types';
+import { createVibeSnapIcon } from '../../components/VibeSnapMarker/VibeSnapMarker';
+import StoryViewer from '../../components/StoryViewer/StoryViewer';
+import CameraCapture from '../../components/CameraCapture/CameraCapture';
 
 // Fix for default marker icon in Leaflet with Vite
 import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
@@ -33,16 +37,13 @@ L.Icon.Default.mergeOptions({
 });
 
 // Create user location marker with avatar
-const createUserLocationIcon = (avatarUrl?: string) => {
-    const defaultAvatar = `<svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`;
+const createUserLocationIcon = (user: User | null | undefined) => {
+    const avatarUrl = user?.avatar_url;
+    const fallbackUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.username || 'user'}`;
+    const displayUrl = avatarUrl || fallbackUrl;
 
-    const html = avatarUrl
-        ? `<div class="user-marker-avatar">
-               <img src="${avatarUrl}" alt="Me" />
-               <div class="user-marker-pulse"></div>
-           </div>`
-        : `<div class="user-marker-avatar user-marker-default">
-               ${defaultAvatar}
+    const html = `<div class="user-marker-avatar">
+               <img src="${displayUrl}" alt="${user?.username || 'Me'}" />
                <div class="user-marker-pulse"></div>
            </div>`;
 
@@ -93,7 +94,7 @@ const isEventPast = (event: Event): boolean => {
 };
 
 // Create dynamic event marker icon
-const createEventIcon = (event: Event) => {
+const createEventIcon = (event: Event, eventSnaps: VibeSnap[] = []) => {
     // Use participant_count from backend, fallback to review_count if not available
     const count = event.participant_count || event.review_count || 0;
     const baseSize = getMarkerSize(count);
@@ -123,7 +124,11 @@ const createEventIcon = (event: Event) => {
         ? `<img src="${imageUrl}" alt="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null; this.outerHTML='${escapedFallback}';" />`
         : fallbackHtml;
 
-    const html = `
+    // Check if we have snaps for this event
+    const hasSnaps = eventSnaps.length > 0;
+    const wrapperSize = size + (hasSnaps ? 12 : 0); // Increase total size if wrapping in snaps ring
+
+    let markerHtml = `
         <div class="event-marker event-marker--${tier}" style="width: ${size}px; height: ${size}px;">
             <div class="event-marker-dot" style="background: ${hasImage ? 'white' : color}; border-color: ${hasImage ? color : 'white'}; display: flex; align-items: center; justify-content: center; overflow: hidden;">
                 ${iconContent}
@@ -133,12 +138,24 @@ const createEventIcon = (event: Event) => {
         </div>
     `;
 
+    // Wrap in Vibe Snaps ring if there are snaps
+    if (hasSnaps) {
+        markerHtml = `
+            <div class="event-marker-vibe-wrapper" style="width: ${wrapperSize}px; height: ${wrapperSize}px;">
+                <div class="event-marker-vibe-inner">
+                    ${markerHtml}
+                </div>
+                <div class="event-vibe-count">▶ ${eventSnaps.length}</div>
+            </div>
+        `;
+    }
+
     return new L.DivIcon({
         className: 'event-marker-container',
-        html,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
-        popupAnchor: [0, -size / 2],
+        html: markerHtml,
+        iconSize: [wrapperSize, wrapperSize],
+        iconAnchor: [wrapperSize / 2, wrapperSize / 2],
+        popupAnchor: [0, -wrapperSize / 2],
     });
 };
 
@@ -316,7 +333,22 @@ const MapPage = () => {
     const [showLocationPrompt, setShowLocationPrompt] = useState(false);
     const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
-    // Fetch events based on viewport using getNearby API
+    // Vibe Snaps State
+    const [vibeSnaps, setVibeSnaps] = useState<VibeSnap[]>([]);
+    // Context for StoryViewer: either viewing an independent snap (string snapId) or an event's snaps (string eventId)
+    const [storyViewerContext, setStoryViewerContext] = useState<{ type: 'independent', snapId: string } | { type: 'event', eventId: string } | null>(null);
+
+    const fetchNearbySnaps = useCallback(async (lat: number, lng: number, radiusKm: number) => {
+        try {
+            const response = await vibeSnapApi.getNearby(lat, lng, radiusKm, 100);
+            if (response.data.success && response.data.data) {
+                setVibeSnaps(response.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching nearby snaps:', error);
+        }
+    }, []);
+
     const fetchNearbyEvents = useCallback(async (lat: number, lng: number, radiusKm: number) => {
         try {
             // Limit based on radius - smaller radius = fewer events needed
@@ -335,7 +367,8 @@ const MapPage = () => {
     // Handle viewport change from map
     const handleViewportChange = useCallback((center: L.LatLng, radius: number) => {
         fetchNearbyEvents(center.lat, center.lng, radius);
-    }, [fetchNearbyEvents]);
+        fetchNearbySnaps(center.lat, center.lng, radius);
+    }, [fetchNearbyEvents, fetchNearbySnaps]);
 
     const requestLocation = useCallback(async (isInitial = false, showPrompt = true) => {
         setIsLocating(true);
@@ -370,8 +403,9 @@ const MapPage = () => {
             setZoom(isInitial ? 10 : 12);
             setIsLocating(false);
 
-            // Fetch nearby events
+            // Fetch nearby events and snaps
             fetchNearbyEvents(userPos[0], userPos[1], isInitial ? 50 : 30);
+            fetchNearbySnaps(userPos[0], userPos[1], isInitial ? 50 : 30);
             return true;
         } catch (error) {
             console.error('Error getting location:', error);
@@ -381,6 +415,7 @@ const MapPage = () => {
             setIsLocating(false);
             if (isInitial) {
                 fetchNearbyEvents(16.0, 106.0, 300); // Fallback to Vietnam
+                fetchNearbySnaps(16.0, 106.0, 300);
             }
             return false;
         }
@@ -404,6 +439,7 @@ const MapPage = () => {
                     setZoom(15);
                     // Fetch specifically around this point
                     fetchNearbyEvents(lat, lng, 10);
+                    fetchNearbySnaps(lat, lng, 10);
                     initialFetchDone.current = true;
                     // If we have an event ID, we might want to highlight it or open popup later
                     // For now, centering is enough
@@ -587,6 +623,7 @@ const MapPage = () => {
         setShowSearchResults(false);
         // Fetch events near the searched location
         fetchNearbyEvents(lat, lon, 30);
+        fetchNearbySnaps(lat, lon, 30);
     };
 
     // Get current location
@@ -643,6 +680,49 @@ const MapPage = () => {
         }
     }, [user]);
 
+    // Helper to group snaps
+    // Group snaps into: those attached to events, and independent (street) snaps
+    const { eventSnapsMap, independentSnaps } = useMemo(() => {
+        const eventMap: Record<string, VibeSnap[]> = {};
+        const independent: VibeSnap[] = [];
+
+        vibeSnaps.forEach(snap => {
+            // Find if this snap is within NEARBY_RADIUS_METERS of any event
+            let assignedEventId: string | null = null;
+            // First check if it explicitly has an event_id
+            if (snap.event_id && eventsWithLocation.some(e => e.id === snap.event_id)) {
+                assignedEventId = snap.event_id;
+            } else {
+                // Otherwise assign by distance
+                for (const event of eventsWithLocation) {
+                    const [lng, lat] = event.location!.coordinates!.coordinates;
+                    const dist = calculateDistance(snap.location.lat, snap.location.lng, lat, lng);
+                    if (dist <= NEARBY_RADIUS_METERS) {
+                        assignedEventId = event.id;
+                        break;
+                    }
+                }
+            }
+
+            if (assignedEventId) {
+                if (!eventMap[assignedEventId]) eventMap[assignedEventId] = [];
+                eventMap[assignedEventId].push(snap);
+            } else {
+                independent.push(snap);
+            }
+        });
+
+        // Optional: Cluster independent snaps if there are many close by (Phương án 2)
+        // For prototype, we'll just render them as independent markers for now
+
+        return { eventSnapsMap: eventMap, independentSnaps: independent };
+    }, [vibeSnaps, eventsWithLocation]);
+
+    // Handle view event snaps
+    const handleViewEventSnaps = (eventId: string) => {
+        setStoryViewerContext({ type: 'event', eventId });
+    };
+
     if (loading) {
         return (
             <div className="map-page-loading">
@@ -669,6 +749,7 @@ const MapPage = () => {
                         />
                         {searchQuery && (
                             <button
+                                type="button"
                                 className="clear-search"
                                 onClick={() => {
                                     setSearchQuery('');
@@ -705,6 +786,7 @@ const MapPage = () => {
                 </div>
 
                 <button
+                    type="button"
                     className={`locate-button ${isLocating ? 'loading' : ''}`}
                     onClick={getCurrentLocation}
                     disabled={isLocating}
@@ -714,6 +796,7 @@ const MapPage = () => {
                 </button>
 
                 <button
+                    type="button"
                     className={`filter-button ${showFilters ? 'active' : ''} ${selectedCategories.length > 0 ? 'has-filter' : ''}`}
                     onClick={() => setShowFilters(!showFilters)}
                     title="Lọc theo danh mục"
@@ -833,52 +916,76 @@ const MapPage = () => {
                 >
                     {eventsWithLocation.map((event) => {
                         const [lng, lat] = event.location!.coordinates!.coordinates;
+                        const snapsForEvent = eventSnapsMap[event.id] || [];
                         return (
                             <Marker
                                 key={event.id}
                                 position={[lat, lng]}
-                                icon={createEventIcon(event)}
+                                icon={createEventIcon(event, snapsForEvent)}
                                 eventHandlers={{
-                                    click: () => setSelectedEventId(event.id),
+                                    click: () => {
+                                        setSelectedEventId(event.id);
+                                    },
                                 }}
                             >
-                                <Popup>
-                                    <div className="event-popup">
-                                        <PopupImage event={event} />
-                                        <h3 className="popup-title">{event.name}</h3>
-                                        {/* Realtime nearby users badge */}
-                                        {(() => {
-                                            // Count from server (excludes current user) + 1 if user is in range
-                                            const serverCount = nearbyCounts[event.id] ?? 0;
-                                            const dist = getDistanceToEvent(event);
-                                            const selfNearby = userLocation && dist !== null && dist <= NEARBY_RADIUS_METERS ? 1 : 0;
-                                            const totalNearby = serverCount + selfNearby;
-                                            return totalNearby > 0 ? (
-                                                <div className="popup-nearby-badge">
-                                                    <span className="nearby-pulse-dot" />
-                                                    {totalNearby} người đang ở gần
-                                                </div>
-                                            ) : null;
-                                        })()}
-                                        {event.location?.address && (
-                                            <p className="popup-address">
-                                                <MapPin size={14} weight="fill" />
-                                                {event.location.address}
-                                            </p>
-                                        )}
-                                        {event.time?.next_occurrence && (
-                                            <p className="popup-time">
-                                                <Calendar size={14} />
-                                                {formatToVietnameseDate(event.time.next_occurrence)}
-                                            </p>
-                                        )}
-                                        <button
-                                            className="popup-button"
-                                            onClick={() => handleEventClick(event.id)}
-                                        >
-                                            Xem chi tiết
-                                            <ArrowRight size={16} weight="bold" />
-                                        </button>
+                                                <Popup>
+                                                    <div className="event-popup">
+                                                        <PopupImage event={event} />
+                                                        <div className="popup-content-inner" style={{ padding: '0 0.2rem' }}>
+                                                            <h3 className="popup-title" title={event.name}>{event.name}</h3>
+                                                            
+                                                            <div className="popup-info-rows" style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginBottom: '0.6rem', marginTop: '-2px' }}>
+                                                                {event.location?.address && (
+                                                                    <p className="popup-address" style={{ margin: 0 }}>
+                                                                        <MapPin size={14} weight="fill" />
+                                                                        {event.location.address}
+                                                                    </p>
+                                                                )}
+                                                                {event.time?.next_occurrence && (
+                                                                    <p className="popup-time" style={{ margin: 0 }}>
+                                                                        <Calendar size={14} />
+                                                                        {formatToVietnameseDate(event.time.next_occurrence)}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+
+                                                            {/* Realtime nearby users badge */}
+                                                            {(() => {
+                                                                // Count from server (excludes current user) + 1 if user is in range
+                                                                const serverCount = nearbyCounts[event.id] ?? 0;
+                                                                const dist = getDistanceToEvent(event);
+                                                                const selfNearby = userLocation && dist !== null && dist <= NEARBY_RADIUS_METERS ? 1 : 0;
+                                                                const totalNearby = serverCount + selfNearby;
+                                                                return totalNearby > 0 ? (
+                                                                    <div className="popup-nearby-badge" style={{ marginBottom: '0.6rem' }}>
+                                                                        <span className="nearby-pulse-dot" />
+                                                                        {totalNearby} người đang ở gần
+                                                                    </div>
+                                                                ) : null;
+                                                            })()}
+                                                            
+                                                            <div className="popup-actions" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                                                {/* Button to view event snaps if available */}
+                                                                {eventSnapsMap[event.id] && eventSnapsMap[event.id].length > 0 && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className="popup-button"
+                                                                        style={{ background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)' }}
+                                                                        onClick={() => handleViewEventSnaps(event.id)}
+                                                                    >
+                                                                        ▶ Xem Vibe Snaps ({eventSnapsMap[event.id].length})
+                                                                    </button>
+                                                                )}
+                                                                <button
+                                                                    type="button"
+                                                                    className="popup-button"
+                                                                    onClick={() => handleEventClick(event.id)}
+                                                                >
+                                                                    Xem chi tiết
+                                                                    <ArrowRight size={16} weight="bold" />
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
                                         {/* Check-in Button */}
                                         {user && event.location?.coordinates?.coordinates && (
@@ -890,6 +997,7 @@ const MapPage = () => {
                                                     </div>
                                                 ) : isInCheckInRange(event) ? (
                                                     <button
+                                                        type="button"
                                                         className="popup-checkin-btn"
                                                         onClick={() => handleCheckIn(event)}
                                                         disabled={checkingInEventId === event.id}
@@ -910,6 +1018,22 @@ const MapPage = () => {
                         );
                     })}
                 </MarkerClusterGroup>
+
+                {/* Independent Vibe Snaps Markers (Not clustered to keep them prominent) */}
+                {independentSnaps.map((snap) => {
+                    return (
+                        <Marker
+                            key={snap.id}
+                            position={[snap.location.lat, snap.location.lng]}
+                            icon={createVibeSnapIcon(snap)}
+                            eventHandlers={{
+                                click: () => {
+                                    setStoryViewerContext({ type: 'independent', snapId: snap.id });
+                                }
+                            }}
+                        />
+                    );
+                })}
 
                 {/* Radius circles for selected event - must be outside MarkerClusterGroup */}
                 {selectedEventId && (() => {
@@ -935,7 +1059,7 @@ const MapPage = () => {
 
                 {/* User Location Marker */}
                 {userLocation && (
-                    <Marker position={userLocation} icon={createUserLocationIcon(user?.avatar_url)} />
+                    <Marker position={userLocation} icon={createUserLocationIcon(user)} />
                 )}
             </MapContainer>
 
@@ -1008,6 +1132,66 @@ const MapPage = () => {
                     </div>
                 </div>
             </Modal>
+
+            {/* Story Viewer Overlay */}
+            {storyViewerContext !== null && typeof storyViewerContext === 'object' && (() => {
+                let displaySnaps: VibeSnap[] = [];
+                let initialIndex = 0;
+
+                if (storyViewerContext.type === 'independent' && 'snapId' in storyViewerContext) {
+                    // Only show the specific independent snap clicked
+                    const snap = vibeSnaps.find(s => s.id === storyViewerContext.snapId);
+                    displaySnaps = snap ? [snap] : [];
+                    initialIndex = 0;
+                } else if (storyViewerContext.type === 'event' && 'eventId' in storyViewerContext) {
+                    displaySnaps = eventSnapsMap[storyViewerContext.eventId] || [];
+                    initialIndex = 0;
+                }
+
+                if (displaySnaps.length === 0) return null;
+
+                return (
+                    <StoryViewer
+                        snaps={displaySnaps}
+                        initialIndex={initialIndex}
+                        onClose={() => setStoryViewerContext(null)}
+                    />
+                );
+            })()}
+
+            {/* Camera Capture FAB */}
+            <CameraCapture 
+                onCaptureComplete={async (file) => {
+                    if (user && userLocation) {
+                        try {
+                            // Find closest event for auto-checkin connection
+                            let nearestEventId: string | undefined = undefined;
+                            if (eventsWithLocation.length > 0) {
+                                // Simple naive distance check locally
+                                let minDist = NEARBY_RADIUS_METERS;
+                                for (const e of eventsWithLocation) {
+                                    const [lng, lat] = e.location!.coordinates!.coordinates;
+                                    const d = calculateDistance(userLocation[0], userLocation[1], lat, lng);
+                                    if (d < minDist) {
+                                        minDist = d;
+                                        nearestEventId = e.id;
+                                    }
+                                }
+                            }
+                            
+                            const res = await vibeSnapApi.create(file, userLocation[0], userLocation[1], nearestEventId);
+                            if (res.data.success && res.data.data) {
+                                setVibeSnaps(prev => [...prev, res.data.data]);
+                            }
+                        } catch (err: any) {
+                            toast.error('Lỗi khi tải lên Snap: ' + (err.response?.data?.message || err.message));
+                            throw err;
+                        }
+                    } else {
+                        toast.error('Vui lòng bật định vị để đăng Snap hiện trường!');
+                    }
+                }} 
+            />
         </div>
     );
 };

@@ -21,6 +21,8 @@ interface LocationPickerProps {
     address?: string;
     city?: string;
     province?: string;
+    initialCenter?: { lat: number; lng: number }; // Default map center (e.g. event location)
+    searchHint?: string; // Used as fallback geocode query when no address/city/province given
     onLocationChange: (coords: { lat: number; lng: number } | null) => void;
 }
 
@@ -35,13 +37,16 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
 }
 
 // Component to center map on coordinates
-function MapCenterer({ coordinates }: { coordinates: { lat: number; lng: number } | null }) {
+function MapCenterer({ coordinates, initialCenter }: { coordinates: { lat: number; lng: number } | null, initialCenter?: { lat: number; lng: number } }) {
     const map = useMap();
     useEffect(() => {
         if (coordinates) {
             map.setView([coordinates.lat, coordinates.lng], 14);
+        } else if (initialCenter) {
+            // Center on event location when no specific waypoint selected yet
+            map.setView([initialCenter.lat, initialCenter.lng], 12);
         }
-    }, [coordinates, map]);
+    }, [coordinates, initialCenter, map]);
     return null;
 }
 
@@ -61,16 +66,22 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     address,
     city,
     province,
+    initialCenter,
+    searchHint,
     onLocationChange,
 }) => {
     const [isGeocoding, setIsGeocoding] = useState(false);
     const [geocodeError, setGeocodeError] = useState('');
-    const [mapCenter] = useState<[number, number]>([16.0, 106.0]); // Vietnam center
+    // Use initialCenter if provided, otherwise fall back to center of Vietnam
+    const defaultCenter: [number, number] = initialCenter
+        ? [initialCenter.lat, initialCenter.lng]
+        : [16.0, 106.0];
+    const [mapCenter] = useState<[number, number]>(defaultCenter);
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Geocode address to coordinates using Nominatim
     const geocodeAddress = async () => {
-        const searchQuery = [address, city, province].filter(Boolean).join(', ');
+        const searchQuery = [address, city, province].filter(Boolean).join(', ') || searchHint || '';
         if (!searchQuery.trim()) {
             setGeocodeError('Vui lòng nhập địa chỉ trước');
             return;
@@ -144,7 +155,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             <div className="location-picker-map">
                 <MapContainer
                     center={coordinates ? [coordinates.lat, coordinates.lng] : mapCenter}
-                    zoom={coordinates ? 14 : 6}
+                    zoom={coordinates ? 14 : (initialCenter ? 12 : 6)}
                     style={{ height: '250px', width: '100%', borderRadius: '8px' }}
                     scrollWheelZoom={true}
                 >
@@ -153,7 +164,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                         url={`https://api.maptiler.com/maps/base-v4/{z}/{x}/{y}.png?key=${import.meta.env.VITE_MAPTILER_KEY}`}
                     />
                     <MapClickHandler onLocationSelect={handleMapClick} />
-                    <MapCenterer coordinates={coordinates || null} />
+                    <MapCenterer coordinates={coordinates || null} initialCenter={initialCenter} />
                     {coordinates && (
                         <Marker position={[coordinates.lat, coordinates.lng]} />
                     )}
@@ -200,7 +211,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
                                     url={`https://api.maptiler.com/maps/base-v4/{z}/{x}/{y}.png?key=${import.meta.env.VITE_MAPTILER_KEY}`}
                                 />
                                 <MapClickHandler onLocationSelect={handleMapClick} />
-                                <MapCenterer coordinates={coordinates || null} />
+                                <MapCenterer coordinates={coordinates || null} initialCenter={initialCenter} />
                                 <MapResizer trigger={isExpanded} />
                                 {coordinates && (
                                     <Marker position={[coordinates.lat, coordinates.lng]} />

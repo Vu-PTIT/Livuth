@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { usePostsFeed } from '../../hooks/useDataCaching';
 import type { Post } from '../../types';
@@ -6,7 +6,7 @@ import PostCard from '../../components/PostCard';
 import PostDetailModal from '../../components/PostDetailModal';
 import CreatePostForm from '../../components/CreatePostForm';
 import { PostCardSkeleton } from '../../components/Skeleton';
-import { Notebook, ArrowUp, MagnifyingGlass, FunnelSimple, MapPin, Ticket, X } from '@phosphor-icons/react';
+import { Notebook, ArrowUp, MagnifyingGlass, FunnelSimple, X } from '@phosphor-icons/react';
 import { eventApi } from '../../api/endpoints';
 import { formatToVietnameseDate } from '../../utils/date';
 import './FeedPage.css';
@@ -32,6 +32,26 @@ const FeedPage: React.FC = () => {
     const [eventQuery, setEventQuery] = useState('');
     const [foundEvents, setFoundEvents] = useState<any[]>([]);
     const [isSearchingEvents, setIsSearchingEvents] = useState(false);
+    const eventFilterRef = useRef<HTMLDivElement>(null);
+
+    // Handle click outside for event search
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (eventFilterRef.current && !eventFilterRef.current.contains(event.target as Node)) {
+                setShowEventSearch(false);
+            }
+        };
+
+        if (showEventSearch) {
+            document.addEventListener('mousedown', handleClickOutside);
+        } else {
+            document.removeEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showEventSearch]);
 
     const { data: feedData, isLoading } = usePostsFeed({
         page,
@@ -208,7 +228,7 @@ const FeedPage: React.FC = () => {
                     <aside className="feed-sidebar">
                         <div className="sidebar-sticky">
                             <div className="feed-search-section">
-                                <h3 className="sidebar-title"><MagnifyingGlass size={16} /> Tìm kiếm & Lọc</h3>
+                                <h3 className="sidebar-title">Tìm kiếm & Lọc</h3>
                                 <div className="search-bar-wrapper">
                                     <div className="search-input-group">
                                         <MagnifyingGlass size={18} className="search-icon" />
@@ -232,7 +252,7 @@ const FeedPage: React.FC = () => {
                                 {showFilters && (
                                     <div className="feed-filters-panel">
                                         <div className="filter-group">
-                                            <label><MapPin size={14} /> Địa điểm</label>
+                                            <label>Địa điểm</label>
                                             <div className="filter-input-wrapper">
                                                 <input
                                                     type="text"
@@ -247,34 +267,40 @@ const FeedPage: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        <div className="filter-group">
-                                            <label><Ticket size={14} /> Sự kiện</label>
-                                            <div className="event-select-wrapper">
-                                                <div
-                                                    className={`event-select-trigger ${eventIdFilter ? 'selected' : ''}`}
-                                                    onClick={() => setShowEventSearch(!showEventSearch)}
-                                                >
-                                                    {selectedEventName || "Chọn sự kiện..."}
-                                                </div>
-                                                {(eventIdFilter || selectedEventName) && (
+                                        <div className="filter-group" ref={eventFilterRef}>
+                                            <label>Sự kiện</label>
+                                            <div className="filter-input-wrapper">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Chọn sự kiện..."
+                                                    value={selectedEventName || eventQuery}
+                                                    onChange={(e) => {
+                                                        const newVal = e.target.value;
+                                                        setEventQuery(newVal);
+                                                        setSelectedEventName('');
+                                                        setEventIdFilter('');
+                                                        if (newVal.trim()) {
+                                                            setShowEventSearch(true);
+                                                        }
+                                                    }}
+                                                    onFocus={() => {
+                                                        if (eventQuery.trim() || !eventIdFilter) {
+                                                            setShowEventSearch(true);
+                                                        }
+                                                    }}
+                                                />
+                                                {(eventIdFilter || selectedEventName || eventQuery) && (
                                                     <button onClick={() => {
                                                         setEventIdFilter('');
                                                         setSelectedEventName('');
+                                                        setEventQuery('');
                                                         setShowEventSearch(false);
                                                     }} className="clear-field">
                                                         <X size={12} />
                                                     </button>
                                                 )}
                                                 {showEventSearch && (
-                                                    <div className="event-filter-dropdown">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Tìm tên sự kiện..."
-                                                            value={eventQuery}
-                                                            onChange={(e) => setEventQuery(e.target.value)}
-                                                            autoFocus
-                                                            onClick={(e) => e.stopPropagation()}
-                                                        />
+                                                    <div className="event-filter-dropdown" onClick={(e) => e.stopPropagation()}>
                                                         <div className="event-results-list">
                                                             {isSearchingEvents ? (
                                                                 <div className="dropdown-message">Đang tìm...</div>
@@ -287,6 +313,7 @@ const FeedPage: React.FC = () => {
                                                                             e.stopPropagation();
                                                                             setEventIdFilter(event.id);
                                                                             setSelectedEventName(event.name);
+                                                                            setEventQuery('');
                                                                             setShowEventSearch(false);
                                                                         }}
                                                                     >
@@ -295,9 +322,9 @@ const FeedPage: React.FC = () => {
                                                                     </div>
                                                                 ))
                                                             ) : eventQuery ? (
-                                                                <div className="dropdown-message">Không tìm thấy</div>
+                                                                <div className="dropdown-message">Không tìm thấy sự kiện</div>
                                                             ) : (
-                                                                <div className="dropdown-message">Nhập tên sự kiện...</div>
+                                                                <div className="dropdown-message">Gợi ý sự kiện gần đây</div>
                                                             )}
                                                         </div>
                                                     </div>

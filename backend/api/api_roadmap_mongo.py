@@ -8,6 +8,7 @@ from backend.schemas.sche_response import DataResponse
 from backend.schemas.sche_roadmap import (
     RoadmapCreateRequest, 
     RoadmapUpdateRequest,
+    RoadmapGenerateRequest,
     EventRoadmapsResponse
 )
 from backend.services.srv_roadmap_mongo import RoadmapMongoService
@@ -42,6 +43,17 @@ async def get_roadmap_detail(
             message="Không tìm thấy lộ trình"
         )
     return DataResponse(data=roadmap)
+
+
+@router.post("/generate", response_model=DataResponse)
+async def generate_ai_roadmap(
+    request: RoadmapGenerateRequest,
+    token: str = Depends(JWTBearer())
+) -> Any:
+    """Generate a structured roadmap using AI"""
+    # Simply mapping request to the service
+    generated_data = await roadmap_service.generate_ai_roadmap(request)
+    return DataResponse(data=generated_data, message="Tạo lộ trình thành công")
 
 
 @router.post("/event/{event_id}", response_model=DataResponse, status_code=status.HTTP_201_CREATED)

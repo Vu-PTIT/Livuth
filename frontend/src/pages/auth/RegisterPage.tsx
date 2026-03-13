@@ -16,7 +16,6 @@ const RegisterPage: React.FC = () => {
         confirmPassword: '',
         first_name: '',
         last_name: '',
-        full_name: '',
         phone: '',
         gender: '',
         dob: '',
@@ -45,10 +44,6 @@ const RegisterPage: React.FC = () => {
             setError('Email không hợp lệ');
             return false;
         }
-        return true;
-    };
-
-    const validateStep2 = () => {
         if (formData.password.length < 8) {
             setError('Mật khẩu phải có ít nhất 8 ký tự');
             return false;
@@ -72,9 +67,13 @@ const RegisterPage: React.FC = () => {
         return true;
     };
 
-    const validateStep3 = () => {
-        if (!formData.first_name || !formData.last_name || !formData.phone) {
-            setError('Vui lòng điền đầy đủ thông tin bắt buộc');
+    const validateStep2 = () => {
+        if (!formData.first_name || !formData.last_name) {
+            setError('Vui lòng nhập họ và tên');
+            return false;
+        }
+        if (!formData.phone) {
+            setError('Vui lòng nhập số điện thoại');
             return false;
         }
         return true;
@@ -85,23 +84,15 @@ const RegisterPage: React.FC = () => {
         if (validateStep1()) setStep(2);
     };
 
-    const handleStep2Submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (validateStep2()) setStep(3);
-    };
-
-    const handleStep3Submit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (validateStep3()) setStep(4);
-    };
-
     const handleFinalSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validateStep2()) return;
+
         setIsLoading(true);
         setError('');
 
         try {
-            const fullName = formData.full_name || `${formData.first_name} ${formData.last_name}`.trim();
+            const fullName = `${formData.first_name} ${formData.last_name}`.trim();
 
             await register({
                 username: formData.username,
@@ -129,7 +120,7 @@ const RegisterPage: React.FC = () => {
     if (success) {
         return (
             <div className="auth-page">
-                <div className="auth-container">
+                <div className="auth-container auth-container--centered">
                     <div className="auth-success">
                         <div className="success-icon">✓</div>
                         <h2>Đăng ký thành công!</h2>
@@ -148,181 +139,181 @@ const RegisterPage: React.FC = () => {
             </div>
             <div className="auth-container-wrapper">
                 <div className="auth-container">
-                    <div className="auth-header">
+                    {/* Back button - top left corner */}
+                    <div className="auth-topbar">
                         <button
                             type="button"
-                            className="auth-back-btn"
+                            className="auth-back-btn-topbar"
                             onClick={() => step > 1 ? setStep(step - 1) : navigate('/login')}
                             title="Quay lại"
                         >
                             <CaretLeft size={24} weight="bold" />
                         </button>
-                        <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
-                        <h1>Tạo tài khoản</h1>
-                        <p>Bước {step} của 4</p>
                     </div>
 
-                    {/* Progress Steps */}
-                    <div className="auth-steps">
-                        {[1, 2, 3, 4].map((s) => (
-                            <div key={s} className={`step ${step >= s ? 'active' : ''}`}></div>
-                        ))}
-                    </div>
+                    {/* Center content */}
+                    <div className="auth-body">
+                        <div className="auth-header">
+                            <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
+                            <h1>Tạo tài khoản</h1>
+                        </div>
 
-                    {error && <div className="alert alert-error">{error}</div>}
+                        {/* Progress Steps - 2 steps */}
+                        <div className="auth-steps">
+                            {[1, 2].map((s) => (
+                                <div key={s} className={`step ${step >= s ? 'active' : ''}`}></div>
+                            ))}
+                        </div>
 
-                    {step === 1 && (
-                        <form onSubmit={handleStep1Submit} className="auth-form">
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="username">Tên đăng nhập *</label>
-                                <input
-                                    type="text"
-                                    id="username"
-                                    name="username"
-                                    className="form-input"
-                                    placeholder="vd: nguyenvana"
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="email">Email *</label>
-                                <input
-                                    type="email"
-                                    id="email"
-                                    name="email"
-                                    className="form-input"
-                                    placeholder="vd: email@example.com"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary btn-block">Tiếp tục</button>
-                        </form>
-                    )}
+                        {error && <div className="alert alert-error">{error}</div>}
 
-                    {step === 2 && (
-                        <form onSubmit={handleStep2Submit} className="auth-form">
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="password">Mật khẩu *</label>
-                                <div className="password-input-wrapper">
+                        {/* Step 1: Account info */}
+                        {step === 1 && (
+                            <form onSubmit={handleStep1Submit} className="auth-form">
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="username">Tên đăng nhập *</label>
                                     <input
-                                        type={showPassword ? 'text' : 'password'}
-                                        id="password"
-                                        name="password"
+                                        type="text"
+                                        id="username"
+                                        name="username"
                                         className="form-input"
-                                        placeholder="Ít nhất 8 ký tự"
-                                        value={formData.password}
+                                        placeholder="vd: nguyenvana"
+                                        value={formData.username}
                                         onChange={handleChange}
                                         required
                                     />
-                                    <button
-                                        type="button"
-                                        className="password-toggle"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                    >
-                                        {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
-                                    </button>
                                 </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="confirmPassword">Xác nhận mật khẩu *</label>
-                                <input
-                                    type="password"
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    className="form-input"
-                                    placeholder="Nhập lại mật khẩu"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary btn-block">Tiếp tục</button>
-                        </form>
-                    )}
-
-                    {step === 3 && (
-                        <form onSubmit={handleStep3Submit} className="auth-form">
-                            <div className="form-row">
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="first_name">Họ</label>
+                                    <label className="form-label" htmlFor="email">Email *</label>
                                     <input
-                                        type="text"
-                                        id="first_name"
-                                        name="first_name"
+                                        type="email"
+                                        id="email"
+                                        name="email"
                                         className="form-input"
-                                        placeholder="Nguyễn"
-                                        value={formData.first_name}
+                                        placeholder="vd: email@example.com"
+                                        value={formData.email}
                                         onChange={handleChange}
+                                        required
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label className="form-label" htmlFor="last_name">Tên</label>
+                                    <label className="form-label" htmlFor="password">Mật khẩu *</label>
+                                    <div className="password-input-wrapper">
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            id="password"
+                                            name="password"
+                                            className="form-input"
+                                            placeholder="Ít nhất 8 ký tự, có chữ hoa và số"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <button
+                                            type="button"
+                                            className="password-toggle"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                        >
+                                            {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="confirmPassword">Xác nhận mật khẩu *</label>
                                     <input
-                                        type="text"
-                                        id="last_name"
-                                        name="last_name"
+                                        type="password"
+                                        id="confirmPassword"
+                                        name="confirmPassword"
                                         className="form-input"
-                                        placeholder="Văn A"
-                                        value={formData.last_name}
+                                        placeholder="Nhập lại mật khẩu"
+                                        value={formData.confirmPassword}
                                         onChange={handleChange}
+                                        required
                                     />
                                 </div>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="phone">Số điện thoại *</label>
-                                <input
-                                    type="tel"
-                                    id="phone"
-                                    name="phone"
-                                    className="form-input"
-                                    placeholder="0901234567"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary btn-block">Tiếp tục</button>
-                        </form>
-                    )}
+                                <button type="submit" className="btn btn-primary btn-block">Tiếp tục</button>
+                            </form>
+                        )}
 
-                    {step === 4 && (
-                        <form onSubmit={handleFinalSubmit} className="auth-form">
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="gender">Giới tính</label>
-                                <select
-                                    id="gender"
-                                    name="gender"
-                                    className="form-select"
-                                    value={formData.gender}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="Male">Nam</option>
-                                    <option value="Female">Nữ</option>
-                                    <option value="Other">Khác</option>
-                                </select>
-                            </div>
-                            <div className="form-group">
-                                <label className="form-label" htmlFor="dob">Ngày sinh</label>
-                                <input
-                                    type="date"
-                                    id="dob"
-                                    name="dob"
-                                    className="form-input"
-                                    value={formData.dob}
-                                    onChange={handleChange}
-                                    max={new Date().toISOString().split('T')[0]}
-                                />
-                            </div>
-                            <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
-                                {isLoading ? 'Đang đăng ký...' : <><UserPlus size={20} /> Đăng ký</>}
-                            </button>
-                        </form>
-                    )}
+                        {/* Step 2: Personal info */}
+                        {step === 2 && (
+                            <form onSubmit={handleFinalSubmit} className="auth-form">
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor="first_name">Họ *</label>
+                                        <input
+                                            type="text"
+                                            id="first_name"
+                                            name="first_name"
+                                            className="form-input"
+                                            placeholder="Nguyễn"
+                                            value={formData.first_name}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor="last_name">Tên *</label>
+                                        <input
+                                            type="text"
+                                            id="last_name"
+                                            name="last_name"
+                                            className="form-input"
+                                            placeholder="Văn A"
+                                            value={formData.last_name}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label" htmlFor="phone">Số điện thoại *</label>
+                                    <input
+                                        type="tel"
+                                        id="phone"
+                                        name="phone"
+                                        className="form-input"
+                                        placeholder="0901234567"
+                                        value={formData.phone}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </div>
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor="gender">Giới tính</label>
+                                        <select
+                                            id="gender"
+                                            name="gender"
+                                            className="form-select"
+                                            value={formData.gender}
+                                            onChange={handleChange}
+                                        >
+                                            <option value="">Chọn</option>
+                                            <option value="Male">Nam</option>
+                                            <option value="Female">Nữ</option>
+                                            <option value="Other">Khác</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="form-label" htmlFor="dob">Ngày sinh</label>
+                                        <input
+                                            type="date"
+                                            id="dob"
+                                            name="dob"
+                                            className="form-input"
+                                            value={formData.dob}
+                                            onChange={handleChange}
+                                            max={new Date().toISOString().split('T')[0]}
+                                        />
+                                    </div>
+                                </div>
+                                <button type="submit" className="btn btn-primary btn-block" disabled={isLoading}>
+                                    {isLoading ? 'Đang đăng ký...' : <><UserPlus size={20} /> Đăng ký</>}
+                                </button>
+                            </form>
+                        )}
+                    </div>
 
                     <div className="auth-footer">
                         <p>

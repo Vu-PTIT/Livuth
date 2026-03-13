@@ -102,6 +102,8 @@ app.include_router(checkin_router, prefix=settings.API_PREFIX, tags=["Check-in"]
 app.include_router(roadmap_router, prefix=settings.API_PREFIX, tags=["Roadmaps"])
 app.include_router(upload_router, prefix=settings.API_PREFIX, tags=["Uploads"])
 app.include_router(presence_router, prefix=settings.API_PREFIX, tags=["Presence"])
+from backend.api.api_vibe_snap_mongo import router as vibe_snap_router
+app.include_router(vibe_snap_router, prefix=settings.API_PREFIX, tags=["Vibe Snaps"])
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")

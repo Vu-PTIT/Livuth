@@ -81,6 +81,86 @@
     transform: translateX(-2px);
 }
 
+/* Shared Pill Back Button */
+.back-btn-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.4rem 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 100px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
+    z-index: 50;
+}
+
+.back-btn-pill:hover {
+    background: var(--bg-secondary);
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Side Navigation Layout */
+.side-nav-layout {
+    display: flex;
+    align-items: flex-start;
+    padding: 2rem 3rem;
+    gap: 2rem;
+    position: relative;
+    min-height: calc(100vh - 80px); /* Account for header */
+}
+
+.side-nav-layout .nav-sidebar {
+    flex-shrink: 0;
+    width: 200px; /* Consistent width for the back button area */
+}
+
+.side-nav-layout .main-content-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.side-nav-layout .main-content-area > * {
+    width: 100%;
+}
+
+@media (max-width: 1200px) {
+    .side-nav-layout {
+        padding: 2rem;
+        gap: 1.5rem;
+    }
+    .side-nav-layout .nav-sidebar {
+        width: 180px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .side-nav-layout {
+        flex-direction: column;
+        padding: 1.5rem 1rem;
+        gap: 1.5rem;
+    }
+
+    .side-nav-layout .nav-sidebar {
+        width: auto;
+    }
+
+    .side-nav-layout .main-content-area {
+        justify-content: flex-start;
+    }
+}
+
 .event-hero-content h1 {
     font-size: 3rem;
     font-weight: 800;
@@ -991,7 +1071,8 @@
     display: flex;
     gap: 1rem;
     overflow-x: auto;
-    padding-top: 5px;
+    overflow-y: visible; /* Allow cards to lift up without clipping */
+    padding-top: 12px;   /* Must be > translateY(6px) + shadow room */
     padding-bottom: 1rem;
     margin-bottom: 1rem;
     -webkit-overflow-scrolling: touch;
@@ -1004,9 +1085,9 @@
     user-select: none;
 }
 
-.roadmap-horizontal-list.dragging .roadmap-card {
+.roadmap-horizontal-list.is-moving .roadmap-card {
     pointer-events: none;
-    /* Prevent hover effects while dragging */
+    /* Prevent hover effects and clicks while actually dragging */
 }
 
 .roadmap-horizontal-list::-webkit-scrollbar {
@@ -1022,24 +1103,24 @@
 .roadmap-card {
     width: 280px;
     flex: 0 0 auto;
-    background: var(--bg-secondary);
-    border: 1px solid transparent;
-    /* default transparent border */
-    border-radius: 8px;
-    /* Slightly squarer radius from screenshot */
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
     padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 1rem;
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); /* Permanent subtle shadow */
+    cursor: pointer;
 }
 
-/* Thẻ đầu tiên (active / highlighted) có vẻ có border đỏ trong screenshot */
 .roadmap-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1); /* Stronger premium shadow */
     border-color: var(--primary-color);
+    background: var(--card-bg);
 }
 
 .roadmap-card-header {
@@ -1213,4 +1294,88 @@
         width: 100%;
         justify-content: center;
     }
+
+}
+
+/* ============================================
+   Numbered Markers
+   ============================================ */
+.numbered-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.marker-pin {
+    width: 30px;
+    height: 30px;
+    border-radius: 50% 50% 50% 0;
+    background: var(--primary-color);
+    position: absolute;
+    transform: rotate(-45deg);
+    left: 50%;
+    top: 50%;
+    margin: -15px 0 0 -15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border: 2px solid white;
+}
+
+.marker-number {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: 800;
+    font-size: 14px;
+    z-index: 10;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.numbered-marker-active .marker-pin {
+    background: var(--info-color);
+    transform: rotate(-45deg) scale(1.08);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+.numbered-marker-active .marker-number {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.roadmap-waypoint-item {
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roadmap-waypoint-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+.roadmap-waypoint-active {
+    background-color: var(--primary-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 12px;
+}
+
+.roadmap-waypoint-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background-color: var(--primary-color);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+/* Ensure roadmap map stays under fixed header */
+.roadmap-interactive-view .leaflet-container {
+    position: relative;
+    z-index: 0;
+}
+
+.roadmap-map-wrapper {
+    position: relative;
 }

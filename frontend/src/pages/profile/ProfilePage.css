@@ -65,7 +65,7 @@
 }
 
 .x-profile-info {
-    padding: 0.5rem 1rem 1.5rem;
+    padding: 1.25rem 1rem 1.5rem;
 }
 
 .x-profile-name-row {
@@ -657,12 +657,13 @@
     height: 350px;
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     position: relative;
     border-radius: 20px 20px 0 0;
 }
 
 .web-profile .profile-header-content {
-    padding: 0 2.5rem 1.5rem 2.5rem;
+    padding: 1.5rem 2.5rem 1.5rem 2.5rem;
     position: relative;
 }
 

@@ -95,72 +95,74 @@ const LoginPage: React.FC = () => {
             </div>
             <div className="auth-container-wrapper">
                 <div className="auth-container">
-                    <div className="auth-header">
-                        <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
-                        <h1>Đăng nhập</h1>
-                        <p>Chào mừng bạn quay trở lại</p>
-                    </div>
-
-                    {error && <div className="alert alert-error">{error}</div>}
-
-                    <form onSubmit={handleSubmit} className="auth-form">
-                        <div className="form-group">
-                            <label htmlFor="username">Tên đăng nhập</label>
-                            <input
-                                type="text"
-                                id="username"
-                                name="username"
-                                className="form-input"
-                                placeholder="Nhập tên đăng nhập"
-                                value={formData.username}
-                                onChange={handleChange}
-                                required
-                                autoComplete="username"
-                            />
+                    <div className="auth-body">
+                        <div className="auth-header">
+                            <img src="/logo-transparent.png" alt="Ganvo" className="logo-img" />
+                            <h1>Đăng nhập</h1>
+                            <p>Chào mừng bạn quay trở lại</p>
                         </div>
 
-                        <div className="form-group">
-                            <label htmlFor="password">Mật khẩu</label>
-                            <div className="password-input-wrapper">
+                        {error && <div className="alert alert-error">{error}</div>}
+
+                        <form onSubmit={handleSubmit} className="auth-form">
+                            <div className="form-group">
+                                <label htmlFor="username">Tên đăng nhập</label>
                                 <input
-                                    type={showPassword ? 'text' : 'password'}
-                                    id="password"
-                                    name="password"
+                                    type="text"
+                                    id="username"
+                                    name="username"
                                     className="form-input"
-                                    placeholder="Nhập mật khẩu"
-                                    value={formData.password}
+                                    placeholder="Nhập tên đăng nhập"
+                                    value={formData.username}
                                     onChange={handleChange}
                                     required
-                                    autoComplete="current-password"
+                                    autoComplete="username"
                                 />
-                                <button
-                                    type="button"
-                                    className="password-toggle"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                >
-                                    {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
-                                </button>
                             </div>
+
+                            <div className="form-group">
+                                <label htmlFor="password">Mật khẩu</label>
+                                <div className="password-input-wrapper">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        className="form-input"
+                                        placeholder="Nhập mật khẩu"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        required
+                                        autoComplete="current-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        className="password-toggle"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeSlash size={20} /> : <Eye size={20} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="btn btn-primary btn-block"
+                                disabled={isLoading}
+                            >
+                                {isLoading ? 'Đang đăng nhập...' : <><SignIn size={20} /> Đăng nhập</>}
+                            </button>
+                        </form>
+
+                        <div className="social-login-separator">
+                            <span>Hoặc tiếp tục với</span>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="btn btn-primary btn-block"
-                            disabled={isLoading}
-                        >
-                            {isLoading ? 'Đang đăng nhập...' : <><SignIn size={20} /> Đăng nhập</>}
-                        </button>
-                    </form>
-
-                    <div className="social-login-separator">
-                        <span>Hoặc tiếp tục với</span>
-                    </div>
-
-                    <div className="google-login-wrapper">
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={() => setError('Đăng nhập Google thất bại')}
-                        />
+                        <div className="google-login-wrapper">
+                            <GoogleLogin
+                                onSuccess={handleGoogleSuccess}
+                                onError={() => setError('Đăng nhập Google thất bại')}
+                            />
+                        </div>
                     </div>
 
                     <div className="auth-footer">

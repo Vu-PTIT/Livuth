@@ -22,6 +22,7 @@ import type {
     Comment,
     CommentCreateRequest,
     CommentListResponse,
+    Roadmap,
 } from '../types';
 
 // ============ AUTH API ============
@@ -361,20 +362,46 @@ export const uploadApi = {
 // ============ ROADMAP API ============
 export const roadmapApi = {
     getEventRoadmaps: (eventId: string) =>
-        apiClient.get<ApiResponse<{ roadmaps: any[] }>>(`/roadmaps/event/${eventId}`),
+        apiClient.get<ApiResponse<{ roadmaps: Roadmap[] }>>(`/roadmaps/event/${eventId}`),
 
     getById: (roadmapId: string) =>
-        apiClient.get<ApiResponse<any>>(`/roadmaps/${roadmapId}`),
+        apiClient.get<ApiResponse<Roadmap>>(`/roadmaps/${roadmapId}`),
 
-    create: (eventId: string, data: { title: string; duration: string; tags: string[]; content: string }) =>
-        apiClient.post<ApiResponse<any>>(`/roadmaps/event/${eventId}`, data),
+    create: (eventId: string, data: { title: string; duration: string; tags: string[]; content?: string; days: import('../types').RoadmapDay[] }) =>
+        apiClient.post<ApiResponse<Roadmap>>(`/roadmaps/event/${eventId}`, data),
 
-    update: (roadmapId: string, data: Partial<{ title: string; duration: string; tags: string[]; content: string }>) =>
-        apiClient.put<ApiResponse<any>>(`/roadmaps/${roadmapId}`, data),
+    generate: (data: { location: string; duration_days: number; interests: string; event_id?: string }) =>
+        apiClient.post<ApiResponse<Partial<Roadmap>>>('/roadmaps/generate', data),
+
+    update: (roadmapId: string, data: Partial<{ title: string; duration: string; tags: string[]; content?: string; days: import('../types').RoadmapDay[] }>) =>
+        apiClient.put<ApiResponse<Roadmap>>(`/roadmaps/${roadmapId}`, data),
 
     delete: (roadmapId: string) =>
         apiClient.delete(`/roadmaps/${roadmapId}`),
 
     toggleLike: (roadmapId: string) =>
         apiClient.post<ApiResponse<{ is_liked: boolean; like_count: number }>>(`/roadmaps/${roadmapId}/like`),
+};
+
+// ============ VIBE SNAP API ============
+export const vibeSnapApi = {
+    getNearby: (lat: number, lng: number, radiusKm: number = 10, limit: number = 100) =>
+        apiClient.get<ApiResponse<any[]>>('/vibe-snaps/nearby', {
+            params: { lat, lng, radius: radiusKm, limit },
+        }),
+
+    create: (file: File, lat: number, lng: number, event_id?: string) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('lat', lat.toString());
+        formData.append('lng', lng.toString());
+        if (event_id) {
+            formData.append('event_id', event_id);
+        }
+        return apiClient.post<ApiResponse<any>>('/vibe-snaps', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
 };

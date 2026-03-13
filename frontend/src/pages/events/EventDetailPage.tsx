@@ -16,7 +16,6 @@ import {
     CheckCircle,
     ArrowLeft,
     Star,
-    UserCircle,
     PaperPlaneRight,
     PencilSimple,
     MapTrifold,
@@ -60,10 +59,12 @@ const EventDetailPage: React.FC = () => {
 
     const handleMouseLeave = () => {
         setIsDragging(false);
+        setTimeout(() => setDragStarted(false), 50);
     };
 
     const handleMouseUp = () => {
         setIsDragging(false);
+        setTimeout(() => setDragStarted(false), 50);
     };
 
     const handleMouseMove = (e: React.MouseEvent) => {
@@ -338,6 +339,7 @@ const EventDetailPage: React.FC = () => {
 
                     {/* Tab Content */}
                     {activeTab === 'info' && (
+                        <>
                         <div className="tab-content card">
                             {/* Mobile-only tags relocated here */}
                             {event.categories && event.categories.length > 0 && (
@@ -390,10 +392,81 @@ const EventDetailPage: React.FC = () => {
                                 )}
                             </div>
                         </div>
+
+                        {/* Location */}
+                        {event.location?.address && (
+                            <div className="card info-card" style={{ marginTop: '1.5rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                                    <h3 style={{ marginBottom: 0 }}>
+                                        <MapPin size={20} />
+                                        Địa điểm
+                                    </h3>
+
+                                    {event.location.coordinates?.coordinates && (
+                                        <Link
+                                            to={`/map?lat=${event.location.coordinates.coordinates[1]}&lng=${event.location.coordinates.coordinates[0]}&eventId=${event.id}`}
+                                            className="btn btn-outline btn-sm"
+                                            style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.4rem',
+                                                padding: '0.3rem 0.8rem',
+                                                fontSize: '0.85rem',
+                                                borderRadius: '20px',
+                                                whiteSpace: 'nowrap',
+                                                borderColor: 'var(--border-color)',
+                                                color: 'var(--text-secondary)'
+                                            }}
+                                        >
+                                            <MapTrifold size={16} weight="bold" />
+                                            Xem bản đồ
+                                        </Link>
+                                    )}
+                                </div>
+
+                                <div style={{ paddingLeft: '0.25rem' }}>
+                                    <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
+                                        {event.location.address}
+                                    </p>
+                                    {event.location.city && (
+                                        <p className="text-secondary" style={{ fontSize: '0.9rem' }}>
+                                            {event.location.city}{event.location.province ? `, ${event.location.province}` : ''}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Additional Info */}
+                        {event.info?.note && (
+                            <div className="card info-card" style={{ marginTop: '1.5rem' }}>
+                                <h3>
+                                    <Clock size={20} />
+                                    Lưu ý
+                                </h3>
+                                <p>{event.info.note}</p>
+                            </div>
+                        )}
+
+                        {/* Gallery */}
+                        {event.media && event.media.length > 1 && (
+                            <div className="gallery-section" style={{ marginTop: '1.5rem' }}>
+                                <h3>Hình ảnh</h3>
+                                <div className="gallery-grid">
+                                    {event.media.map((item: any, idx: number) => (
+                                        <div key={idx} className="gallery-item">
+                                            <img src={item.url} alt={item.caption || `Ảnh ${idx + 1}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        </>
                     )}
 
                     {/* Community Roadmaps Section */}
                     {activeTab === 'roadmaps' && (
+                        <>
                         <div className="community-roadmaps-section card" style={{ marginTop: 0 }}>
                             <div className="section-header-flex">
                                 <div className="section-title-wrapper">
@@ -409,7 +482,7 @@ const EventDetailPage: React.FC = () => {
                             </div>
 
                             <div
-                                className={`roadmap-horizontal-list ${isDragging ? 'dragging' : ''}`}
+                                className={`roadmap-horizontal-list ${isDragging ? 'dragging' : ''} ${dragStarted ? 'is-moving' : ''}`}
                                 ref={roadmapListRef}
                                 onMouseDown={handleMouseDown}
                                 onMouseLeave={handleMouseLeave}
@@ -431,14 +504,17 @@ const EventDetailPage: React.FC = () => {
                                             key={roadmap.id}
                                             className="roadmap-card"
                                             onClick={(e) => {
-                                                if (dragStarted) e.preventDefault();
+                                                if (dragStarted) {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                }
                                             }}
                                             draggable={false}
                                         >
                                             <div className="roadmap-card-header">
                                                 <h4 className="roadmap-title" title={roadmap.title}>{roadmap.title}</h4>
                                                 <div className="roadmap-author">
-                                                    <img src={roadmap.user_avatar || 'https://i.pravatar.cc/150'} alt={roadmap.user_name || 'Người dùng'} />
+                                                    <img src={roadmap.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${roadmap.user_name || 'user'}`} alt={roadmap.user_name || 'Người dùng'} />
                                                     <span>{roadmap.user_name || 'Người dùng ẩn danh'}</span>
                                                 </div>
                                             </div>
@@ -468,79 +544,9 @@ const EventDetailPage: React.FC = () => {
                                 </Link>
                             </div>
                         </div>
-                    )}
 
-                    {/* Location */}
-                    {event.location?.address && (
-                        <div className="card info-card">
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                                <h3 style={{ marginBottom: 0 }}>
-                                    <MapPin size={20} />
-                                    Địa điểm
-                                </h3>
-
-                                {event.location.coordinates?.coordinates && (
-                                    <Link
-                                        to={`/map?lat=${event.location.coordinates.coordinates[1]}&lng=${event.location.coordinates.coordinates[0]}&eventId=${event.id}`}
-                                        className="btn btn-outline btn-sm"
-                                        style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '0.4rem',
-                                            padding: '0.3rem 0.8rem',
-                                            fontSize: '0.85rem',
-                                            borderRadius: '20px',
-                                            whiteSpace: 'nowrap',
-                                            borderColor: 'var(--border-color)',
-                                            color: 'var(--text-secondary)'
-                                        }}
-                                    >
-                                        <MapTrifold size={16} weight="bold" />
-                                        Xem bản đồ
-                                    </Link>
-                                )}
-                            </div>
-
-                            <div style={{ paddingLeft: '0.25rem' }}>
-                                <p style={{ fontSize: '1.05rem', fontWeight: 600, marginBottom: '0.25rem', color: 'var(--text-primary)' }}>
-                                    {event.location.address}
-                                </p>
-                                {event.location.city && (
-                                    <p className="text-secondary" style={{ fontSize: '0.9rem' }}>
-                                        {event.location.city}{event.location.province ? `, ${event.location.province}` : ''}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Additional Info */}
-                    {event.info?.note && (
-                        <div className="card info-card">
-                            <h3>
-                                <Clock size={20} />
-                                Lưu ý
-                            </h3>
-                            <p>{event.info.note}</p>
-                        </div>
-                    )}
-
-                    {/* Gallery */}
-                    {event.media && event.media.length > 1 && (
-                        <div className="gallery-section">
-                            <h3>Hình ảnh</h3>
-                            <div className="gallery-grid">
-                                {event.media.map((item: any, idx: number) => (
-                                    <div key={idx} className="gallery-item">
-                                        <img src={item.url} alt={item.caption || `Ảnh ${idx + 1}`} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Reviews Section */}
-                    <div className="reviews-section card">
+                        {/* Reviews Section */}
+                        <div className="reviews-section card" style={{ marginTop: '1.5rem' }}>
                         <h3>
                             <Star size={20} weight="fill" />
                             Đánh giá ({reviewStats?.total_reviews || 0})
@@ -653,11 +659,11 @@ const EventDetailPage: React.FC = () => {
                                     <div key={review.id} className="review-item">
                                         <div className="review-header">
                                             <div className="reviewer-info">
-                                                {review.user_avatar ? (
-                                                    <img src={review.user_avatar} alt="" className="reviewer-avatar" />
-                                                ) : (
-                                                    <UserCircle size={40} weight="fill" className="reviewer-avatar-placeholder" />
-                                                )}
+                                                <img 
+                                                    src={review.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${review.user_name || 'user'}`} 
+                                                    alt="" 
+                                                    className="reviewer-avatar" 
+                                                />
                                                 <div>
                                                     <span className="reviewer-name">{review.user_name || 'Ẩn danh'}</span>
                                                     <span className="review-date">{formatDate(review.created_at)}</span>
@@ -673,6 +679,8 @@ const EventDetailPage: React.FC = () => {
                             <p className="no-reviews">Chưa có đánh giá nào cho sự kiện này</p>
                         )}
                     </div>
+                    </>
+                )}
                 </div>
 
                 {/* Sidebar */}

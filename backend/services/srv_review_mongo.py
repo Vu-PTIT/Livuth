@@ -29,16 +29,34 @@ class ReviewMongoService:
         """
         collection = self.get_collection()
         
-        # Get reviews sorted by newest first
-        cursor = collection.find(
-            {"event_id": ObjectId(event_id)}
-        ).sort("created_at", -1).limit(limit)
+        # Use aggregation pipeline to join real-time avatar from users collection
+        pipeline = [
+            {"$match": {"event_id": ObjectId(event_id)}},
+            {"$sort": {"created_at": -1}},
+            {"$limit": limit},
+            {"$lookup": {
+                "from": "users",
+                "localField": "user_id",
+                "foreignField": "_id",
+                "as": "user_info",
+                "pipeline": [{"$project": {"avatar_url": 1, "username": 1}}]
+            }},
+            {"$addFields": {
+                "user_avatar": {
+                    "$ifNull": [
+                        {"$arrayElemAt": ["$user_info.avatar_url", 0]},
+                        "$user_avatar"
+                    ]
+                }
+            }},
+            {"$unset": "user_info"}
+        ]
         
         reviews = []
         rating_sum = 0
         rating_distribution = {"5": 0, "4": 0, "3": 0, "2": 0, "1": 0}
         
-        async for doc in cursor:
+        async for doc in collection.aggregate(pipeline):
             doc["id"] = str(doc.pop("_id"))
             doc["event_id"] = str(doc.get("event_id", ""))
             doc["user_id"] = str(doc.get("user_id", ""))

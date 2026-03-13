@@ -10,15 +10,24 @@ class AIAgent:
     """Agent for handling AI interactions via Google Gemini"""
     
     # Default System Prompt
-    DEFAULT_SYSTEM_PROMPT = """Chào bạn! Tôi là Ganvo AI - Trợ lý du lịch thông minh chuyên về Văn hóa và Lễ hội Việt Nam 🇻🇳.
+    DEFAULT_SYSTEM_PROMPT = """Bạn là Ganvo AI - Trợ lý du lịch thông minh chuyên về Văn hóa và Lễ hội Việt Nam 🇻🇳.
 
-    Tôi ở đây để giúp bạn:
-    - Khám phá các lễ hội đặc sắc trên khắp cả nước 🏮
-    - Tìm kiếm địa điểm du lịch văn hóa, tâm linh, lịch sử 
-    - Gợi ý lịch trình và kinh nghiệm đi lại, ăn uống 🍜
-    - Giải đáp thắc mắc về phong tục, tập quán Việt Nam
+Bạn có khả năng truy cập dữ liệu THỰC TẾ từ hệ thống (sự kiện, thống kê, số người, tour du lịch, v.v.) để trả lời câu hỏi chính xác.
 
-    Hãy hỏi tôi bất cứ điều gì về du lịch Việt Nam nhé! Tôi sẽ trả lời ngắn gọn, chính xác và thân thiện."""
+**Nguyên tắc trả lời:**
+1. **QUY TẮC KHOẢNG CÁCH (QUAN TRỌNG NHẤT):** Khi tìm kiếm theo vị trí, bạn PHẢI lấy sự kiện có khoảng cách nhỏ nhất (km thấp nhất) làm sự kiện chính để giới thiệu đầu tiên. Trong trường hợp này là sự kiện PTIT (3.52 km) phải được ưu tiên hơn Tết Nguyên Đán (3.72 km).
+2. Nếu context hệ thống được cung cấp → ƯU TIÊN dữ liệu đó, không được bỏ sót bất kỳ sự kiện nào có trong context.
+3. Tuyệt đối không được thiên vị các lễ hội truyền thống mà bỏ qua các sự kiện hiện đại/giải trí. Nếu sự kiện hiện đại gần hơn, nó phải là mục đầu tiên.
+4. Nếu context có dữ liệu "Số người đang ở gần (real-time)" → trình bày rõ ràng con số đó.
+5. Luôn trả lời bằng tiếng Việt, thân thiện, ngắn gọn, có emoji phù hợp.
+6. Với câu hỏi về số liệu (người, lượt thích, rating, khoảng cách) → trình bày dưới dạng danh sách rõ ràng, bắt đầu từ khoảng cách gần nhất.
+
+**Bạn có thể trả lời các loại câu hỏi:**
+- 🗺️ Thông tin sự kiện, lễ hội (địa điểm, thời gian, hoạt động)
+- 📊 Thống kê sự kiện (đông người nhất, nhiều tim nhất, đánh giá cao nhất)
+- 👥 Bao nhiêu người đang ở gần một sự kiện (dữ liệu real-time từ bản đồ)
+- 🚌 Tour du lịch, nhà cung cấp tour cho sự kiện
+- 🍜 Gợi ý ăn uống, đi lại, kinh nghiệm du lịch"""
 
     def __init__(self):
         self.client = None
@@ -69,15 +78,19 @@ class AIAgent:
             # Prepare system prompt with context if available
             system_instruction = self.DEFAULT_SYSTEM_PROMPT
             if context:
-                system_instruction += f"\n\n{context}\n\nLƯU Ý QUAN TRỌNG: Hãy sử dụng thông tin THỰC TẾ từ hệ thống cung cấp ở trên để trả lời câu hỏi nếu liên quan (như tên sự kiện, thời gian, địa điểm, nội dung). Chỉ dùng kiến thức ngoài khi thông tin hệ thống không đủ."
+                system_instruction += (
+                    f"\n\n---\nDỮ LIỆU THỰC TẾ TỪ HỆ THỐNG (ưu tiên dùng thông tin này):\n\n"
+                    f"{context}"
+                    f"\n---\n"
+                )
 
             # Prepare configuration
             config = types.GenerateContentConfig(
                 temperature=settings.GENERATION_TEMPERATURE,
                 top_p=0.95,
                 top_k=40,
-                max_output_tokens=4096,
-                system_instruction=system_instruction
+                max_output_tokens=8192,
+                system_instruction=system_instruction,
             )
 
             # Format history (the new SDK is stricter about parts structure)
