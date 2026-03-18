@@ -60,7 +60,7 @@ class EventMongoService:
 
             # Check if user liked the event
             event["is_liked"] = False
-            if user_id and event.get("likes"):
+            if user_id and ObjectId.is_valid(user_id) and event.get("likes"):
                 event["is_liked"] = ObjectId(user_id) in event["likes"]
             
             try:
@@ -96,7 +96,7 @@ class EventMongoService:
 
         # Check if user liked the event
         event["is_liked"] = False
-        if user_id and event.get("likes"):
+        if user_id and ObjectId.is_valid(user_id) and event.get("likes"):
             event["is_liked"] = ObjectId(user_id) in event["likes"]
         
         # Optionally populate tour providers
@@ -330,7 +330,7 @@ class EventMongoService:
         for event in recommended:
             # Check if user liked the event
             event["is_liked"] = False
-            if user_id and event.get("likes"):
+            if user_id and ObjectId.is_valid(user_id) and event.get("likes"):
                 event["is_liked"] = ObjectId(user_id) in event["likes"]
                 
             try:
@@ -405,7 +405,7 @@ class EventMongoService:
         for event in nearby_events:
             # Check if user liked the event
             event["is_liked"] = False
-            if user_id and event.get("likes"):
+            if user_id and ObjectId.is_valid(user_id) and event.get("likes"):
                 event["is_liked"] = ObjectId(user_id) in event["likes"]
                 
             try:
@@ -502,7 +502,7 @@ class EventMongoService:
             
             # Check if user liked the event
             event["is_liked"] = False
-            if user_id and event.get("likes"):
+            if user_id and ObjectId.is_valid(user_id) and event.get("likes"):
                 event["is_liked"] = ObjectId(user_id) in event["likes"]
             
             try:

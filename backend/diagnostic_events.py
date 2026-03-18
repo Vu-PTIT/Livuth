@@ -4,6 +4,10 @@ import sys
 import json
 from bson import json_util, ObjectId
 
+# Force UTF-8 encoding for stdout
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.core.database import db
 from backend.schemas.sche_event import EventBaseResponse

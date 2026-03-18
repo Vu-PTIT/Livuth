@@ -271,18 +271,7 @@ const ProfilePage: React.FC = () => {
         setError('');
 
         try {
-            const currentHobbies = currentUser.hobbies || [];
-            const hobbiesToAdd = selectedHobbies.filter(h => !currentHobbies.includes(h));
-            const hobbiesToRemove = currentHobbies.filter(h => !selectedHobbies.includes(h));
-
-            for (const hobby of hobbiesToAdd) {
-                await userApi.addHobby(currentUser.id, hobby);
-            }
-
-            for (const hobby of hobbiesToRemove) {
-                await userApi.removeHobby(currentUser.id, hobby);
-            }
-
+            await userApi.updateMe({ hobbies: selectedHobbies });
             await refreshUser();
             setShowHobbyModal(false);
             toast.success('Cập nhật sở thích thành công!');
